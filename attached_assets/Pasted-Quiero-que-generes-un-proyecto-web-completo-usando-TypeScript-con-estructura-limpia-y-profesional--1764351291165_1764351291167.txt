@@ -1,0 +1,124 @@
+Quiero que generes un proyecto web completo usando TypeScript, con estructura limpia y profesional.
+El proyecto es una página de turismo y debe seguir estas especificaciones:
+
+🔷 1. Diseño general del proyecto
+
+Debe tener:
+
+Navbar en la parte superior.
+
+Debajo del navbar, un mapa interactivo (puede ser Google Maps, Leaflet o Mapbox).
+
+En el mapa deben aparecer 3 categorías de marcadores:
+
+Restaurantes
+
+Hoteles
+
+Sitios recreativos
+
+Debajo del mapa, debe haber secciones con tarjetas (cards) mostrando:
+
+Hoteles
+
+Restaurantes
+
+Sitios recreativos
+
+Transporte (opcional)
+
+Cada categoría debe mostrar varios locales con imagen y breve descripción.
+
+🔷 2. Funcionalidades especiales
+🥽 VR y AR para Restaurantes
+
+En cada restaurante debe existir:
+
+Un botón "Ver productos en VR/AR"
+
+Un botón "Ver interior del local en VR/AR"
+
+Estos visores deben implementarse con:
+
+Three.js
+
+WebXR
+
+Modelos 3D en formato .glb o .gltf
+
+El usuario debe poder:
+
+Rotar los objetos
+
+Verlos en realidad aumentada
+
+Pasar a modo realidad virtual
+
+🔷 3. Login
+
+Debe haber un sistema de login simple:
+
+Página: /login
+
+Guardar usuario y contraseña en almacenamiento temporal (localStorage o mock API)
+
+Después del login, el usuario debe poder acceder al mapa y las secciones
+
+🔷 4. Estructura de carpetas
+
+Genera una estructura así:
+
+/turismo-app
+│── /public
+│   ├── icon.png
+│   ├── modelos-3d/
+│   │    ├── interior.glb
+│   │    └── producto1.glb
+│
+│── /src
+│   ├── /components
+│   │   ├── Navbar.ts
+│   │   ├── MapView.ts
+│   │   ├── CardItem.ts
+│   │   ├── VRViewer.ts
+│   │   └── ARViewer.ts
+│   │
+│   ├── /pages
+│   │   ├── Home.ts
+│   │   ├── Restaurantes.ts
+│   │   ├── Hoteles.ts
+│   │   ├── SitiosRecreativos.ts
+│   │   └── Login.ts
+│   │
+│   ├── /styles
+│   │   └── main.css
+│   │
+│   ├── /utils
+│   │   ├── api.ts
+│   │   └── auth.ts
+│
+│── main.ts
+│── index.html
+│── vite.config.ts
+
+🔷 5. Lo que debe generar
+
+Te pido:
+
+Todo el código TypeScript necesario
+
+El HTML y CSS del diseño
+
+El mapa con marcadores
+
+Los visores VR y AR funcionando
+
+Los componentes modularizados
+
+Una pequeña base de datos mock con restaurantes/ hoteles/ sitios
+
+Un login básico
+
+Comentarios en el código explicando cada parte
+
+Que sea un proyecto responsivo, moderno y bien organizado.

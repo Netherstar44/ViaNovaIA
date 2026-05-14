@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  /* VIANova Theme - Dark & Gold */
+  --color-background: hsl(0 0% 5%); /* Almost Black */
+  --color-foreground: hsl(0 0% 95%); /* Off-white */
+  
+  --color-primary: hsl(45 100% 50%); /* Gold/Yellow */
+  --color-primary-foreground: hsl(0 0% 0%); /* Black text on gold */
+  
+  --color-secondary: hsl(0 0% 15%); /* Dark Gray */
+  --color-secondary-foreground: hsl(0 0% 100%);
+  
+  --color-accent: hsl(45 90% 60%); /* Lighter Gold */
+  --color-accent-foreground: hsl(0 0% 0%);
+  
+  --color-card: hsl(0 0% 8%); /* Slightly lighter than bg */
+  --color-card-foreground: hsl(0 0% 95%);
+  
+  --color-border: hsl(0 0% 20%);
+  --color-input: hsl(0 0% 20%);
+  --color-ring: hsl(45 100% 50%);
+  
+  --color-muted: hsl(0 0% 15%);
+  --color-muted-foreground: hsl(0 0% 60%);
+  
+  --color-destructive: hsl(0 62.8% 30.6%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Poppins", sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+  
+  /* Scrollbar Styling for Dark Theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 10%); 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 30%); 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 40%); 
+  }
+}
+
+/* Leaflet Map Fixes */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background: #0a0a0a;
+}
+
+/* Invert map tiles for dark mode effect (simple hack) */
+.leaflet-layer,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out,
+.leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Custom scrollbar for cards section */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
