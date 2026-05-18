@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image,
 } from "react-native";
 import { useAuth, type AuthUser } from "../lib/auth";
-import type { UserRole } from "../db/schema";
+import type { UserRole } from "../lib/api";
 
 const GOLD = "#c9a227";
 const BG = "#050509";

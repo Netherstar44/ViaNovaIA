@@ -11,9 +11,42 @@ import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail, sendCustomEmail } from "../mailer.js";
+import rateLimit from "express-rate-limit";
+import * as badWords from "bad-words";
+const Filter = badWords.default || badWords;
 
-const upload = multer({ storage: multer.memoryStorage() });
+// Instanciar filtro de groserías y añadir palabras en español
+const profanityFilter = new Filter();
+profanityFilter.addWords('puta', 'mierda', 'malparido', 'gonorrea', 'hijueputa', 'pendejo', 'imbecil', 'marica', 'maricón', 'zorra', 'perra');
 
+// Limiter para endpoints sensibles
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 peticiones por ventana
+  message: { message: "Demasiados intentos. Por favor, inténtalo de nuevo más tarde." }
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 20, // 20 subidas por hora
+  message: { message: "Límite de subida de archivos alcanzado." }
+});
+
+// Configuración estricta de multer para seguridad
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // Limitar a 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'model/gltf-binary'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Formato de archivo no soportado o inválido"));
+    }
+  }
+});
 // Hash password with $2a$ prefix for pgcrypto compatibility (mobile app uses pgcrypto)
 async function hashPassword(plain: string): Promise<string> {
   const salt = await bcrypt.genSalt(12);
@@ -62,7 +95,7 @@ export async function registerRoutes(
   });
 
   // ─── AUTH: Register (always traveler) ────────────────────────────────────────
-  app.post("/api/auth/register", async (req, res, next) => {
+  app.post("/api/auth/register", authLimiter, async (req, res, next) => {
     try {
       const { username, password, name, email } = req.body || {};
 
@@ -81,6 +114,7 @@ export async function registerRoutes(
       }
 
       const hashedPassword = await hashPassword(password);
+      const verificationToken = crypto.randomInt(100000, 999999).toString();
 
       const user = await storage.createUser({
         username,
@@ -88,11 +122,19 @@ export async function registerRoutes(
         name: name || username,
         email,
         role: "traveler",
+        verificationToken,
       });
 
       sendWelcomeEmail(email, name || username).catch((err) => {
         console.error("Error enviando email de bienvenida:", err.message);
       });
+
+      // Send verification email
+      sendCustomEmail({
+        to: email,
+        subject: "Verifica tu correo en VIANova",
+        html: `<p>Hola ${name || username},</p><p>Tu código de verificación es: <strong>${verificationToken}</strong></p>`
+      }).catch(console.error);
 
       res.json({ user: sanitizeUser(user) });
     } catch (err) {
@@ -100,8 +142,34 @@ export async function registerRoutes(
     }
   });
 
+  // ─── AUTH: Verify Email ────────────────────────────────────────────────────
+  app.post("/api/auth/verify-email", async (req, res, next) => {
+    try {
+      const { username, token } = req.body || {};
+      if (!username || !token) return res.status(400).json({ message: "username y token requeridos" });
+
+      const user = await storage.getUserByUsername(username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      if (user.isVerified === "true") {
+        return res.json({ message: "El correo ya está verificado" });
+      }
+
+      if (user.verificationToken !== token) {
+        return res.status(400).json({ message: "Código inválido" });
+      }
+
+      const db = getDb();
+      await db.execute(drizzleSql`UPDATE users SET is_verified = 'true', verification_token = NULL WHERE id = ${user.id}`);
+      
+      res.json({ message: "Correo verificado exitosamente" });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // ─── AUTH: Login ─────────────────────────────────────────────────────────────
-  app.post("/api/auth/login", async (req, res, next) => {
+  app.post("/api/auth/login", authLimiter, async (req, res, next) => {
     try {
       const { username, password } = req.body || {};
 
@@ -122,6 +190,52 @@ export async function registerRoutes(
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) {
         return res.status(401).json({ message: "Contraseña incorrecta" });
+      }
+
+      res.json({ user: sanitizeUser(user) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ─── AUTH: Google Mobile (ID Token verification) ────────────────────────────
+  app.post("/api/auth/google/mobile", async (req, res, next) => {
+    try {
+      const { idToken } = req.body || {};
+      if (!idToken) {
+        return res.status(400).json({ message: "idToken es obligatorio" });
+      }
+
+      // Verify the Google ID token by calling Google's tokeninfo endpoint
+      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!googleRes.ok) {
+        return res.status(401).json({ message: "Token de Google inválido o expirado" });
+      }
+
+      const googleUser = await googleRes.json() as any;
+      const email = googleUser.email;
+      const name = googleUser.name || googleUser.given_name || email.split("@")[0];
+
+      if (!email) {
+        return res.status(400).json({ message: "No se pudo obtener el email de Google" });
+      }
+
+      // Check if user already exists by email
+      let user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        // Create new user with Google profile
+        const username = email.split("@")[0] + "_g" + Math.floor(Math.random() * 1000);
+        const randomPassword = crypto.randomBytes(32).toString("hex");
+        const hashedPassword = await hashPassword(randomPassword);
+
+        user = await storage.createUser({
+          username,
+          password: hashedPassword,
+          name,
+          email,
+          role: "traveler",
+        });
       }
 
       res.json({ user: sanitizeUser(user) });
@@ -366,7 +480,7 @@ export async function registerRoutes(
   });
 
   // Cloudinary upload with category folder
-  app.post("/api/upload", upload.single("file"), async (req, res, next) => {
+  app.post("/api/upload", uploadLimiter, upload.single("file"), async (req, res, next) => {
     try {
       const category = String(req.body.category || "otros");
       const userId = String(req.body.userId || "anon");
@@ -454,7 +568,8 @@ export async function registerRoutes(
   app.post("/api/comments", async (req, res, next) => {
     try {
       const parsed = insertCommentSchema.parse(req.body || {});
-      const created = await storage.insertComment(parsed);
+      const cleanContent = profanityFilter.clean(parsed.content);
+      const created = await storage.insertComment({ ...parsed, content: cleanContent });
       res.json({ comment: created });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.message });
@@ -634,10 +749,12 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/chat", async (req, res, next) => {
+  app.post("/api/chat", authLimiter, async (req, res, next) => {
     try {
-      const { userId, username, message, name, location, history, destinationCity } = req.body || {};
+      let { userId, username, message, name, location, history, destinationCity } = req.body || {};
       if (!message) return res.status(400).json({ message: "message required" });
+
+      message = profanityFilter.clean(message);
 
       // Ensure we have a valid user id in DB (FK-safe)
       let uid: string | undefined = userId;
@@ -682,21 +799,15 @@ export async function registerRoutes(
       const sysPrompt = `Eres VIANova, un conserje inteligente y experto planificador de viajes para Colombia y el mundo. Tu tono es amable, profesional y directo.
 
 **REGLAS CRÍTICAS DE COMPORTAMIENTO:**
-1. **NO saludes en cada mensaje.** Saluda ÚNICAMENTE si el usuario acaba de iniciar la conversación (primer mensaje). Si ya hay historial, responde directamente sin "¡Hola!", "¡Bienvenido!" ni saludos similares.
-2. **LEE SIEMPRE el historial completo antes de responder.** Si el usuario ya indicó su ciudad de origen, destino, presupuesto, duración o preferencias — NO las pidas de nuevo. Usa la información que ya existe.
-3. **NO hagas preguntas redundantes.** Si ya conoces el destino, presupuesto y duración, pasa directamente a planificar.
-4. **Responde de forma concisa.** Máximo 3-4 párrafos por respuesta.
+1. **NO saludes en cada mensaje.** Saluda ÚNICAMENTE en el primer mensaje.
+2. **LEE SIEMPRE el historial.** Si el usuario indicó su ciudad de origen, destino, presupuesto o preferencias — **BAJO NINGUNA CIRCUNSTANCIA VUELVAS A PREGUNTARLOS**. Asúmelos como válidos y avanza.
+3. **DESTINO Y UBICACIÓN:** Si el usuario menciona una ciudad (ej. "voy a cartagena", "estoy en bogotá", "quiero ir a medellín"), ESE ES SU DESTINO O UBICACIÓN. NO le preguntes de nuevo "A dónde viajas" ni "Cuál es tu destino". Pasa directo a recomendar servicios.
+4. **Responde de forma concisa.** Máximo 3-4 párrafos.
 5. **Usa los servicios reales de VIANova** cuando estén disponibles abajo. Menciona sus nombres, precios y usuario (@) exactamente como aparecen.
 
-**MANEJO DE UBICACIÓN:**
-- Si se proporciona una ubicación GPS (lat, lng), úsala como referencia.
-- Si el usuario menciona explícitamente su ciudad, **usa esa ciudad**.
-- Solo pregunta la ubicación si es estrictamente necesaria y no fue mencionada antes.
-
 **PROCESO DE PLANIFICACIÓN DE VIAJES:**
-Cuando el usuario quiera planear un viaje, sigue estos pasos EN ORDEN y SIN REPETIR los que ya completaste:
-1. **Recolección:** Necesitas: presupuesto, destino, duración y preferencias. Si ya los tienes del historial, ve directo al paso 2.
-2. **Propuesta:** Diseña un plan detallado usando los servicios reales de VIANova (con precios exactos) dentro del presupuesto. Incluye costos desglosados (vuelo, hotel/noche, comidas, transporte, actividades).
+1. **Recolección:** Identifica presupuesto, destino, duración. Si el usuario ya mencionó el destino, NUNCA lo vuelvas a preguntar.
+2. **Propuesta:** Diseña un plan usando los servicios reales de VIANova.
 3. **Confirmación:** Pregunta si el usuario aprueba el plan.
 4. **Cronograma:** Si el usuario ACEPTA, genera las solicitudes en este formato exacto:
 
@@ -1106,13 +1217,63 @@ Cuando el usuario quiera planear un viaje, sigue estos pasos EN ORDEN y SIN REPE
     }
   });
 
-  // ── USER PROFILE (público) ────────────────────────────────────────────────
+  // ── USER PROFILE ──────────────────────────────────────────────────────────
+  
+  app.patch("/api/user/profile", authLimiter, async (req, res, next) => {
+    try {
+      const { username, name } = req.body || {};
+      if (!username || !name) return res.status(400).json({ message: "username y name requeridos" });
+
+      const user = await storage.getUserByUsername(username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      const db = getDb();
+      const updated = await db.execute(drizzleSql`UPDATE users SET name = ${name} WHERE id = ${user.id} RETURNING *`);
+      res.json({ user: sanitizeUser(((updated as any).rows ?? (updated as any))[0]) });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.get("/api/users/:username/profile", async (req, res, next) => {
     try {
       const profile = await storage.getUserProfile(req.params.username);
       if (!profile) return res.status(404).json({ message: "Usuario no encontrado" });
       res.json({ profile });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
+  
+  app.get("/api/admin/stats", async (req, res, next) => {
+    try {
+      const db = getDb();
+      // Simple aggregations for Admin Dashboard
+      const usersRes = await db.execute(drizzleSql`SELECT COUNT(*) as c FROM users`);
+      const providersRes = await db.execute(drizzleSql`SELECT COUNT(*) as c FROM users WHERE role != 'traveler' AND role != 'admin'`);
+      const verifiedRes = await db.execute(drizzleSql`SELECT COUNT(*) as c FROM users WHERE is_verified = 'true'`);
+      const lockedRes = await db.execute(drizzleSql`SELECT COUNT(*) as c FROM users WHERE lock_until > now()`);
+      
+      const logsRes = await db.execute(drizzleSql`
+        SELECT id, username, failed_login_attempts as event, updated_at as timestamp 
+        FROM users 
+        WHERE failed_login_attempts > 3 
+        ORDER BY updated_at DESC LIMIT 10
+      `);
+
+      res.json({
+        totalUsers: Number(((usersRes as any).rows ?? usersRes)[0]?.c || 0),
+        totalProviders: Number(((providersRes as any).rows ?? providersRes)[0]?.c || 0),
+        verifiedUsers: Number(((verifiedRes as any).rows ?? verifiedRes)[0]?.c || 0),
+        lockedAccounts: Number(((lockedRes as any).rows ?? lockedRes)[0]?.c || 0),
+        logs: ((logsRes as any).rows ?? logsRes).map((l: any) => ({
+          event: `Múltiples intentos de login fallidos (${l.event})`,
+          username: l.username,
+          timestamp: l.timestamp
+        }))
+      });
     } catch (err) {
       next(err);
     }
@@ -1519,6 +1680,8 @@ Cuando el usuario quiera planear un viaje, sigue estos pasos EN ORDEN y SIN REPE
       configureCloudinary();
       const { username, caption, mediaType } = req.body || {};
       if (!username) return res.status(400).json({ message: "username requerido" });
+      
+      const cleanCaption = profanityFilter.clean(caption || "");
 
       const user = await storage.getUserByUsername(username);
       if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -1543,7 +1706,7 @@ Cuando el usuario quiera planear un viaje, sigue estos pasos EN ORDEN y SIN REPE
       const db = getDb();
       const inserted = await db.execute(drizzleSql`
         INSERT INTO social_posts (user_id, username, caption, media_url, media_type)
-        VALUES (${user.id}, ${username}, ${caption || null}, ${mediaUrl}, ${finalMediaType})
+        VALUES (${user.id}, ${username}, ${cleanCaption}, ${mediaUrl}, ${finalMediaType})
         RETURNING *
       `);
       const post = ((inserted as any).rows ?? (inserted as any))[0];

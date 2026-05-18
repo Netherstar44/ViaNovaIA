@@ -18,6 +18,7 @@ export const userRoleEnum = pgEnum("user_role", [
   "recreation",
   "taxi",
   "translator",
+  "admin",
 ]);
 
 export const users = pgTable("users", {
@@ -38,6 +39,12 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at"),
   identificationNumber: text("identification_number"),
   allowLocation: text("allow_location"),
+  // New fields for security and personalization
+  isVerified: text("is_verified").default("false"),
+  verificationToken: text("verification_token"),
+  failedLoginAttempts: integer("failed_login_attempts").default(0),
+  lockUntil: timestamp("lock_until"),
+  preferences: jsonb("preferences"), // stores user tastes, travel styles, chatbot memory
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

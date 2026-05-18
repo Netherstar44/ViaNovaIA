@@ -1,6 +1,9 @@
-// Database and API configuration
-// NeonDB direct connection via HTTP serverless driver
-export const DB_URL = "postgresql://neondb_owner:npg_8ysf3QPrMFkE@ep-curly-bread-addkbwo7-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require";
-
-export const CLOUDINARY_CLOUD = "dgcefqq1y";
+// API and App configuration — NO database credentials in client code!
 export const APP_NAME = "VIANova";
+export const CLOUDINARY_CLOUD = "dgcefqq1y";
+
+// Production API (Vercel backend)
+export const API_URL = "https://vianova-ia.vercel.app";
+
+// Google OAuth for Android
+export const GOOGLE_ANDROID_CLIENT_ID = "963320565575-4tqiauo9os4dkmc36o26h18vq12v3qh8.apps.googleusercontent.com";

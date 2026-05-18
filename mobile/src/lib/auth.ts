@@ -1,11 +1,8 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { neon } from "@neondatabase/serverless";
-import { DB_URL } from "./config";
-import type { UserRole } from "../db/schema";
+import { API_URL } from "./config";
 
-// Use raw SQL via neon() instead of Drizzle for auth — more reliable in RN
-const sql = neon(DB_URL);
+export type UserRole = "hotel" | "restaurant" | "recreation" | "taxi" | "traveler" | "translator" | "admin";
 
 export interface AuthUser {
   id: string;
@@ -22,9 +19,13 @@ interface AuthState {
   loading: boolean;
   init: () => Promise<void>;
   login: (username: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  loginWithGoogleToken: (idToken: string) => Promise<{ ok: boolean; message?: string }>;
   register: (data: { username: string; password: string; name: string; email: string }) => Promise<{ ok: boolean; message?: string }>;
   logout: () => Promise<void>;
   changeRole: (role: UserRole) => Promise<{ ok: boolean; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ ok: boolean; message?: string }>;
+  verifyResetToken: (token: string) => Promise<{ ok: boolean; message?: string }>;
+  resetPassword: (token: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -50,153 +51,190 @@ export const useAuth = create<AuthState>((set, get) => ({
   login: async (username, password) => {
     try {
       set({ loading: true });
-      console.log("[Auth] Attempting login for:", username);
 
-      // Use pgcrypto's crypt() to verify password server-side in SQL
-      const rows = await sql`
-        SELECT id, username, name, email, role, role_changed_at
-        FROM users
-        WHERE username = ${username}
-        AND password = crypt(${password}, password)
-      `;
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-      console.log("[Auth] Login query returned:", rows.length, "rows");
+      const data = await res.json();
 
-      if (rows.length === 0) {
+      if (!res.ok) {
         set({ loading: false });
-        return { ok: false, message: "Usuario o contraseña incorrectos" };
+        return { ok: false, message: data.message || "Usuario o contraseña incorrectos" };
       }
 
-      const row = rows[0];
       const user: AuthUser = {
-        id: row.id,
-        username: row.username,
-        name: row.name,
-        email: row.email,
-        role: row.role || "traveler",
-        roleChangedAt: row.role_changed_at,
+        id: data.user.id || data.user.username,
+        username: data.user.username,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role || "traveler",
+        roleChangedAt: data.user.roleChangedAt,
       };
 
       await AsyncStorage.setItem("vianova_user", JSON.stringify(user));
       set({ user, isAuthenticated: true, loading: false });
-      console.log("[Auth] Login successful for:", username);
       return { ok: true };
     } catch (err: any) {
       console.error("[Auth] Login error:", err);
       set({ loading: false });
-      return { ok: false, message: err.message || "Error de conexión a la base de datos" };
+      return { ok: false, message: "Error de conexión al servidor" };
+    }
+  },
+
+  loginWithGoogleToken: async (idToken: string) => {
+    try {
+      set({ loading: true });
+
+      // Send the Google ID token to our backend for verification
+      const res = await fetch(`${API_URL}/api/auth/google/mobile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        set({ loading: false });
+        return { ok: false, message: data.message || "Error al autenticar con Google" };
+      }
+
+      const user: AuthUser = {
+        id: data.user.id || data.user.username,
+        username: data.user.username,
+        name: data.user.name,
+        email: data.user.email,
+        role: data.user.role || "traveler",
+        roleChangedAt: data.user.roleChangedAt,
+      };
+
+      await AsyncStorage.setItem("vianova_user", JSON.stringify(user));
+      set({ user, isAuthenticated: true, loading: false });
+      return { ok: true };
+    } catch (err: any) {
+      console.error("[Auth] Google login error:", err);
+      set({ loading: false });
+      return { ok: false, message: "Error de conexión con Google" };
     }
   },
 
   register: async (data) => {
     try {
       set({ loading: true });
-      console.log("[Auth] Attempting registration for:", data.username);
 
-      // Check if username exists
-      const existingUser = await sql`SELECT id FROM users WHERE username = ${data.username}`;
-      if (existingUser.length > 0) {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
         set({ loading: false });
-        return { ok: false, message: "El nombre de usuario ya está registrado" };
+        return { ok: false, message: result.message || "Error al registrarse" };
       }
 
-      // Check if email exists
-      const existingEmail = await sql`SELECT id FROM users WHERE email = ${data.email}`;
-      if (existingEmail.length > 0) {
-        set({ loading: false });
-        return { ok: false, message: "El correo electrónico ya está registrado" };
-      }
-
-      // Create user with pgcrypto for password hashing (done server-side in SQL)
-      const rows = await sql`
-        INSERT INTO users (id, username, password, name, email, role, created_at)
-        VALUES (
-          gen_random_uuid(),
-          ${data.username},
-          crypt(${data.password}, gen_salt('bf', 12)),
-          ${data.name},
-          ${data.email},
-          'traveler',
-          NOW()
-        )
-        RETURNING id, username, name, email, role, role_changed_at
-      `;
-
-      console.log("[Auth] Registration returned:", rows.length, "rows");
-
-      if (rows.length === 0) {
-        set({ loading: false });
-        return { ok: false, message: "Error al crear la cuenta" };
-      }
-
-      const row = rows[0];
       const user: AuthUser = {
-        id: row.id,
-        username: row.username,
-        name: row.name,
-        email: row.email,
-        role: row.role || "traveler",
-        roleChangedAt: row.role_changed_at,
+        id: result.user.id || result.user.username,
+        username: result.user.username,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role || "traveler",
+        roleChangedAt: result.user.roleChangedAt,
       };
 
       await AsyncStorage.setItem("vianova_user", JSON.stringify(user));
       set({ user, isAuthenticated: true, loading: false });
-      console.log("[Auth] Registration successful for:", data.username);
       return { ok: true };
     } catch (err: any) {
       console.error("[Auth] Register error:", err);
       set({ loading: false });
-      return { ok: false, message: err.message || "Error de conexión" };
+      return { ok: false, message: "Error de conexión al servidor" };
     }
   },
 
   logout: async () => {
     await AsyncStorage.removeItem("vianova_user");
     set({ user: null, isAuthenticated: false });
-    console.log("[Auth] Logged out");
   },
 
   changeRole: async (role) => {
     const user = get().user;
     if (!user) return { ok: false, message: "No autenticado" };
 
-    // Check cooldown
-    if (user.roleChangedAt) {
-      const diff = Date.now() - new Date(user.roleChangedAt).getTime();
-      const days = diff / (1000 * 60 * 60 * 24);
-      if (days < 15) {
-        const remaining = Math.ceil(15 - days);
-        return { ok: false, message: `Espera ${remaining} día(s) más para cambiar tu rol.` };
-      }
-    }
-
     try {
-      const rows = await sql`
-        UPDATE users SET role = ${role}, role_changed_at = NOW()
-        WHERE id = ${user.id}
-        RETURNING id, username, name, email, role, role_changed_at
-      `;
+      const res = await fetch(`${API_URL}/api/user/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.username, role }),
+      });
 
-      if (rows.length === 0) {
-        return { ok: false, message: "Usuario no encontrado" };
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { ok: false, message: data.message || "Error al cambiar de rol" };
       }
 
-      const row = rows[0];
       const updated: AuthUser = {
-        id: row.id,
-        username: row.username,
-        name: row.name,
-        email: row.email,
-        role: row.role,
-        roleChangedAt: row.role_changed_at,
+        ...user,
+        role: data.user.role,
+        roleChangedAt: data.user.roleChangedAt || new Date().toISOString(),
       };
 
       await AsyncStorage.setItem("vianova_user", JSON.stringify(updated));
       set({ user: updated });
       return { ok: true, message: "Rol actualizado" };
     } catch (err: any) {
-      console.error("[Auth] Change role error:", err);
-      return { ok: false, message: err.message };
+      return { ok: false, message: "Error de conexión" };
+    }
+  },
+
+  forgotPassword: async (email: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, message: data.message || "Error al enviar correo" };
+      return { ok: true, message: data.message };
+    } catch {
+      return { ok: false, message: "Error de conexión" };
+    }
+  },
+
+  verifyResetToken: async (token: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/verify-reset-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, message: data.message || "Código inválido" };
+      return { ok: true };
+    } catch {
+      return { ok: false, message: "Error de conexión" };
+    }
+  },
+
+  resetPassword: async (token: string, newPassword: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, message: data.message || "Error al restablecer" };
+      return { ok: true, message: data.message };
+    } catch {
+      return { ok: false, message: "Error de conexión" };
     }
   },
 }));

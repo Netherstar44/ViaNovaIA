@@ -61,6 +61,10 @@ export default function AccountSettings() {
   // Reviews section
   const [showReviews, setShowReviews] = useState(false);
 
+  // Profile Edit
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+
   useEffect(() => {
     if (user) {
       fetchRoles();
@@ -164,6 +168,28 @@ export default function AccountSettings() {
     }
   };
 
+  const handleSaveName = async () => {
+    if (!newName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.username, name: newName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      
+      // Update local context manually or reload
+      window.location.reload();
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Error al actualizar perfil" });
+    } finally {
+      setIsSubmitting(false);
+      setIsEditingName(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -199,7 +225,33 @@ export default function AccountSettings() {
                 <div className="space-y-4 text-sm">
                   <div>
                     <span className="text-xs text-muted-foreground block mb-1">Nombre</span>
-                    <p className="font-medium text-base">{user.name || user.username}</p>
+                    {isEditingName ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="Tu nombre completo"
+                        />
+                        <button onClick={handleSaveName} disabled={isSubmitting} className="text-green-500 hover:text-green-400 p-1">
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => setIsEditingName(false)} disabled={isSubmitting} className="text-muted-foreground hover:text-red-400 p-1">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between group">
+                        <p className="font-medium text-base">{user.name || user.username}</p>
+                        <button 
+                          onClick={() => { setIsEditingName(true); setNewName(user.name || user.username); }} 
+                          className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary transition-all"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block mb-1">Usuario</span>

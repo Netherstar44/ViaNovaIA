@@ -2,8 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
-import { listServices } from "../db/operations";
-import type { Service } from "../db/schema";
+import { listServices } from "../lib/api";
+import type { Service } from "../lib/api";
 import { useNavigation } from "@react-navigation/native";
 
 const GOLD = "#c9a227";

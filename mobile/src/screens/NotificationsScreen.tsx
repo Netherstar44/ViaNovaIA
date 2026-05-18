@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useAuth } from "../lib/auth";
+import { API_URL } from "../lib/config";
 
 const GOLD = "#c9a227";
 const BG = "#050509";
@@ -24,7 +25,7 @@ export default function NotificationsScreen() {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/notifications", {
+      const res = await fetch(`${API_URL}/api/notifications?username=${encodeURIComponent(user.username)}`, {
         // assuming standard fetch with cookie handling for mobile or whatever the app uses.
         // wait, looking at mobile app, it might use api client.
       });
@@ -45,7 +46,7 @@ export default function NotificationsScreen() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${API_URL}/api/notifications/${id}/read`, {
         method: "PATCH",
       });
       setNotifications((prev) =>

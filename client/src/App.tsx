@@ -9,6 +9,7 @@ import AccountSettings from "@/pages/AccountSettings";
 import MyProducts from "@/pages/MyProducts";
 import RoleSelection from "@/pages/RoleSelection";
 import Notifications from "@/pages/Notifications";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 // ── TAXI ──────────────────────────────────────────────────────────────────────
 import TaxiDashboard from "@/pages/taxi/TaxiDashboard";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/settings" component={AccountSettings} />
       <Route path="/my-products" component={MyProducts} />
       <Route path="/notifications" component={Notifications} />
+      <Route path="/admin" component={AdminDashboard} />
 
       {/* ── Taxi ── */}
       <Route path="/taxi-dashboard" component={TaxiDashboard} />
@@ -45,12 +47,16 @@ function Router() {
   );
 }
 
+import { ThemeProvider } from "next-themes";
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Router />
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <Toaster />
+        <Router />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

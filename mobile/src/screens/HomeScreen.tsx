@@ -4,8 +4,8 @@ import {
   StyleSheet, RefreshControl, ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { listServices, listServicesByCategory } from "../db/operations";
-import type { Service, ServiceCategory } from "../db/schema";
+import { listServices, listServicesByCategory } from "../lib/api";
+import type { Service, ServiceCategory } from "../lib/api";
 
 const GOLD = "#c9a227";
 const BG = "#050509";

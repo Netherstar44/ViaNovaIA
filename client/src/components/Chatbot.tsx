@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
+import logoImg from '../assets/logo.jpeg';
 
 interface Message {
   id: string;
@@ -350,7 +351,7 @@ export default function Chatbot() {
                 <div className="flex items-center gap-3 relative z-10">
                   <div className="relative">
                     <Avatar className="h-12 w-12 border-2 border-primary/50 shadow-lg ring-2 ring-background">
-                      <AvatarImage src="/bot-avatar.png" />
+                      <AvatarImage src={logoImg} alt="VIANova Bot" />
                       <AvatarFallback className="bg-gradient-to-br from-primary to-yellow-600 text-black">
                         <Bot className="h-6 w-6" />
                       </AvatarFallback>
@@ -388,6 +389,7 @@ export default function Chatbot() {
                         >
                           {msg.role === 'assistant' && (
                             <Avatar className="h-8 w-8 shrink-0 shadow-md">
+                              <AvatarImage src={logoImg} />
                               <AvatarFallback className="bg-primary/20 text-primary border border-primary/30"><Bot className="h-4 w-4" /></AvatarFallback>
                             </Avatar>
                           )}

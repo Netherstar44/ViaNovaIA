@@ -256,8 +256,8 @@ export default function Home() {
                 >
                   <div className="bg-card/90 backdrop-blur-md border border-border/40 rounded-2xl p-2 shadow-xl flex flex-col md:flex-row gap-2 items-center">
 
-                    <div className="flex-1 w-full bg-secondary/30 rounded-xl flex items-center px-4 h-12 hover:bg-secondary/50 transition-colors border border-transparent focus-within:border-primary/50 group">
-                      <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    <div className="flex-1 min-w-[200px] w-full bg-secondary/30 rounded-xl flex items-center px-4 h-12 hover:bg-secondary/50 transition-colors border border-transparent focus-within:border-primary/50 group">
+                      <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors shrink-0" />
                       <input
                         type="text"
                         placeholder="Buscar por nombre, descripción o ciudad..."
@@ -347,13 +347,13 @@ export default function Home() {
                       className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                     >
                       <AnimatePresence>
-                        {filteredAll.map((item, index) => (
+                        {filteredAll.slice(0, 20).map((item, index) => (
                           <motion.div
                             layout
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.4, delay: index * 0.05 }}
+                            transition={{ duration: 0.4, delay: (index % 10) * 0.05 }}
                             key={item.id}
                             onClick={() => handleItemClick(item)}
                             className="cursor-pointer"
@@ -361,6 +361,11 @@ export default function Home() {
                             <CardItem item={item} onViewMap={() => handleViewOnMap(item)} />
                           </motion.div>
                         ))}
+                        {filteredAll.length > 20 && (
+                           <div className="col-span-1 sm:col-span-2 text-center pt-8 opacity-60 text-sm">
+                             Mostrando 20 resultados de {filteredAll.length}. Usa los filtros para refinar tu búsqueda.
+                           </div>
+                        )}
                       </AnimatePresence>
                     </motion.div>
                   )}

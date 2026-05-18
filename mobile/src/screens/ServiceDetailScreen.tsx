@@ -4,9 +4,9 @@ import {
   TextInput, Alert, FlatList, ActivityIndicator,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
-import { listComments, addComment, deleteComment } from "../db/operations";
+import { listComments, addComment, deleteComment } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import type { Service, Comment } from "../db/schema";
+import type { Service, Comment } from "../lib/api";
 
 const GOLD = "#c9a227";
 const BG = "#050509";
