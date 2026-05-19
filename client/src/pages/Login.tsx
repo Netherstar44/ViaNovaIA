@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';

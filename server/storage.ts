@@ -28,7 +28,7 @@ import {
   type InsertReview,
   type PaymentMethod,
   type InsertPaymentMethod,
-  type Notification,
+  type Notification as DbNotification,
   type InsertNotification
 } from "../shared/schema.js";
 
@@ -56,8 +56,8 @@ export interface IStorage {
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   deletePasswordResetToken(token: string): Promise<void>;
   
-  insertNotification(data: InsertNotification): Promise<Notification>;
-  getProviderNotifications(providerUsername: string): Promise<Notification[]>;
+  insertNotification(data: InsertNotification): Promise<DbNotification>;
+  getProviderNotifications(providerUsername: string): Promise<DbNotification[]>;
   markNotificationAsRead(id: string): Promise<void>;
 }
 
@@ -111,13 +111,13 @@ export class DbStorage implements IStorage {
     return rows[0];
   }
 
-  async insertNotification(data: InsertNotification): Promise<Notification> {
+  async insertNotification(data: InsertNotification): Promise<DbNotification> {
     const db = getDb();
     const rows = await db.insert(notifications).values(data).returning();
     return rows[0];
   }
 
-  async getProviderNotifications(providerUsername: string): Promise<Notification[]> {
+  async getProviderNotifications(providerUsername: string): Promise<DbNotification[]> {
     const db = getDb();
     return await db.select().from(notifications).where(eq(notifications.providerUsername, providerUsername)).orderBy(desc(notifications.createdAt));
   }

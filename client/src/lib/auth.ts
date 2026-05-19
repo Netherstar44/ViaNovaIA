@@ -1,7 +1,7 @@
 import { apiBase } from "@/lib/queryClient";
 import { create } from 'zustand';
 
-export type UserRole = 'hotel' | 'restaurant' | 'recreation' | 'taxi' | 'traveler' | 'translator';
+export type UserRole = 'hotel' | 'restaurant' | 'recreation' | 'taxi' | 'traveler' | 'translator' | 'admin';
 
 export interface User {
   username: string;

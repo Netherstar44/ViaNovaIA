@@ -13,7 +13,7 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<any>({
     queryKey: ["/api/admin/stats"],
   });
 

@@ -230,6 +230,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   avatarUrl: true,
   locationLat: true,
   locationLng: true,
+  verificationToken: true,
+  isVerified: true,
+  failedLoginAttempts: true,
+  lockUntil: true,
+  preferences: true,
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({
@@ -337,7 +342,7 @@ export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type UserRoleRecord = typeof userRoles.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
-export const Notification = typeof notifications.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 export type AvailabilitySlot = typeof availabilitySlots.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
 export type Post = typeof posts.$inferSelect;
