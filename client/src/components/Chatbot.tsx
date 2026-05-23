@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import botLogo from '../assets/bot-logo.png';
-import { AIIcon } from './AIIcon';
+import aiSvgIcon from '../assets/iasvg.png';
 
 declare global {
   interface Window {
@@ -639,7 +639,7 @@ export default function Chatbot() {
             >
               <div className="w-full h-full bg-gradient-to-br from-primary via-primary/80 to-primary/50 rounded-full flex items-center justify-center p-[2px]">
                 <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center relative">
-                  <AIIcon className="h-10 w-10 text-primary relative z-10" />
+                  <div className="h-10 w-10 relative z-10 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
                 </div>
               </div>
             </Button>
@@ -665,7 +665,7 @@ export default function Chatbot() {
                   <div className="relative">
                     <Avatar className="h-12 w-12 border-0 shadow-lg shadow-primary/50 ring-2 ring-primary/40 bg-gradient-to-br from-primary via-primary/80 to-primary/50 p-[2px]">
                       <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center">
-                        <AIIcon className="h-8 w-8 text-primary" />
+                        <div className="h-8 w-8 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
                       </div>
                     </Avatar>
                     <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
@@ -791,7 +791,7 @@ export default function Chatbot() {
                                 {msg.role === 'assistant' && (
                                   <Avatar className="h-8 w-8 shrink-0 shadow-md shadow-primary/40 bg-gradient-to-br from-primary via-primary/80 to-primary/50 p-[2px]">
                                     <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center">
-                                      <AIIcon className="h-5 w-5 text-primary" />
+                                      <div className="h-5 w-5 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
                                     </div>
                                   </Avatar>
                                 )}
