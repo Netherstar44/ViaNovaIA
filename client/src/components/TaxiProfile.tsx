@@ -50,7 +50,7 @@ export default function TaxiProfile({ username, compact = false }: TaxiProfilePr
           <Car className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate">{profile.name || username}</p>
+          <p className="text-sm font-semibold truncate notranslate">{profile.name || username}</p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {taxiData?.vehicleType && <span>{taxiData.vehicleType}</span>}
             {taxiData?.plate && (
@@ -89,7 +89,7 @@ export default function TaxiProfile({ username, compact = false }: TaxiProfilePr
             <User className="h-8 w-8 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold truncate">{profile.name || username}</h3>
+            <h3 className="text-xl font-bold truncate notranslate">{profile.name || username}</h3>
             <p className="text-sm text-muted-foreground">@{username}</p>
             <div className="flex items-center gap-2 mt-2">
               <StarDisplay rating={profile.averageRating} size={18} />

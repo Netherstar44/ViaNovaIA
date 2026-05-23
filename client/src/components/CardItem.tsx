@@ -55,7 +55,7 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
       
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold">{item.name}</CardTitle>
+          <CardTitle className="text-lg font-bold notranslate">{item.name}</CardTitle>
           <div className="flex items-center gap-1 text-amber-500">
             <Star className="h-4 w-4 fill-current" />
             <span className="text-sm font-medium">{realRating}</span>

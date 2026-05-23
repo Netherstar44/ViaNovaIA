@@ -383,7 +383,7 @@ export default function Chatbot() {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Hubo un error al procesar tu mensaje. Intenta nuevamente.'
+        content: t('chatbot.error_processing')
       }]);
     } finally {
       setIsLoading(false);
@@ -409,7 +409,7 @@ export default function Chatbot() {
         const newUserMsg: Message = {
           id: Date.now().toString(),
           role: 'user',
-          content: '📍 He compartido mi ubicación actual.'
+          content: t('chatbot.location_shared')
         };
         setMessages(prev => [...prev, newUserMsg]);
         setIsLoading(true);
@@ -427,7 +427,7 @@ export default function Chatbot() {
           })
         });
         const data = await res.json();
-        const reply = data.reply || 'Ubicación recibida.';
+        const reply = data.reply || t('chatbot.location_received');
         
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
@@ -438,7 +438,7 @@ export default function Chatbot() {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           role: 'assistant',
-          content: 'No pude acceder a tu ubicación. Por favor revisa los permisos de tu navegador.'
+          content: t('chatbot.location_error')
         }]);
       }
     } catch (err) {
@@ -458,7 +458,7 @@ export default function Chatbot() {
     const newUserMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: `📍 Mi ubicación es: ${val}`
+      content: t('chatbot.manual_location', { val })
     };
     setMessages(prev => [...prev, newUserMsg]);
     setIsLoading(true);
@@ -480,7 +480,7 @@ export default function Chatbot() {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.reply || 'Ubicación recibida.'
+        content: data.reply || t('chatbot.location_received')
       }]);
     } catch (err) {
       console.error(err);
@@ -512,7 +512,7 @@ export default function Chatbot() {
         const newUserMsg: Message = {
           id: Date.now().toString(),
           role: 'user',
-          content: 'He adjuntado una referencia visual:',
+          content: t('chatbot.image_attached'),
           image: data.url
         };
         setMessages(prev => [...prev, newUserMsg]);
@@ -521,13 +521,13 @@ export default function Chatbot() {
           setMessages(prev => [...prev, {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: 'He recibido la imagen. ¡Se ve increíble! ¿Qué te gustaría saber o encontrar relacionado a este estilo?'
+            content: t('chatbot.image_received')
           }]);
           setIsLoading(false);
         }, 1500);
 
       } catch (e) {
-        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'No pude cargar la imagen, el archivo es inválido o muy pesado.' }]);
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: t('chatbot.image_error') }]);
         setIsLoading(false);
       }
     };
@@ -604,10 +604,10 @@ export default function Chatbot() {
         {isLast && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: items.length * 0.08 }}>
             {bookingsSent
-              ? <div className="flex items-center gap-2 mt-3 text-green-400 text-xs font-bold"><CheckCircle2 className="h-4 w-4" />¡Solicitudes enviadas a todos los proveedores!</div>
+              ? <div className="flex items-center gap-2 mt-3 text-green-400 text-xs font-bold"><CheckCircle2 className="h-4 w-4" />{t('chatbot.bookings_sent')}</div>
               : <Button onClick={() => handleConfirmBookings(content)} disabled={isSendingBookings} className="w-full mt-3 bg-primary text-black hover:bg-primary/80 font-bold text-xs h-9 rounded-xl">
                   {isSendingBookings ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                  Confirmar y Enviar Reservas
+                  {t('chatbot.confirm_bookings')}
                 </Button>
             }
           </motion.div>
@@ -632,8 +632,13 @@ export default function Chatbot() {
               onClick={() => setIsOpen(true)}
               className="h-16 w-16 rounded-full bg-primary text-primary-foreground border-2 border-primary/20 p-0 overflow-hidden"
             >
-              <Sparkles className="h-8 w-8 absolute opacity-50 blur-[2px] animate-pulse" />
-              <img src={botLogo} alt="ViaNova Bot" className="h-12 w-12 object-contain relative z-10 drop-shadow-md" />
+              <div className="w-full h-full bg-gradient-to-br from-primary via-amber-400 to-orange-500 rounded-full flex items-center justify-center p-[2px]">
+                <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center relative">
+                  <Sparkles className="h-6 w-6 text-primary absolute top-2 right-2 animate-pulse" />
+                  <Sparkles className="h-4 w-4 text-primary absolute bottom-2 left-2 animate-bounce" />
+                  <Bot className="h-8 w-8 text-primary relative z-10" />
+                </div>
+              </div>
             </Button>
           </motion.div>
         )}
@@ -664,7 +669,7 @@ export default function Chatbot() {
                   </div>
                   <div>
                     <h3 className="font-heading font-extrabold text-foreground text-lg tracking-tight">VIANova AI</h3>
-                    <p className="text-xs text-primary/80 font-medium tracking-wide">Impulsado por Llama 3.1 {isVoiceMode && "& Kokoro TTS"}</p>
+                    <p className="text-xs text-primary/80 font-medium tracking-wide">Impulsado por Llama 3.1</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 relative z-10">

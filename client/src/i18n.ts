@@ -21,11 +21,21 @@ const resources = {
         all: "Todos los Destinos", hotel: "Alojamientos", restaurant: "Gastronomía", recreation: "Experiencias", transport: "Movilidad"
       },
       chatbot: {
-        placeholder: "Escribe tu mensaje...", send: "Enviar", start: "¡Hola! Soy Kokoro, tu asistente IA de ViaNova. ¿A dónde quieres ir hoy?",
+        placeholder: "Escribe tu mensaje...", send: "Enviar", start: "¡Hola! Soy tu asistente IA de ViaNova. ¿A dónde quieres ir hoy?",
         voice_on: "Activar voz", voice_off: "Desactivar voz",
         listening: "Escuchando...", speaking: "VIANova está hablando...", tap_mic: "Toca el micrófono para hablar",
         note: "Nota", gps_warning: "El GPS automático en computadoras puede ser impreciso.", auto_gps: "Usar GPS Automático",
-        or_manual: "O ingresa manualmente", destination: "Destino de viaje:"
+        or_manual: "O ingresa manualmente", destination: "Destino de viaje:",
+        error_processing: "Hubo un error al procesar tu mensaje. Intenta nuevamente.",
+        location_shared: "📍 He compartido mi ubicación actual.",
+        location_received: "Ubicación recibida.",
+        location_error: "No pude acceder a tu ubicación. Por favor revisa los permisos de tu navegador.",
+        manual_location: "📍 Mi ubicación es: {{val}}",
+        image_attached: "He adjuntado una referencia visual:",
+        image_received: "He recibido la imagen. ¡Se ve increíble! ¿Qué te gustaría saber o encontrar relacionado a este estilo?",
+        image_error: "No pude cargar la imagen, el archivo es inválido o muy pesado.",
+        bookings_sent: "¡Solicitudes enviadas a todos los proveedores!",
+        confirm_bookings: "Confirmar y Enviar Reservas"
       },
       comments: {
         title: "Reseñas y Comentarios", your_rating: "Tu calificación:", placeholder: "Comparte tu experiencia...",
@@ -54,11 +64,21 @@ const resources = {
         all: "All Destinations", hotel: "Accommodations", restaurant: "Gastronomy", recreation: "Experiences", transport: "Mobility"
       },
       chatbot: {
-        placeholder: "Type a message...", send: "Send", start: "Hello! I'm Kokoro, your ViaNova AI assistant. Where do you want to go today?",
+        placeholder: "Type a message...", send: "Send", start: "Hello! I'm your ViaNova AI assistant. Where do you want to go today?",
         voice_on: "Voice On", voice_off: "Voice Off",
         listening: "Listening...", speaking: "VIANova is speaking...", tap_mic: "Tap the microphone to speak",
         note: "Note", gps_warning: "Automatic GPS on computers may be inaccurate.", auto_gps: "Use Automatic GPS",
-        or_manual: "Or enter manually", destination: "Travel destination:"
+        or_manual: "Or enter manually", destination: "Travel destination:",
+        error_processing: "There was an error processing your message. Please try again.",
+        location_shared: "📍 I have shared my current location.",
+        location_received: "Location received.",
+        location_error: "Could not access your location. Please check your browser permissions.",
+        manual_location: "📍 My location is: {{val}}",
+        image_attached: "I have attached a visual reference:",
+        image_received: "I received the image. It looks amazing! What would you like to know or find related to this style?",
+        image_error: "Could not load the image, the file is invalid or too large.",
+        bookings_sent: "Requests sent to all providers!",
+        confirm_bookings: "Confirm and Send Bookings"
       },
       comments: {
         title: "Reviews & Comments", your_rating: "Your rating:", placeholder: "Share your experience...",
@@ -87,11 +107,21 @@ const resources = {
         all: "Toutes les Destinations", hotel: "Hébergement", restaurant: "Gastronomie", recreation: "Expériences", transport: "Mobilité"
       },
       chatbot: {
-        placeholder: "Tapez un message...", send: "Envoyer", start: "Bonjour ! Je suis Kokoro, votre assistante IA. Où voulez-vous aller aujourd'hui ?",
+        placeholder: "Tapez un message...", send: "Envoyer", start: "Bonjour ! Je suis votre assistante IA. Où voulez-vous aller aujourd'hui ?",
         voice_on: "Voix Activée", voice_off: "Voix Désactivée",
         listening: "Écoute en cours...", speaking: "VIANova parle...", tap_mic: "Appuyez sur le micro pour parler",
         note: "Note", gps_warning: "Le GPS automatique sur ordinateur peut être imprécis.", auto_gps: "Utiliser le GPS automatique",
-        or_manual: "Ou saisir manuellement", destination: "Destination de voyage :"
+        or_manual: "Ou saisir manuellement", destination: "Destination de voyage :",
+        error_processing: "Une erreur s'est produite. Veuillez réessayer.",
+        location_shared: "📍 J'ai partagé ma position actuelle.",
+        location_received: "Position reçue.",
+        location_error: "Impossible d'accéder à votre position. Vérifiez vos autorisations.",
+        manual_location: "📍 Ma position est : {{val}}",
+        image_attached: "J'ai joint une référence visuelle :",
+        image_received: "J'ai reçu l'image. C'est magnifique ! Que souhaitez-vous savoir ou trouver à ce sujet ?",
+        image_error: "Impossible de charger l'image, fichier invalide ou trop volumineux.",
+        bookings_sent: "Demandes envoyées à tous les fournisseurs !",
+        confirm_bookings: "Confirmer et envoyer les réservations"
       },
       comments: {
         title: "Avis et Commentaires", your_rating: "Votre note :", placeholder: "Partagez votre expérience...",
@@ -120,11 +150,21 @@ const resources = {
         all: "Todos", hotel: "Acomodações", restaurant: "Gastronomia", recreation: "Experiências", transport: "Mobilidade"
       },
       chatbot: {
-        placeholder: "Digite sua mensagem...", send: "Enviar", start: "Olá! Sou a Kokoro, sua assistente IA. Para onde vamos hoje?",
+        placeholder: "Digite sua mensagem...", send: "Enviar", start: "Olá! Sou sua assistente IA. Para onde vamos hoje?",
         voice_on: "Voz Ativada", voice_off: "Voz Desativada",
         listening: "Ouvindo...", speaking: "VIANova está falando...", tap_mic: "Toque no microfone para falar",
         note: "Nota", gps_warning: "O GPS automático em computadores pode ser impreciso.", auto_gps: "Usar GPS Automático",
-        or_manual: "Ou insira manualmente", destination: "Destino de viagem:"
+        or_manual: "Ou insira manualmente", destination: "Destino de viagem:",
+        error_processing: "Houve um erro ao processar sua mensagem. Tente novamente.",
+        location_shared: "📍 Compartilhei minha localização atual.",
+        location_received: "Localização recebida.",
+        location_error: "Não foi possível acessar sua localização. Verifique as permissões do navegador.",
+        manual_location: "📍 Minha localização é: {{val}}",
+        image_attached: "Anexei uma referência visual:",
+        image_received: "Recebi a imagem. Parece incrível! O que você gostaria de saber ou encontrar relacionado a este estilo?",
+        image_error: "Não foi possível carregar a imagem, o arquivo é inválido ou muito grande.",
+        bookings_sent: "Solicitações enviadas a todos os fornecedores!",
+        confirm_bookings: "Confirmar e Enviar Reservas"
       },
       comments: {
         title: "Avaliações e Comentários", your_rating: "Sua avaliação:", placeholder: "Compartilhe sua experiência...",
@@ -153,11 +193,21 @@ const resources = {
         all: "所有目的地", hotel: "住宿", restaurant: "美食", recreation: "体验", transport: "交通"
       },
       chatbot: {
-        placeholder: "输入消息...", send: "发送", start: "你好！我是你的AI助手Kokoro。你今天想去哪里？",
+        placeholder: "输入消息...", send: "发送", start: "你好！我是你的AI助手。你今天想去哪里？",
         voice_on: "语音开启", voice_off: "语音关闭",
         listening: "正在聆听...", speaking: "VIANova正在说话...", tap_mic: "点击麦克风开始说话",
         note: "提示", gps_warning: "电脑上的自动GPS可能不准确。", auto_gps: "使用自动GPS",
-        or_manual: "或手动输入", destination: "旅行目的地："
+        or_manual: "或手动输入", destination: "旅行目的地：",
+        error_processing: "处理您的消息时出错。请重试。",
+        location_shared: "📍 我已分享当前位置。",
+        location_received: "已收到位置信息。",
+        location_error: "无法访问您的位置。请检查您的浏览器权限。",
+        manual_location: "📍 我的位置是：{{val}}",
+        image_attached: "我附上了一张视觉参考图：",
+        image_received: "我收到了图片。看起来很棒！您想了解或寻找与此风格相关的什么内容？",
+        image_error: "无法加载图片，文件无效或太大。",
+        bookings_sent: "请求已发送给所有供应商！",
+        confirm_bookings: "确认并发送预订"
       },
       comments: {
         title: "评论与评价", your_rating: "你的评分：", placeholder: "分享你的体验...",

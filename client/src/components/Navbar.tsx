@@ -4,6 +4,7 @@ import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Cl
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import TranslatedText from "@/components/TranslatedText";
 // Logos sin fondo (para el Navbar)
 import logoPrincipal from "../assets/Logo_principal-removebg-preview.png";
 import logoOcean   from "../assets/Logo_ocean-removebg-preview.png";
@@ -35,6 +36,13 @@ export default function Navbar() {
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+    
+    // Trigger Google Translate Widget if present
+    const gtSelect = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    if (gtSelect) {
+      gtSelect.value = lng;
+      gtSelect.dispatchEvent(new Event('change'));
+    }
   };
 
   // Seleccionar logo según el tema activo
@@ -111,12 +119,12 @@ export default function Navbar() {
 
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
-      case 'hotel': return 'Hotel';
-      case 'restaurant': return 'Restaurante';
-      case 'recreation': return 'Recreación';
-      case 'taxi': return 'Taxista';
-      case 'translator': return 'Traductor';
-      default: return 'Viajero';
+      case 'hotel': return <TranslatedText text="Hotel" />;
+      case 'restaurant': return <TranslatedText text="Restaurante" />;
+      case 'recreation': return <TranslatedText text="Recreación" />;
+      case 'taxi': return <TranslatedText text="Taxista" />;
+      case 'translator': return <TranslatedText text="Traductor" />;
+      default: return <TranslatedText text="Viajero" />;
     }
   };
 
@@ -189,11 +197,11 @@ export default function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Languages className="h-5 w-5" />
-                  <span className="sr-only">Cambiar idioma</span>
+                  <span className="sr-only"><TranslatedText text="Cambiar idioma" /></span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-card border-border">
-                <DropdownMenuLabel>Idioma / Language</DropdownMenuLabel>
+                <DropdownMenuLabel><TranslatedText text="Idioma / Language" /></DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => changeLanguage('es')} className="cursor-pointer gap-2">
                   Español {i18n.language === 'es' && "✓"}
@@ -218,17 +226,17 @@ export default function Navbar() {
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span className="sr-only">Cambiar tema</span>
+                  <span className="sr-only"><TranslatedText text="Cambiar tema" /></span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-card border-border">
-                <DropdownMenuLabel>Apariencia</DropdownMenuLabel>
+                <DropdownMenuLabel><TranslatedText text="Apariencia" /></DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer gap-2">
-                  <Sun className="h-4 w-4" /> Claro
+                  <Sun className="h-4 w-4" /> <TranslatedText text="Claro" />
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer gap-2">
-                  <Moon className="h-4 w-4" /> Oscuro
+                  <Moon className="h-4 w-4" /> <TranslatedText text="Oscuro" />
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme('sunset')} className="cursor-pointer gap-2">
                   <span className="w-4 h-4 rounded-full bg-orange-400" /> Sunset
