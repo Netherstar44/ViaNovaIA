@@ -70,7 +70,7 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
           <img src={src} alt="Hero" className="w-full h-full object-cover" />
         </motion.div>
       ))}
-      <div className="relative z-20 container mx-auto px-4 flex flex-col items-center text-center mt-12">
+      <div className="relative z-20 container mx-auto px-4 h-full flex flex-col items-center justify-center text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
