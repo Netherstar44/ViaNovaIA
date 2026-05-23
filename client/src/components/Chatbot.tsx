@@ -139,7 +139,7 @@ export default function Chatbot() {
     };
   }, []);
 
-  const playTTS = async (text: string) => {
+  const playTTS = async (text: string, onReady?: () => void) => {
     // Clean text: remove asterisks completely, remove code blocks, and markdown structure
     const cleanText = text
       .replace(/\*/g, '') // Remove all asterisks
@@ -150,7 +150,10 @@ export default function Chatbot() {
       .replace(/[#_~`>|]/g, '')
       .trim();
       
-    if (!cleanText) return;
+    if (!cleanText) {
+      if (onReady) onReady();
+      return;
+    }
 
     // Stop any currently playing audio
     if (audioRef.current) {
@@ -196,6 +199,8 @@ export default function Chatbot() {
 
       // Pause mic while speaking so it doesn't hear itself
       try { recognitionRef.current?.stop(); setIsListening(false); } catch(e) {}
+      
+      if (onReady) onReady();
       await audio.play();
     } catch (err) {
       console.error('Edge TTS error, falling back to Web Speech:', err);
@@ -218,9 +223,11 @@ export default function Chatbot() {
           }
         };
         synth.cancel();
+        if (onReady) onReady();
         synth.speak(utterance);
       } catch (e) {
         console.error('Fallback TTS also failed', e);
+        if (onReady) onReady();
       }
     }
   };
@@ -291,27 +298,36 @@ export default function Chatbot() {
       const data = await res.json();
       const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
 
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: reply
-      }]);
-      
-      setVoiceTranscript(reply);
-      playTTS(reply);
+      setVoiceTranscript('Generando voz...');
+
+      const onAudioReady = () => {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: reply
+        }]);
+        setVoiceTranscript(reply);
+        setIsLoading(false);
+        isHandlingVoiceRef.current = false;
+      };
+
+      await playTTS(reply, onAudioReady);
 
     } catch (err) {
       const errorMsg = 'Hubo un error al procesar tu mensaje. Intenta nuevamente.';
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: errorMsg
-      }]);
-      setVoiceTranscript(errorMsg);
-      playTTS(errorMsg);
-    } finally {
-      setIsLoading(false);
-      isHandlingVoiceRef.current = false;
+      
+      const onAudioReady = () => {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: errorMsg
+        }]);
+        setVoiceTranscript(errorMsg);
+        setIsLoading(false);
+        isHandlingVoiceRef.current = false;
+      };
+
+      await playTTS(errorMsg, onAudioReady);
     }
   };
 
