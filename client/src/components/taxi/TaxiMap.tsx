@@ -130,9 +130,8 @@ export default function TaxiMap({ isAvailable, activeRide, nearbyPassengers = []
       <MapContainer center={center} zoom={zoom} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
         <FlyTo center={center} zoom={zoom} />
         <TileLayer
-          attribution='Google Maps'
-          url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-          subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
         {/* Taxista */}
