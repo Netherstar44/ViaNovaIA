@@ -1,6 +1,6 @@
 import { apiBase } from "@/lib/queryClient";
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2 } from 'lucide-react';
+import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import botLogo from '../assets/bot-logo.png';
+
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 interface Message {
   id: string;
@@ -29,14 +36,210 @@ export default function Chatbot() {
   const [destinationCity, setDestinationCity] = useState('');
   const [isSendingBookings, setIsSendingBookings] = useState(false);
   const [bookingsSent, setBookingsSent] = useState(false);
+
+  // Voice Mode States
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  
+  const messagesRef = useRef(messages);
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const transcriptRef = useRef('');
+  const isHandlingVoiceRef = useRef(false);
 
   useEffect(() => {
-    if (scrollRef.current) {
+    synthRef.current = window.speechSynthesis;
+  }, []);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    if (scrollRef.current && !isVoiceMode) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen, isLoading]);
+  }, [messages, isOpen, isLoading, isVoiceMode]);
+
+  useEffect(() => {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'es-ES';
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          const currentText = finalTranscript || interimTranscript;
+          setVoiceTranscript(currentText);
+          transcriptRef.current = currentText;
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+          if (transcriptRef.current.trim() && !isHandlingVoiceRef.current) {
+            handleVoiceSend(transcriptRef.current.trim());
+          }
+        };
+
+        recognitionRef.current = recognition;
+      }
+    } catch (e) {
+      console.error("SpeechRecognition initialization failed", e);
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch(e) {}
+      }
+      if (synthRef.current) {
+        try {
+          synthRef.current.cancel();
+        } catch(e) {}
+      }
+    };
+  }, []);
+
+  const playTTS = (text: string) => {
+    if (!synthRef.current) return;
+    
+    // Clean text from markdown and structural components for natural reading
+    const cleanText = text
+      .replace(/###.*/g, '')
+      .replace(/\[.*?\]/g, '')
+      .replace(/\*.*?\*/g, '')
+      .replace(/📋 Solicitudes de Reserva.*/g, '')
+      .trim();
+      
+    if (!cleanText) return;
+
+    // "Kokoro TTS" mode behavior via Web Speech Synthesis API
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'es-ES';
+    utterance.rate = 1.05; 
+    utterance.pitch = 1.1;
+    
+    const voices = synthRef.current.getVoices();
+    const esVoices = voices.filter(v => v.lang.startsWith('es'));
+    if (esVoices.length > 0) {
+      // Prioritize modern/premium sounding voices
+      utterance.voice = esVoices.find(v => v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('female')) || esVoices[0];
+    }
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    
+    synthRef.current.cancel(); 
+    synthRef.current.speak(utterance);
+  };
+
+  const toggleVoiceMode = () => {
+    if (isVoiceMode) {
+      setIsVoiceMode(false);
+      setIsListening(false);
+      recognitionRef.current?.stop();
+      if (synthRef.current) synthRef.current.cancel();
+      setIsSpeaking(false);
+      setVoiceTranscript('');
+      transcriptRef.current = '';
+    } else {
+      setIsVoiceMode(true);
+      startListening();
+    }
+  };
+
+  const startListening = () => {
+    if (recognitionRef.current && !isListening) {
+      setVoiceTranscript('');
+      transcriptRef.current = '';
+      if (synthRef.current) synthRef.current.cancel();
+      setIsSpeaking(false);
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleVoiceSend = async (text: string) => {
+    isHandlingVoiceRef.current = true;
+    transcriptRef.current = ''; 
+    
+    const newUserMsg: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text
+    };
+
+    setMessages(prev => [...prev, newUserMsg]);
+    setIsLoading(true);
+    setVoiceTranscript('Pensando...');
+
+    try {
+      const res = await fetch(apiBase + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user?.username || 'anon',
+          name: user?.name || user?.username || 'Viajero',
+          message: newUserMsg.content,
+          location: sharedLocation,
+          destinationCity: destinationCity.trim() || undefined,
+          history: messagesRef.current.slice(-14).map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await res.json();
+      const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: reply
+      }]);
+      
+      setVoiceTranscript(reply);
+      playTTS(reply);
+
+    } catch (err) {
+      const errorMsg = 'Hubo un error al procesar tu mensaje. Intenta nuevamente.';
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: errorMsg
+      }]);
+      setVoiceTranscript(errorMsg);
+      playTTS(errorMsg);
+    } finally {
+      setIsLoading(false);
+      isHandlingVoiceRef.current = false;
+    }
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
@@ -61,7 +264,6 @@ export default function Chatbot() {
           message: newUserMsg.content,
           location: sharedLocation,
           destinationCity: destinationCity.trim() || undefined,
-          // Send session history from React state (reliable, no DB contamination)
           history: messages.slice(-14).map(m => ({ role: m.role, content: m.content }))
         })
       });
@@ -165,7 +367,7 @@ export default function Chatbot() {
           username: user?.username || 'anon',
           name: user?.name || user?.username || 'Viajero',
           message: newUserMsg.content,
-          location: undefined, // Bypass GPS
+          location: undefined,
           destinationCity: destinationCity.trim() || undefined,
           history: messages.slice(-14).map(m => ({ role: m.role, content: m.content }))
         })
@@ -180,7 +382,7 @@ export default function Chatbot() {
       console.error(err);
     } finally {
       setIsLoading(false);
-      setSharedLocation({lat: 0, lng: 0}); // Marcar como compartida para ocultar el cuadro
+      setSharedLocation({lat: 0, lng: 0}); 
     }
   };
 
@@ -211,7 +413,6 @@ export default function Chatbot() {
         };
         setMessages(prev => [...prev, newUserMsg]);
         
-        // Simular respuesta por la imagen
         setTimeout(() => {
           setMessages(prev => [...prev, {
             id: (Date.now() + 1).toString(),
@@ -229,7 +430,6 @@ export default function Chatbot() {
     input.click();
   };
 
-  // ── Booking helpers ────────────────────────────────────────────────────────
   type BookingItem = { type: string; icon: any; color: string; details: string; providerUsername: string };
 
   function parseBookings(content: string): BookingItem[] {
@@ -361,180 +561,264 @@ export default function Chatbot() {
                   </div>
                   <div>
                     <h3 className="font-heading font-extrabold text-foreground text-lg tracking-tight">VIANova AI</h3>
-                    <p className="text-xs text-primary/80 font-medium tracking-wide">Impulsado por Groq</p>
+                    <p className="text-xs text-primary/80 font-medium tracking-wide">Impulsado por Groq {isVoiceMode && "& TTS"}</p>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-9 w-9 rounded-full hover:bg-white/10 relative z-10 transition-colors" 
-                  onClick={() => setIsOpen(false)}
-                >
-                  <X className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              </div>
-
-              {/* MESSAGES AREA */}
-              <div className="flex-1 overflow-hidden bg-black/5 relative">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none mix-blend-overlay" />
-                <ScrollArea className="h-full px-4 py-6">
-                  <div className="flex flex-col gap-6">
-                    <AnimatePresence>
-                      {messages.map((msg, idx) => (
-                        <motion.div
-                          key={msg.id}
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ duration: 0.3, delay: idx * 0.05 }}
-                          className={`flex gap-3 items-end ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                        >
-                          {msg.role === 'assistant' && (
-                            <Avatar className="h-8 w-8 shrink-0 shadow-md bg-card p-0.5">
-                              <AvatarImage src={botLogo} className="object-contain" />
-                              <AvatarFallback className="bg-primary/20 text-primary border border-primary/30"><Bot className="h-4 w-4" /></AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div
-                            className={`rounded-2xl p-4 text-sm max-w-[85%] shadow-sm leading-relaxed ${
-                              msg.role === 'user'
-                                ? 'bg-primary text-black font-medium rounded-br-sm'
-                                : 'bg-secondary/40 backdrop-blur-md text-foreground border border-white/5 rounded-bl-sm'
-                            }`}
-                          >
-                            <div className="whitespace-pre-wrap tracking-wide">
-                              {msg.content.includes('### SOLICITUDES DE RESERVA:')
-                                ? <>
-                                    <span>{msg.content.split('### SOLICITUDES DE RESERVA:')[0]}</span>
-                                    <BookingCards content={msg.content} msgIdx={idx} totalMsgs={messages.length} />
-                                  </>
-                                : <span>{msg.content}</span>
-                              }
-                            </div>
-                            {msg.image && (
-                              <img 
-                                src={msg.image} 
-                                alt="Referencia" 
-                                className="mt-3 rounded-lg border border-black/10 w-full h-auto shadow-md"
-                              />
-                            )}
-                            {msg.role === 'assistant' && msg.content.toLowerCase().includes('ubicación') && !sharedLocation && idx === messages.length - 1 && (
-                              <div className="mt-4 p-3 bg-background/50 rounded-xl border border-primary/20 shadow-sm">
-                                <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                                  <strong className="text-primary font-bold">💡 Nota:</strong> El GPS automático en computadoras puede ser impreciso o mostrar "Bogotá" debido a tu proveedor de internet.
-                                </p>
-                                <div className="flex flex-col gap-3">
-                                  <Button 
-                                    onClick={handleShareLocation}
-                                    disabled={isLocating || isLoading}
-                                    className="w-full bg-primary/20 text-primary hover:bg-primary/30 border border-primary/50 text-xs font-bold transition-all"
-                                  >
-                                    {isLocating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MapPin className="h-4 w-4 mr-2" />}
-                                    Usar GPS Automático
-                                  </Button>
-                                  
-                                  <div className="flex gap-2 items-center">
-                                    <div className="h-[1px] flex-1 bg-border/50"></div>
-                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">O ingresa manualmente</span>
-                                    <div className="h-[1px] flex-1 bg-border/50"></div>
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <Input 
-                                      placeholder="Ej. Pitalito, Huila" 
-                                      value={manualLocationInput}
-                                      onChange={(e) => setManualLocationInput(e.target.value)}
-                                      onKeyDown={(e) => e.key === 'Enter' && handleManualLocationSubmit()}
-                                      className="h-8 text-xs bg-background/50 border-primary/20 focus-visible:ring-primary/50"
-                                      disabled={isLoading || isLocating}
-                                    />
-                                    <Button 
-                                      size="sm" 
-                                      onClick={handleManualLocationSubmit}
-                                      disabled={!manualLocationInput.trim() || isLoading || isLocating}
-                                      className="h-8 px-3 text-xs bg-primary text-black hover:bg-primary/80"
-                                    >
-                                      Enviar
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    
-                    {isLoading && (
-                       <motion.div 
-                         initial={{ opacity: 0, y: 10 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         className="flex gap-3 items-end"
-                       >
-                         <Avatar className="h-8 w-8 shrink-0 shadow-md">
-                            <AvatarFallback className="bg-primary/20 text-primary border border-primary/30"><Bot className="h-4 w-4" /></AvatarFallback>
-                         </Avatar>
-                         <div className="bg-secondary/40 backdrop-blur-md border border-white/5 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2 shadow-sm">
-                           <div className="flex gap-1 items-center justify-center">
-                              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
-                              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
-                              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
-                           </div>
-                         </div>
-                       </motion.div>
-                    )}
-                    <div ref={scrollRef} className="h-1" />
-                  </div>
-                </ScrollArea>
-              </div>
-
-              {/* FOOTER / INPUT */}
-              <div className="p-4 bg-background/95 backdrop-blur-xl border-t border-white/5 relative z-10 flex flex-col gap-3">
-                <div className="flex items-center gap-2 px-1">
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">Destino de viaje:</span>
-                  <input
-                    type="text"
-                    placeholder="Opcional (Ej. Cali)"
-                    value={destinationCity}
-                    onChange={(e) => setDestinationCity(e.target.value)}
-                    disabled={isLoading}
-                    className="bg-transparent border-b border-white/10 focus:border-primary outline-none text-sm text-foreground placeholder:text-muted-foreground/40 w-32 pb-0.5 transition-colors"
-                  />
-                </div>
-                
-                <div className="relative flex items-center">
+                <div className="flex items-center gap-1 relative z-10">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="absolute left-2 h-9 w-9 rounded-full text-muted-foreground hover:bg-secondary hover:text-primary transition-colors"
-                    onClick={handleQuickUpload}
-                    title="Enviar Imagen"
+                    className={`h-9 w-9 rounded-full transition-colors ${isVoiceMode ? 'bg-primary/20 text-primary' : 'hover:bg-white/10 text-muted-foreground'}`}
+                    onClick={toggleVoiceMode}
+                    title="Modo Voz (Kokoro TTS)"
                   >
-                    <ImageIcon className="h-5 w-5" />
+                    {isVoiceMode ? <AudioLines className="h-5 w-5 animate-pulse" /> : <Mic className="h-5 w-5" />}
                   </Button>
-                  <div className="flex-1 ml-12 pr-14">
-                    <Input
-                      placeholder="Pregúntame sobre restaurantes, hoteles..."
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      disabled={isLoading}
-                      className="w-full h-14 bg-secondary/30 border-white/10 rounded-full focus-visible:ring-primary focus-visible:ring-1 text-sm shadow-inner transition-all hover:bg-secondary/50 placeholder:text-muted-foreground/70"
-                    />
-                  </div>
                   <Button 
+                    variant="ghost" 
                     size="icon" 
-                    onClick={handleSend} 
-                    disabled={!inputValue.trim() || isLoading}
-                    className="absolute right-2 h-10 w-10 rounded-full bg-primary text-black shadow-md hover:scale-105 hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                    className="h-9 w-9 rounded-full hover:bg-white/10 transition-colors" 
+                    onClick={() => setIsOpen(false)}
                   >
-                    <Send className="h-4 w-4 ml-0.5" />
+                    <X className="h-5 w-5 text-muted-foreground" />
                   </Button>
-                </div>
-                <div className="mt-3 flex justify-center items-center gap-1 text-[10px] text-muted-foreground/50 font-medium uppercase tracking-widest">
-                   <MapPin className="h-3 w-3" /> VIANova Context-Aware AI
                 </div>
               </div>
+
+              {/* MESSAGES AREA / VOICE OVERLAY */}
+              <div className="flex-1 overflow-hidden bg-black/5 relative">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none mix-blend-overlay" />
+                
+                <AnimatePresence mode="wait">
+                  {isVoiceMode ? (
+                    <motion.div 
+                      key="voice-mode"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute inset-0 z-20 bg-background/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6 text-center border-t border-white/5"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+                      
+                      {/* Grok-style waves visualizer */}
+                      <div className="flex items-center justify-center h-32 gap-1.5 mb-8 relative z-10 w-full">
+                        {[...Array(12)].map((_, i) => (
+                          <motion.div
+                            key={i}
+                            animate={
+                              isSpeaking
+                                ? {
+                                    height: ["10%", "100%", "20%", "80%", "10%"],
+                                  }
+                                : isListening 
+                                ? {
+                                    height: ["10%", "30%", "10%"],
+                                  }
+                                : {
+                                    height: "10%",
+                                  }
+                            }
+                            transition={{
+                              duration: isSpeaking ? 0.7 : 1.5,
+                              repeat: Infinity,
+                              delay: i * 0.05,
+                              ease: "easeInOut",
+                            }}
+                            className={`w-2 rounded-full ${isSpeaking ? 'bg-primary' : 'bg-primary/50'}`}
+                            style={{ height: "10%" }}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="relative z-10 max-w-full">
+                        <p className={`text-lg font-medium transition-colors ${isListening ? 'text-foreground' : 'text-primary'}`}>
+                          {isListening ? 'Escuchando...' : isSpeaking ? 'VIANova está hablando...' : 'Toca el micrófono para hablar'}
+                        </p>
+                        <p className="mt-4 text-sm text-muted-foreground min-h-[3rem] line-clamp-4 px-4 italic">
+                          {voiceTranscript ? `"${voiceTranscript}"` : ""}
+                        </p>
+                      </div>
+
+                      <div className="mt-12 relative z-10">
+                        <Button
+                          onClick={isListening ? () => recognitionRef.current?.stop() : startListening}
+                          className={`h-20 w-20 rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-primary text-black hover:bg-primary/80 hover:scale-105'}`}
+                        >
+                          {isListening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="chat-mode"
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      exit={{ opacity: 0 }}
+                      className="h-full w-full"
+                    >
+                      <ScrollArea className="h-full px-4 py-6">
+                        <div className="flex flex-col gap-6">
+                          <AnimatePresence>
+                            {messages.map((msg, idx) => (
+                              <motion.div
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                className={`flex gap-3 items-end ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                              >
+                                {msg.role === 'assistant' && (
+                                  <Avatar className="h-8 w-8 shrink-0 shadow-md bg-card p-0.5">
+                                    <AvatarImage src={botLogo} className="object-contain" />
+                                    <AvatarFallback className="bg-primary/20 text-primary border border-primary/30"><Bot className="h-4 w-4" /></AvatarFallback>
+                                  </Avatar>
+                                )}
+                                <div
+                                  className={`rounded-2xl p-4 text-sm max-w-[85%] shadow-sm leading-relaxed ${
+                                    msg.role === 'user'
+                                      ? 'bg-primary text-black font-medium rounded-br-sm'
+                                      : 'bg-secondary/40 backdrop-blur-md text-foreground border border-white/5 rounded-bl-sm'
+                                  }`}
+                                >
+                                  <div className="whitespace-pre-wrap tracking-wide">
+                                    {msg.content.includes('### SOLICITUDES DE RESERVA:')
+                                      ? <>
+                                          <span>{msg.content.split('### SOLICITUDES DE RESERVA:')[0]}</span>
+                                          <BookingCards content={msg.content} msgIdx={idx} totalMsgs={messages.length} />
+                                        </>
+                                      : <span>{msg.content}</span>
+                                    }
+                                  </div>
+                                  {msg.image && (
+                                    <img 
+                                      src={msg.image} 
+                                      alt="Referencia" 
+                                      className="mt-3 rounded-lg border border-black/10 w-full h-auto shadow-md"
+                                    />
+                                  )}
+                                  {msg.role === 'assistant' && msg.content.toLowerCase().includes('ubicación') && !sharedLocation && idx === messages.length - 1 && (
+                                    <div className="mt-4 p-3 bg-background/50 rounded-xl border border-primary/20 shadow-sm">
+                                      <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                                        <strong className="text-primary font-bold">💡 Nota:</strong> El GPS automático en computadoras puede ser impreciso o mostrar "Bogotá" debido a tu proveedor de internet.
+                                      </p>
+                                      <div className="flex flex-col gap-3">
+                                        <Button 
+                                          onClick={handleShareLocation}
+                                          disabled={isLocating || isLoading}
+                                          className="w-full bg-primary/20 text-primary hover:bg-primary/30 border border-primary/50 text-xs font-bold transition-all"
+                                        >
+                                          {isLocating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MapPin className="h-4 w-4 mr-2" />}
+                                          Usar GPS Automático
+                                        </Button>
+                                        
+                                        <div className="flex gap-2 items-center">
+                                          <div className="h-[1px] flex-1 bg-border/50"></div>
+                                          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">O ingresa manualmente</span>
+                                          <div className="h-[1px] flex-1 bg-border/50"></div>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                          <Input 
+                                            placeholder="Ej. Pitalito, Huila" 
+                                            value={manualLocationInput}
+                                            onChange={(e) => setManualLocationInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleManualLocationSubmit()}
+                                            className="h-8 text-xs bg-background/50 border-primary/20 focus-visible:ring-primary/50"
+                                            disabled={isLoading || isLocating}
+                                          />
+                                          <Button 
+                                            size="sm" 
+                                            onClick={handleManualLocationSubmit}
+                                            disabled={!manualLocationInput.trim() || isLoading || isLocating}
+                                            className="h-8 px-3 text-xs bg-primary text-black hover:bg-primary/80"
+                                          >
+                                            Enviar
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                          
+                          {isLoading && (
+                             <motion.div 
+                               initial={{ opacity: 0, y: 10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               className="flex gap-3 items-end"
+                             >
+                               <Avatar className="h-8 w-8 shrink-0 shadow-md">
+                                  <AvatarFallback className="bg-primary/20 text-primary border border-primary/30"><Bot className="h-4 w-4" /></AvatarFallback>
+                               </Avatar>
+                               <div className="bg-secondary/40 backdrop-blur-md border border-white/5 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2 shadow-sm">
+                                 <div className="flex gap-1 items-center justify-center">
+                                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                    <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                                 </div>
+                               </div>
+                             </motion.div>
+                          )}
+                          <div ref={scrollRef} className="h-1" />
+                        </div>
+                      </ScrollArea>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* FOOTER / INPUT */}
+              {!isVoiceMode && (
+                <div className="p-4 bg-background/95 backdrop-blur-xl border-t border-white/5 relative z-10 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">Destino de viaje:</span>
+                    <input
+                      type="text"
+                      placeholder="Opcional (Ej. Cali)"
+                      value={destinationCity}
+                      onChange={(e) => setDestinationCity(e.target.value)}
+                      disabled={isLoading}
+                      className="bg-transparent border-b border-white/10 focus:border-primary outline-none text-sm text-foreground placeholder:text-muted-foreground/40 w-32 pb-0.5 transition-colors"
+                    />
+                  </div>
+                  
+                  <div className="relative flex items-center">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute left-2 h-9 w-9 rounded-full text-muted-foreground hover:bg-secondary hover:text-primary transition-colors"
+                      onClick={handleQuickUpload}
+                      title="Enviar Imagen"
+                    >
+                      <ImageIcon className="h-5 w-5" />
+                    </Button>
+                    <div className="flex-1 ml-12 pr-14">
+                      <Input
+                        placeholder="Pregúntame sobre restaurantes, hoteles..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        disabled={isLoading}
+                        className="w-full h-14 bg-secondary/30 border-white/10 rounded-full focus-visible:ring-primary focus-visible:ring-1 text-sm shadow-inner transition-all hover:bg-secondary/50 placeholder:text-muted-foreground/70"
+                      />
+                    </div>
+                    <Button 
+                      size="icon" 
+                      onClick={handleSend} 
+                      disabled={!inputValue.trim() || isLoading}
+                      className="absolute right-2 h-10 w-10 rounded-full bg-primary text-black shadow-md hover:scale-105 hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      <Send className="h-4 w-4 ml-0.5" />
+                    </Button>
+                  </div>
+                  <div className="mt-3 flex justify-center items-center gap-1 text-[10px] text-muted-foreground/50 font-medium uppercase tracking-widest">
+                     <MapPin className="h-3 w-3" /> VIANova Context-Aware AI
+                  </div>
+                </div>
+              )}
 
             </div>
           </motion.div>
