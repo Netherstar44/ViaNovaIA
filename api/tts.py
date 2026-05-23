@@ -8,7 +8,7 @@ class handler(BaseHTTPRequestHandler):
     """
     Vercel Serverless Function – Edge TTS (Microsoft Neural Voices)
     Expone un endpoint POST /api/tts que recibe { text, voice? }
-    y devuelve audio MP3 generado con voz colombiana (es-CO-SalomeNeural).
+    y devuelve audio MP3 generado con voz colombiana masculina (es-CO-GonzaloNeural).
     """
 
     def do_OPTIONS(self):
@@ -38,7 +38,7 @@ class handler(BaseHTTPRequestHandler):
             # Voces colombianas disponibles:
             #   es-CO-SalomeNeural  (Femenina – natural, cálida)
             #   es-CO-GonzaloNeural (Masculina)
-            voice = data.get("voice", "es-CO-SalomeNeural")
+            voice = data.get("voice", "es-CO-GonzaloNeural")
 
             audio = asyncio.run(self._generate_audio(text, voice))
 

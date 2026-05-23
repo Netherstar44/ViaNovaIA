@@ -170,13 +170,13 @@ export default function Chatbot() {
 
     try {
       const edgeVoices: Record<string, string> = {
-        es: 'es-CO-SalomeNeural',
+        es: 'es-CO-GonzaloNeural',
         en: 'en-US-AriaNeural',
         fr: 'fr-FR-DeniseNeural',
         pt: 'pt-BR-FranciscaNeural',
         zh: 'zh-CN-XiaoxiaoNeural'
       };
-      const selectedVoice = edgeVoices[i18n.language] || 'es-CO-SalomeNeural';
+      const selectedVoice = edgeVoices[i18n.language] || 'es-CO-GonzaloNeural';
 
       // Edge TTS – Microsoft Neural Voice
       const res = await fetch(apiBase + '/api/tts', {
