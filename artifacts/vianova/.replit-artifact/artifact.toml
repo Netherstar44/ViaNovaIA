@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "ViaNovaIA"
+version = "1.0.0"
+id = "artifacts/vianova"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24694
+
+[services.development]
+run = "pnpm --filter @workspace/vianova run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/vianova", "run", "build" ]
+publicDir = "artifacts/vianova/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24694"
+BASE_PATH = "/"
