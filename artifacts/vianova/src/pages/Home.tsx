@@ -99,6 +99,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'landing' | 'dashboard'>('landing');
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCity, setSelectedCity] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<LocationItem | null>(null);
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
   const [serviceLocations, setServiceLocations] = useState<LocationItem[]>([]);
@@ -228,6 +229,7 @@ export default function Home() {
                 image: s.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
                 coordinates: [lat, lng],
                 rating: s.rating || 0,
+                city: s.city ?? 'Neiva',
                 priceRange: undefined,
                 hasVR: false,
                 hasAR: false,
@@ -264,6 +266,10 @@ export default function Home() {
       if (searchQuery && !l.name.toLowerCase().includes(searchQuery.toLowerCase()) && !l.description.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
+      // Ciudad
+      if (selectedCity !== 'all' && (l.city ?? 'Neiva') !== selectedCity) {
+        return false;
+      }
       // Categoría
       if (selectedCategory !== 'all' && l.category !== selectedCategory) {
         return false;
@@ -285,7 +291,7 @@ export default function Home() {
       }
       return true;
     });
-  }, [allLocations, userLoc, distanceFilter, priceFilter, popularityFilter, selectedCategory, searchQuery]);
+  }, [allLocations, userLoc, distanceFilter, priceFilter, popularityFilter, selectedCategory, selectedCity, searchQuery]);
 
   const mapLocations = filteredAll;
 
@@ -404,27 +410,53 @@ export default function Home() {
 
               <div className="flex flex-col md:flex-row gap-6 mb-12">
                 <div className="w-full md:w-[65%]">
-                  {/* Category Pills */}
-                  <div className="flex flex-wrap gap-2 mb-8">
-                    {[
-                      { id: 'all', label: t('categories.all'), icon: null },
-                      { id: 'hotel', label: t('categories.hotel'), icon: <Bed className="w-4 h-4" /> },
-                      { id: 'restaurant', label: t('categories.restaurant'), icon: <Utensils className="w-4 h-4" /> },
-                      { id: 'recreation', label: t('categories.recreation'), icon: <TentTree className="w-4 h-4" /> },
-                      { id: 'transport', label: t('categories.transport'), icon: <Car className="w-4 h-4" /> }
-                    ].map(cat => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat.id
-                            ? 'bg-primary/10 text-primary border-primary/50'
-                            : 'bg-transparent text-muted-foreground hover:text-foreground border-transparent hover:border-border/50'
-                          }`}
-                      >
-                        {cat.icon}
-                        {cat.label}
-                      </button>
-                    ))}
+                  {/* City + Category Pills */}
+                  <div className="flex flex-col gap-3 mb-8">
+                    {/* City selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ciudad:</span>
+                      <div className="flex gap-1.5">
+                        {[
+                          { id: 'all', label: '🇨🇴 Todas' },
+                          { id: 'Neiva', label: '🏙️ Neiva' },
+                          { id: 'Bogotá', label: '🌆 Bogotá' },
+                        ].map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => { setSelectedCity(c.id); setSelectedItem(null); }}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 border ${
+                              selectedCity === c.id
+                                ? 'bg-primary text-black border-primary'
+                                : 'bg-transparent text-muted-foreground hover:text-foreground border-border/50'
+                            }`}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Category pills */}
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 'all', label: t('categories.all'), icon: null },
+                        { id: 'hotel', label: t('categories.hotel'), icon: <Bed className="w-4 h-4" /> },
+                        { id: 'restaurant', label: t('categories.restaurant'), icon: <Utensils className="w-4 h-4" /> },
+                        { id: 'recreation', label: t('categories.recreation'), icon: <TentTree className="w-4 h-4" /> },
+                        { id: 'transport', label: t('categories.transport'), icon: <Car className="w-4 h-4" /> }
+                      ].map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat.id
+                              ? 'bg-primary/10 text-primary border-primary/50'
+                              : 'bg-transparent text-muted-foreground hover:text-foreground border-transparent hover:border-border/50'
+                            }`}
+                        >
+                          {cat.icon}
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Layout Grid For Cards */}

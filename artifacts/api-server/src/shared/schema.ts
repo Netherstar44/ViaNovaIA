@@ -106,6 +106,7 @@ export const services = pgTable("services", {
   whatToBring: text("what_to_bring"),
   schedule: text("schedule"),
   parentHotelId: varchar("parent_hotel_id"),
+  city: text("city").default("Neiva"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

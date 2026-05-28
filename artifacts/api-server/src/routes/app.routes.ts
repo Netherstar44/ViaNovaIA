@@ -708,9 +708,12 @@ export async function registerRoutes(
 
   app.get("/api/services", async (req, res, next) => {
     try {
-      const { category } = req.query as { category?: string };
+      const { category, city } = req.query as { category?: string; city?: string };
       if (!category) return res.status(400).json({ message: "category required" });
-      const list = await storage.listServicesByCategory(category);
+      let list = await storage.listServicesByCategory(category);
+      if (city && city !== "all") {
+        list = list.filter((s: any) => (s.city ?? "Neiva") === city);
+      }
       res.json({ services: list });
     } catch (err) {
       next(err);
