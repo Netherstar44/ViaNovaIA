@@ -11,29 +11,19 @@ try {
   });
 } catch (_) {
 }
-// Parche global: Redirigir todas las peticiones /api a Vercel en el APK/Producción
+// Inject auth token into all /api requests (works in web and Capacitor)
 const originalFetch = window.fetch;
 window.fetch = async (input, init) => {
-  let url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
-  
-  if (typeof url === 'string' && url.startsWith('/api')) {
-    // Si no estamos en entorno local de desarrollo, forzamos el dominio del backend
-    if (!import.meta.env.DEV) {
-      url = 'https://via-nova-ia.vercel.app' + url;
-    }
-  }
-
-  // Inject token if available
+  const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
   const token = localStorage.getItem('auth_token');
   if (token && typeof url === 'string' && url.includes('/api')) {
     init = init || {};
     init.headers = {
       ...init.headers,
-      'Authorization': `Bearer ${token}`
+      'Authorization': `Bearer ${token}`,
     };
   }
-
-  return originalFetch(typeof input === 'string' ? url : input, init);
+  return originalFetch(input, init);
 };
 
 // Parche para Capacitor/APK: Evitar el error "404 Page Not Found" de wouter

@@ -101,7 +101,10 @@ function sanitizeUser(user: any) {
 }
 
 // Configuración de JWT
-const JWT_SECRET = process.env.JWT_SECRET || "via_nova_jwt_secret_key_2026";
+if (!process.env.JWT_SECRET) {
+  console.warn("[WARN] JWT_SECRET env var is not set — using a random ephemeral secret. Set JWT_SECRET in Replit secrets for persistent sessions.");
+}
+const JWT_SECRET = process.env.JWT_SECRET || require("crypto").randomBytes(32).toString("hex");
 const isProd = process.env.NODE_ENV === "production";
 const COOKIE_OPTIONS = {
   httpOnly: true,

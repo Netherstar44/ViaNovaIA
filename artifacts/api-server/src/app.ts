@@ -37,7 +37,11 @@ app.use(cors({
     : true,
   credentials: true
 }));
-app.use(cookieParser(process.env.SESSION_SECRET || "via_nova_secret_key_2026"));
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  logger.warn("SESSION_SECRET env var is not set. Set it in Replit secrets for secure cookie signing.");
+}
+app.use(cookieParser(sessionSecret || undefined));
 app.use(express.json({
   verify: (req: any, _res, buf) => {
     req.rawBody = buf;

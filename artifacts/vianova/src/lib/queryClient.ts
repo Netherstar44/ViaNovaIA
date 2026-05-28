@@ -9,12 +9,9 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export const getBaseUrl = () => {
-  const isApp = (typeof window !== 'undefined' && Capacitor.isNativePlatform()) || 
-                (typeof navigator !== 'undefined' && navigator.userAgent.includes('wv'));
-  if (isApp) {
-    return "https://via-nova-ia.vercel.app";
-  }
-  return "";
+  // Allow explicit override via env var (e.g. for Capacitor APK pointing at a hosted backend).
+  // In Replit (web), this is always empty so requests go to same-origin /api via Vite proxy.
+  return (import.meta.env.VITE_API_BASE_URL as string) || "";
 };
 
 export const apiBase = getBaseUrl();
