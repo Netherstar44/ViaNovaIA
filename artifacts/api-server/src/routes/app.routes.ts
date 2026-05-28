@@ -196,67 +196,11 @@ export async function registerRoutes(
   app.use("/api/social", socialRouter);
 
   // Health
-  app.get("/api/nuke-local232", async (req, res, next) => {
-    try {
-      const db = getDb();
-      await db.execute(drizzleSql`DELETE FROM products WHERE name ILIKE '%Local 232%' OR name ILIKE '%ABELARDO%'`);
-      res.json({ nuked: true, message: "Local 232 obliterado para siempre." });
-    } catch (err) {
-      next(err);
-    }
-  });
-
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true });
   });
 
-  app.get("/api/seed-60", async (req, res, next) => {
-    try {
-      const db = getDb();
-      await db.execute(drizzleSql`DELETE FROM services WHERE name ILIKE '%test%' OR name ILIKE '%prueba%' OR name ILIKE '%hola%' OR name ILIKE '%mi negocio%' OR name ILIKE '%all stars%' OR name ILIKE '%perfect%' OR name = 'asdf'`);
-      
-      const newServices = [];
-      const cats = ['hotel', 'restaurant', 'recreation', 'transport'];
-      const images: Record<string, string[]> = {
-        hotel: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80', 'https://images.unsplash.com/photo-1551882547-ff40c0d5c9f4?w=800&q=80', 'https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=800&q=80', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80', 'https://images.unsplash.com/photo-1596436889106-be35e843f974?w=800&q=80'],
-        restaurant: ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80', 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&q=80', 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80', 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&q=80', 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80'],
-        recreation: ['https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=800&q=80', 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&q=80', 'https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?w=800&q=80', 'https://images.unsplash.com/photo-1510853675132-58241c941e4f?w=800&q=80', 'https://images.unsplash.com/photo-1565214975484-3cfa9e56f914?w=800&q=80'],
-        transport: ['https://images.unsplash.com/photo-1600320254374-ce2d293c324e?w=800&q=80', 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80', 'https://images.unsplash.com/photo-1490650404312-a2175773bbf5?w=800&q=80', 'https://images.unsplash.com/photo-1506645292803-579c17d4ba6a?w=800&q=80', 'https://images.unsplash.com/photo-1612808264703-a1286c12ba3c?w=800&q=80']
-      };
-      const names: Record<string, string[]> = {
-        hotel: ['Grand Plaza', 'Eco Resort', 'Boutique Hotel', 'Royal Suites', 'Sunset Inn', 'Mountain View', 'City Center', 'Oasis Resort', 'Paradise Lodge', 'Emerald Hotel', 'Riverside Inn', 'Golden Palace', 'Silver Sands', 'Azure Retreat', 'Crystal Cove'],
-        restaurant: ['La Casona', 'Sabor Auténtico', 'El Fogón', 'Bistro 44', 'GastroBar', 'Cielo Rojo', 'Mesa de Autor', 'El Jardín', 'Terraza Grill', 'Mar y Tierra', 'Fuego Mágico', 'Sabores', 'Rincón Gourmet', 'La Piazza', 'Café Colonial'],
-        recreation: ['Parque Nacional', 'Reserva', 'Museo de Arte', 'Tour Histórico', 'Aventura', 'Sendero Mágico', 'Aguas Termales', 'Observatorio', 'Jardín Botánico', 'Ruinas Antiguas', 'Safari Local', 'Buceo Profundo', 'Escalada Libre', 'Paseo en Globo', 'Ruta del Café'],
-        transport: ['Taxi Express', 'Transporte VIP', 'Shuttle Aeropuerto', 'Tour Privado', 'Viajes Seguros', 'Ruta Rápida', 'Movilidad Plus', 'Traslados Premium', 'City Tour Bus', 'Transporte Ejecutivo', 'Van Familiar', 'Auto Clásico', 'Moto Taxi', 'Limusina Elite', 'Bote Turístico']
-      };
-      const descs = ['La mejor experiencia garantizada para ti y tu familia. Reservas disponibles todo el año.', 'Descubre algo nuevo y emocionante. Perfecto para escapadas de fin de semana.', 'Calidad, confort y atención de primera clase. Tu satisfacción es nuestra prioridad.', 'Disfruta de momentos inolvidables en el mejor ambiente de la ciudad.', 'Una opción económica y segura para disfrutar al máximo sin preocupaciones.'];
-      
-      for (const cat of cats) {
-        for (let i = 0; i < 15; i++) {
-          newServices.push({
-            provider_username: 'vianova_admin',
-            category: cat,
-            name: names[cat][i] + ' ' + (Math.floor(Math.random() * 100) + 1),
-            description: descs[Math.floor(Math.random() * descs.length)],
-            image_url: `https://picsum.photos/seed/${cat}${i}/800/600`,
-            location_lat: (Math.random() * (5.0 - 3.0) + 3.0).toFixed(4),
-            location_lng: (Math.random() * (-73.0 - -75.0) + -75.0).toFixed(4),
-            rating: Math.floor(Math.random() * 2) + 4,
-            price: Math.floor(Math.random() * 500000) + 20000,
-            currency: 'COP'
-          });
-        }
-      }
-      
-      for (const s of newServices) {
-        await db.execute(drizzleSql`INSERT INTO services (provider_username, category, name, description, image_url, location_lat, location_lng, rating, price, currency) VALUES (${s.provider_username}, ${s.category}, ${s.name}, ${s.description}, ${s.image_url}, ${s.location_lat}, ${s.location_lng}, ${s.rating}, ${s.price}, ${s.currency})`);
-      }
-      
-      res.json({ success: true, message: "Cleaned DB and seeded 60 services." });
-    } catch (err) {
-      next(err);
-    }
-  });
+  // REMOVED: /api/seed-60 was a public destructive endpoint — disabled for security.
 
   // ─── AUTH: Register (always traveler) ────────────────────────────────────────
   app.post("/api/auth/register", authLimiter, async (req, res, next) => {
@@ -793,127 +737,7 @@ export async function registerRoutes(
     }
   });
 
-  // ─── Migration endpoint ────────────────────────────────────────────────────
-  app.get("/api/migrate", async (req, res, next) => {
-    try {
-      const db = getDb();
-
-
-      // Enum: service_category
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          CREATE TYPE service_category AS ENUM ('hotel', 'restaurant', 'recreation', 'transport');
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-      `);
-
-      // Enum: user_role
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          CREATE TYPE user_role AS ENUM ('traveler', 'hotel', 'restaurant', 'recreation', 'taxi');
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-      `);
-
-      // Table: services
-      await db.execute(drizzleSql`
-        CREATE TABLE IF NOT EXISTS services (
-          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-          provider_username text NOT NULL,
-          category service_category NOT NULL,
-          name text NOT NULL,
-          description text,
-          image_url text,
-          location_lat text,
-          location_lng text,
-          rating integer,
-          created_at timestamp DEFAULT now()
-        );
-      `);
-
-      // Table: comments
-      await db.execute(drizzleSql`
-        CREATE TABLE IF NOT EXISTS comments (
-          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-          location_id text NOT NULL,
-          author_username text NOT NULL,
-          content text NOT NULL,
-          rating integer,
-          created_at timestamp DEFAULT now()
-        );
-      `);
-
-      // Add email column to users (if not exists)
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          ALTER TABLE users ADD COLUMN email text;
-        EXCEPTION
-          WHEN duplicate_column THEN null;
-        END $$;
-      `);
-
-      // Add role column to users (if not exists)
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          ALTER TABLE users ADD COLUMN role user_role DEFAULT 'traveler';
-        EXCEPTION
-          WHEN duplicate_column THEN null;
-        END $$;
-      `);
-
-      // Table: password_reset_tokens
-      await db.execute(drizzleSql`
-        CREATE TABLE IF NOT EXISTS password_reset_tokens (
-          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id varchar NOT NULL REFERENCES users(id),
-          token text NOT NULL UNIQUE,
-          expires_at timestamp NOT NULL,
-          created_at timestamp DEFAULT now()
-        );
-      `);
-
-      // Add role_changed_at column to users (if not exists)
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          ALTER TABLE users ADD COLUMN role_changed_at timestamp;
-        EXCEPTION
-          WHEN duplicate_column THEN null;
-        END $$;
-      `);
-
-      // Add 'translator' to user_role enum if not already present
-      await db.execute(drizzleSql`
-        DO $$ BEGIN
-          ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'translator';
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-      `);
-
-      // Create chat_messages table for persistent chatbot history (isolated by userId)
-      await db.execute(drizzleSql`
-        CREATE TABLE IF NOT EXISTS chat_messages (
-          id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id varchar NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          role text NOT NULL CHECK (role IN ('user', 'assistant')),
-          content text NOT NULL,
-          image text,
-          created_at timestamp DEFAULT now()
-        );
-      `);
-
-      // Create index for fast per-user queries
-      await db.execute(drizzleSql`
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON chat_messages(user_id, created_at DESC);
-      `);
-
-      res.json({ success: true, message: "Tablas y columnas migradas exitosamente (roles, email, tokens, role_changed_at, translator, chat_messages)" });
-    } catch (err) {
-      next(err);
-    }
-  });
+  // REMOVED: /api/migrate was a public DDL endpoint — disabled for security.
 
   // Groq chat endpoints
   app.get("/api/chat/history", async (req, res, next) => {
