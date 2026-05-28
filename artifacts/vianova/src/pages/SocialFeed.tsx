@@ -162,9 +162,11 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4">
-        <Avatar username={post.username} src={post.avatar_url} size={42} />
+        <a href={`/profile/${post.username}`} className="flex-shrink-0">
+          <Avatar username={post.username} src={post.avatar_url} size={42} />
+        </a>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-foreground leading-tight">@{post.username}</p>
+          <a href={`/profile/${post.username}`} className="font-bold text-sm text-foreground leading-tight hover:text-primary transition-colors">@{post.username}</a>
           <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
         </div>
         {currentUser === post.username && (
@@ -448,21 +450,26 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
 /* ─── Main Social Feed Page ───────────────────────────────────────────────── */
 export default function SocialFeed() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false); // Ref para evitar doble fetch sin romper useCallback
+  const loadingRef = useRef(false);
 
   const fetchFeed = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
     try {
-      const r = await fetch(`${apiBase}/api/social/posts`, { credentials: 'include' });
-      const data = await r.json();
+      const url = activeTab === "mine" && user
+        ? `${apiBase}/api/social/posts/user/${encodeURIComponent(user.username)}`
+        : `${apiBase}/api/social/posts`;
+      const r = await fetch(url, { credentials: 'include' });
+      const raw = await r.json();
+      const data = Array.isArray(raw) ? raw : (raw.posts ?? []);
 
       if (!Array.isArray(data)) {
         console.warn("[SocialFeed] Backend devolvió no-array:", data);
@@ -493,10 +500,10 @@ export default function SocialFeed() {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, []); // Sin dependencias — usa ref para la guard
+  }, [activeTab, user?.username]);
 
-  // Initial load
-  useEffect(() => { fetchFeed(true); }, []);
+  // Reload when tab changes
+  useEffect(() => { fetchFeed(true); }, [activeTab]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -537,8 +544,28 @@ export default function SocialFeed() {
         </div>
       </div>
 
+      {/* Tabs */}
+      {user && (
+        <div className="container max-w-2xl mx-auto px-4 pt-4">
+          <div className="flex gap-1 bg-secondary/30 rounded-full p-1 w-fit">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setActiveTab("mine")}
+              className={`px-5 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === "mine" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Mis Posts
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Feed */}
-      <div className="container max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className="container max-w-2xl mx-auto px-4 py-4 space-y-5">
         <AnimatePresence mode="popLayout">
           {posts.map(post => (
             <PostCard

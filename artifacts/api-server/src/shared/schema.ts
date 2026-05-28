@@ -45,6 +45,8 @@ export const users = pgTable("users", {
   failedLoginAttempts: integer("failed_login_attempts").default(0),
   lockUntil: timestamp("lock_until"),
   preferences: jsonb("preferences"), // stores user tastes, travel styles, chatbot memory
+  bio: text("bio"),
+  city: text("city").default("Neiva"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 

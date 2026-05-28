@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, User, Building2, Utensils, TentTree, Car, Shield, Check,
   AlertCircle, Loader2, Plus, ChevronDown, Pencil, Save, X, Trash2,
-  Wallet, Star, Languages,
+  Wallet, Star, Languages, MapPin, Camera, Activity,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -66,9 +66,28 @@ export default function AccountSettings() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
 
+  // Bio / Avatar / City edit
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState("");
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [newAvatar, setNewAvatar] = useState("");
+  const [isEditingCity, setIsEditingCity] = useState(false);
+  const [newCity, setNewCity] = useState("");
+
+  // Activity
+  const [activityItems, setActivityItems] = useState<any[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchRoles();
+      // Load activity
+      setLoadingActivity(true);
+      fetch(`${apiBase}/api/users/${user.username}/activity`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.activity && setActivityItems(d.activity))
+        .catch(() => {})
+        .finally(() => setLoadingActivity(false));
       // Load current vehicle data if taxi
       if (user.role === "taxi") {
         fetch(`${apiBase}/api/taxi/profile/${user.username}`)
@@ -169,26 +188,47 @@ export default function AccountSettings() {
     }
   };
 
-  const handleSaveName = async () => {
-    if (!newName.trim()) return;
+  const patchProfile = async (fields: Record<string, string>) => {
     setIsSubmitting(true);
     try {
       const res = await fetch(apiBase + "/api/user/profile", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user.username, name: newName }),
+        body: JSON.stringify({ username: user!.username, ...fields }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      
-      // Update local context manually or reload
+      setMessage({ type: "success", text: "Perfil actualizado" });
       window.location.reload();
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Error al actualizar perfil" });
     } finally {
       setIsSubmitting(false);
-      setIsEditingName(false);
     }
+  };
+
+  const handleSaveName = async () => {
+    if (!newName.trim()) return;
+    await patchProfile({ name: newName });
+    setIsEditingName(false);
+  };
+
+  const handleSaveBio = async () => {
+    await patchProfile({ bio: newBio });
+    setIsEditingBio(false);
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!newAvatar.trim()) return;
+    await patchProfile({ avatarUrl: newAvatar });
+    setIsEditingAvatar(false);
+  };
+
+  const handleSaveCity = async () => {
+    if (!newCity.trim()) return;
+    await patchProfile({ city: newCity });
+    setIsEditingCity(false);
   };
 
   return (
@@ -262,7 +302,90 @@ export default function AccountSettings() {
                     <span className="text-xs text-muted-foreground block mb-1">Email</span>
                     <p className="font-medium">{user.email || "—"}</p>
                   </div>
-                  
+
+                  {/* Bio */}
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">Bio</span>
+                    {isEditingBio ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={newBio}
+                          onChange={e => setNewBio(e.target.value)}
+                          rows={3}
+                          maxLength={200}
+                          placeholder="Cuéntanos sobre ti..."
+                          className="w-full bg-background border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={handleSaveBio} disabled={isSubmitting} className="text-green-500 hover:text-green-400 p-1"><Check className="h-4 w-4" /></button>
+                          <button onClick={() => setIsEditingBio(false)} className="text-muted-foreground hover:text-red-400 p-1"><X className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between group">
+                        <p className="text-sm text-muted-foreground italic">{(user as any).bio || "Sin bio"}</p>
+                        <button onClick={() => { setIsEditingBio(true); setNewBio((user as any).bio || ""); }} className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary transition-all ml-2 flex-shrink-0">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Avatar URL */}
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1 flex items-center gap-1"><Camera className="h-3 w-3" /> Foto de Perfil (URL)</span>
+                    {isEditingAvatar ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          value={newAvatar}
+                          onChange={e => setNewAvatar(e.target.value)}
+                          placeholder="https://..."
+                          className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button onClick={handleSaveAvatar} disabled={isSubmitting} className="text-green-500 hover:text-green-400 p-1"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => setIsEditingAvatar(false)} className="text-muted-foreground hover:text-red-400 p-1"><X className="h-4 w-4" /></button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 group">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-border bg-secondary/30 flex-shrink-0">
+                          {(user as any).avatarUrl
+                            ? <img src={(user as any).avatarUrl} className="w-full h-full object-cover" alt="avatar" />
+                            : <User className="h-4 w-4 m-auto text-muted-foreground mt-2" />}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate flex-1">{(user as any).avatarUrl ? "Foto configurada" : "Sin foto"}</p>
+                        <button onClick={() => { setIsEditingAvatar(true); setNewAvatar((user as any).avatarUrl || ""); }} className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary transition-all">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* City */}
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1 flex items-center gap-1"><MapPin className="h-3 w-3" /> Ciudad</span>
+                    {isEditingCity ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newCity}
+                          onChange={e => setNewCity(e.target.value)}
+                          placeholder="Ej: Neiva"
+                          className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button onClick={handleSaveCity} disabled={isSubmitting} className="text-green-500 hover:text-green-400 p-1"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => setIsEditingCity(false)} className="text-muted-foreground hover:text-red-400 p-1"><X className="h-4 w-4" /></button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between group">
+                        <p className="font-medium text-sm">{(user as any).city || "Neiva"}</p>
+                        <button onClick={() => { setIsEditingCity(true); setNewCity((user as any).city || "Neiva"); }} className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-primary transition-all">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="pt-2 border-t border-border/30">
                     <span className="text-xs text-muted-foreground block mb-2">Rol Activo</span>
                     <div className="relative">
@@ -501,6 +624,35 @@ export default function AccountSettings() {
                 </AnimatePresence>
                 {!showReviews && (
                   <p className="text-sm text-muted-foreground italic">Tus reseñas están ocultas. Haz clic en "Mostrar" para verlas.</p>
+                )}
+              </div>
+
+              {/* ── Activity ── */}
+              <div className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Actividad Reciente
+                </h2>
+                {loadingActivity ? (
+                  <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+                ) : activityItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Sin actividad registrada aún.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {activityItems.map((item: any, i: number) => {
+                      const typeLabel = item.type === "post" ? "Publicación" : item.type === "ride" ? "Viaje" : "Reserva";
+                      const typeColor = item.type === "post" ? "text-primary" : item.type === "ride" ? "text-yellow-500" : "text-blue-500";
+                      return (
+                        <div key={i} className="flex items-start gap-3 text-sm">
+                          <div className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary flex-shrink-0 mt-0.5 ${typeColor}`}>{typeLabel}</div>
+                          <div>
+                            <p className="font-medium">{item.title || "—"}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 

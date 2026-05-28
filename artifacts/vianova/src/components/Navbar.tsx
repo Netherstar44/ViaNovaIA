@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth, UserRole } from "@/lib/auth";
-import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon } from "lucide-react";
+import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon, MessageCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -290,6 +290,11 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => setLocation("/social")} className="cursor-pointer gap-2">
                     <Globe className="h-4 w-4 text-primary" />
                     ViaSocial
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => setLocation("/messages")} className="cursor-pointer gap-2">
+                    <MessageCircle className="h-4 w-4 text-primary" />
+                    Mensajes
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onClick={() => setLocation("/ride-history")} className="cursor-pointer gap-2">

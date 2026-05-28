@@ -1,6 +1,7 @@
 import { apiBase } from "@/lib/queryClient";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { useEffect, useRef } from "react";
 import { Car, DollarSign, WifiOff, MapPin, RefreshCw, ChevronRight } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,58 @@ export default function TaxiDashboard() {
     isAccepting, isRejecting, isStarting, isCompleting,
     justCompletedRide, clearCompletedRide
   } = useTaxiDashboard(username);
+
+  // ── GPS Broadcasting (Socket.IO) ────────────────────────────────────────────
+  const socketRef = useRef<any>(null);
+  const watchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!activeRide || !["accepted", "in_progress"].includes(activeRide.status) || !username) {
+      // Stop broadcasting if no active ride
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      return;
+    }
+
+    // Connect to Socket.IO and start broadcasting GPS
+    import("socket.io-client").then(({ io }) => {
+      if (socketRef.current) return;
+      const socket = io(window.location.origin, { path: "/socket.io", transports: ["websocket", "polling"] });
+      socketRef.current = socket;
+
+      if ("geolocation" in navigator) {
+        watchIdRef.current = navigator.geolocation.watchPosition(
+          (pos) => {
+            socket.emit("taxi_location_update", {
+              rideId: activeRide.id,
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              taxiUsername: username,
+            });
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 3000, timeout: 8000 }
+        );
+      }
+    });
+
+    return () => {
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [activeRide?.id, activeRide?.status, username]);
 
   const { data: earningsData } = useQuery({
     queryKey: ["taxi", "earnings", username],

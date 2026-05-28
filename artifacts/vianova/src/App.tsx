@@ -22,6 +22,8 @@ import SocialFeed from "@/pages/SocialFeed";
 import ProductManager from "@/pages/ProductManager";
 import ProductStore from "@/pages/ProductStore";
 import NukePage from "@/pages/Nuke";
+import Messages from "@/pages/Messages";
+import UserProfile from "@/pages/UserProfile";
 
 function Router() {
   return (
@@ -47,6 +49,9 @@ function Router() {
       <Route path="/products" component={ProductManager} />
       <Route path="/explore" component={ProductStore} />
       <Route path="/nuke" component={NukePage} />
+      <Route path="/messages" component={Messages} />
+      <Route path="/messages/:username" component={Messages} />
+      <Route path="/profile/:username" component={UserProfile} />
 
       <Route component={NotFound} />
     </Switch>

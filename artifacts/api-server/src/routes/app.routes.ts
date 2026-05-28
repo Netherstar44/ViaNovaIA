@@ -157,16 +157,33 @@ export async function registerRoutes(
   });
 
   io.on("connection", (socket) => {
-    console.log("🟢 Nuevo cliente conectado:", socket.id);
-    
-    // Taxi Tracking: Recibir posición del taxi y emitir al viajero
-    socket.on("taxi_location_update", (data) => {
-      io.emit("taxi_location", data);
+    // Join a ride room to receive ride-specific events
+    socket.on("join_ride", (rideId: string) => {
+      socket.join(`ride:${rideId}`);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔴 Cliente desconectado:", socket.id);
+    socket.on("leave_ride", (rideId: string) => {
+      socket.leave(`ride:${rideId}`);
     });
+
+    // Taxi GPS: Receive location from driver, broadcast to ride room
+    socket.on("taxi_location_update", (data: { rideId: string; lat: number; lng: number; taxiUsername: string }) => {
+      if (data.rideId) {
+        io.to(`ride:${data.rideId}`).emit("taxi_location", data);
+      } else {
+        io.emit("taxi_location", data);
+      }
+    });
+
+    // In-ride chat message
+    socket.on("ride_chat_message", (data: { rideId: string; from: string; text: string; role: string }) => {
+      io.to(`ride:${data.rideId}`).emit("ride_chat_message", {
+        ...data,
+        at: new Date().toISOString(),
+      });
+    });
+
+    socket.on("disconnect", () => {});
   });
 
   // Make io accessible to routes
@@ -1466,14 +1483,20 @@ export async function registerRoutes(
   
   app.patch("/api/user/profile", authLimiter, async (req, res, next) => {
     try {
-      const { username, name } = req.body || {};
-      if (!username || !name) return res.status(400).json({ message: "username y name requeridos" });
+      const { username, name, bio, avatarUrl, city } = req.body || {};
+      if (!username) return res.status(400).json({ message: "username requerido" });
 
       const user = await storage.getUserByUsername(username);
       if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
       const db = getDb();
-      const updatedRows = await db.update(users).set({ name }).where(eq(users.id, user.id)).returning();
+      const updates: Record<string, any> = {};
+      if (name !== undefined) updates.name = name;
+      if (bio !== undefined) updates.bio = bio;
+      if (avatarUrl !== undefined) updates.avatarUrl = avatarUrl;
+      if (city !== undefined) updates.city = city;
+
+      const updatedRows = await db.update(users).set(updates).where(eq(users.id, user.id)).returning();
       res.json({ user: sanitizeUser(updatedRows[0]) });
     } catch (err) {
       next(err);
@@ -2120,6 +2143,112 @@ export async function registerRoutes(
         LIMIT 30
       `);
       res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { next(err); }
+  });
+
+  // ── DIRECT MESSAGES ───────────────────────────────────────────────────────
+
+  // GET /api/dm/conversations/:username — list of recent conversations
+  app.get("/api/dm/conversations/:username", async (req, res, next) => {
+    try {
+      const db = getDb();
+      const { username } = req.params;
+      const rows = await db.execute(drizzleSql`
+        SELECT
+          CASE WHEN from_username = ${username} THEN to_username ELSE from_username END AS other_username,
+          MAX(created_at) AS last_time,
+          SUM(CASE WHEN to_username = ${username} AND is_read = false THEN 1 ELSE 0 END) AS unread_count,
+          (SELECT content FROM direct_messages dm2
+            WHERE (dm2.from_username = ${username} AND dm2.to_username = CASE WHEN dm.from_username = ${username} THEN dm.to_username ELSE dm.from_username END)
+               OR (dm2.to_username = ${username} AND dm2.from_username = CASE WHEN dm.from_username = ${username} THEN dm.to_username ELSE dm.from_username END)
+            ORDER BY dm2.created_at DESC LIMIT 1) AS last_message
+        FROM direct_messages dm
+        WHERE from_username = ${username} OR to_username = ${username}
+        GROUP BY other_username
+        ORDER BY last_time DESC
+        LIMIT 50
+      `);
+      res.json({ conversations: (rows as any).rows ?? rows ?? [] });
+    } catch (err) { next(err); }
+  });
+
+  // GET /api/dm/:username/:other — messages between two users
+  app.get("/api/dm/:username/:other", async (req, res, next) => {
+    try {
+      const db = getDb();
+      const { username, other } = req.params;
+      const rows = await db.execute(drizzleSql`
+        SELECT * FROM direct_messages
+        WHERE (from_username = ${username} AND to_username = ${other})
+           OR (from_username = ${other} AND to_username = ${username})
+        ORDER BY created_at ASC
+        LIMIT 200
+      `);
+      // Mark received as read
+      await db.execute(drizzleSql`
+        UPDATE direct_messages SET is_read = true
+        WHERE to_username = ${username} AND from_username = ${other} AND is_read = false
+      `);
+      res.json({ messages: (rows as any).rows ?? rows ?? [] });
+    } catch (err) { next(err); }
+  });
+
+  // POST /api/dm/send — send a direct message
+  app.post("/api/dm/send", async (req, res, next) => {
+    try {
+      const { fromUsername, toUsername, content } = req.body || {};
+      if (!fromUsername || !toUsername || !content?.trim()) {
+        return res.status(400).json({ message: "fromUsername, toUsername y content requeridos" });
+      }
+      const db = getDb();
+      const rows = await db.execute(drizzleSql`
+        INSERT INTO direct_messages (from_username, to_username, content)
+        VALUES (${fromUsername}, ${toUsername}, ${content.trim()})
+        RETURNING *
+      `);
+      const msg = ((rows as any).rows ?? rows)[0];
+      res.status(201).json({ message: msg });
+    } catch (err) { next(err); }
+  });
+
+  // DELETE /api/social/posts/:id — delete own post
+  app.delete("/api/social/posts/:id", async (req, res, next) => {
+    try {
+      const { username } = req.body || {};
+      if (!username) return res.status(400).json({ message: "username requerido" });
+      const db = getDb();
+      await db.execute(drizzleSql`
+        DELETE FROM social_posts WHERE id = ${req.params.id} AND username = ${username}
+      `);
+      res.json({ success: true });
+    } catch (err) { next(err); }
+  });
+
+  // GET /api/users/:username/activity — user activity history
+  app.get("/api/users/:username/activity", async (req, res, next) => {
+    try {
+      const db = getDb();
+      const { username } = req.params;
+      const [posts, rides, bookings] = await Promise.all([
+        db.execute(drizzleSql`
+          SELECT 'post' as type, caption as title, created_at FROM social_posts
+          WHERE username = ${username} ORDER BY created_at DESC LIMIT 5
+        `),
+        db.execute(drizzleSql`
+          SELECT 'ride' as type, destination_address as title, created_at FROM rides
+          WHERE traveler_username = ${username} ORDER BY created_at DESC LIMIT 5
+        `),
+        db.execute(drizzleSql`
+          SELECT 'booking' as type, provider_username as title, created_at FROM bookings
+          WHERE traveler_username = ${username} ORDER BY created_at DESC LIMIT 5
+        `),
+      ]);
+      const all = [
+        ...((posts as any).rows ?? []),
+        ...((rides as any).rows ?? []),
+        ...((bookings as any).rows ?? []),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 20);
+      res.json({ activity: all });
     } catch (err) { next(err); }
   });
 
