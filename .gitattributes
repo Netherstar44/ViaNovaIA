@@ -1,0 +1,2 @@
+.migration-backup/ViaNovaIA.apk filter=lfs diff=lfs merge=lfs -text
+.migration-backup/client/public/dummy_assets.bin filter=lfs diff=lfs merge=lfs -text
