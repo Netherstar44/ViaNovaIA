@@ -57,7 +57,9 @@ export default function ProviderCalendar({ services }: ProviderCalendarProps) {
 
   const handleAddSlot = async () => {
     if (!selectedServiceId || !date) {
-      return toast({ title: "Atención", description: "Selecciona un servicio y una fecha", variant: "destructive" });
+       toast({ title: "Atención", description: "Selecciona un servicio y una fecha", variant: "destructive" });
+        return;
+      
     }
 
     try {

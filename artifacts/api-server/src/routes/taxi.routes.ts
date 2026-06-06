@@ -53,7 +53,7 @@ export function registerTaxiRoutes(app: Express): void {
     } catch (err) {
       if (err instanceof z.ZodError)
         return res.status(400).json({ message: err.errors[0].message });
-      next(err);
+      return next(err);
     }
   });
 
@@ -65,9 +65,9 @@ export function registerTaxiRoutes(app: Express): void {
   app.get("/api/rides/nearby", async (req, res, next) => {
     try {
       const pending = await getPendingRides();
-      res.json({ rides: pending });
+      return res.json({ rides: pending });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -79,9 +79,9 @@ export function registerTaxiRoutes(app: Express): void {
     try {
       const ride = await getRideById(req.params.id);
       if (!ride) return res.status(404).json({ message: "Viaje no encontrado" });
-      res.json({ ride });
+      return res.json({ ride });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -130,11 +130,11 @@ export function registerTaxiRoutes(app: Express): void {
         await createEarning(updated.taxiUsername, updated.id, updated.fare);
       }
 
-      res.json({ ride: updated });
+      return res.json({ ride: updated });
     } catch (err) {
       if (err instanceof z.ZodError)
         return res.status(400).json({ message: err.errors[0].message });
-      next(err);
+      return next(err);
     }
   });
 
@@ -149,9 +149,9 @@ export function registerTaxiRoutes(app: Express): void {
         getActiveTaxiRide(username),
         getTaxiRideHistory(username),
       ]);
-      res.json({ activeRide: activeRide ?? null, history });
+      return res.json({ activeRide: activeRide ?? null, history });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -166,9 +166,9 @@ export function registerTaxiRoutes(app: Express): void {
         getActiveTravelerRide(username),
         getTravelerRideHistory(username),
       ]);
-      res.json({ activeRide: activeRide ?? null, history });
+      return res.json({ activeRide: activeRide ?? null, history });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -188,7 +188,7 @@ export function registerTaxiRoutes(app: Express): void {
     } catch (err) {
       if (err instanceof z.ZodError)
         return res.status(400).json({ message: err.errors[0].message });
-      next(err);
+      return next(err);
     }
   });
 
@@ -200,9 +200,9 @@ export function registerTaxiRoutes(app: Express): void {
   app.get("/api/taxi/nearby", async (req, res, next) => {
     try {
       const drivers = await getAvailableTaxis();
-      res.json({ drivers });
+      return res.json({ drivers });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -214,9 +214,9 @@ export function registerTaxiRoutes(app: Express): void {
     try {
       const profile = await getTaxiProfile(req.params.username);
       if (!profile) return res.status(404).json({ message: "Taxista no encontrado" });
-      res.json({ profile });
+      return res.json({ profile });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -298,7 +298,7 @@ export function registerTaxiRoutes(app: Express): void {
     } catch (err) {
       if (err instanceof z.ZodError)
         return res.status(400).json({ message: err.errors[0].message });
-      next(err);
+      return next(err);
     }
   });
 }

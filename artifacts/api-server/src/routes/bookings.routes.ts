@@ -86,9 +86,9 @@ router.post("/lock", requireAuth, async (req: any, res) => {
       lockedUntil
     }).returning();
 
-    res.json({ message: "Slot bloqueado por 5 minutos", booking });
+    return res.json({ message: "Slot bloqueado por 5 minutos", booking });
   } catch (err: any) {
-    res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
@@ -112,9 +112,9 @@ router.post("/confirm", requireAuth, async (req: any, res) => {
       .where(eq(bookings.id, bookingId))
       .returning();
 
-    res.json({ message: "Reserva confirmada con PSE", booking: confirmed });
+    return res.json({ message: "Reserva confirmada con PSE", booking: confirmed });
   } catch (err: any) {
-    res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">ViaNovaIA</string>
-    <string name="title_activity_main">ViaNovaIA</string>
-    <string name="package_name">com.vianova.app</string>
-    <string name="custom_url_scheme">com.vianova.app</string>
-    <string name="server_client_id">963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com</string>
-</resources>

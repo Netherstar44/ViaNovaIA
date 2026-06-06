@@ -71,7 +71,8 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
       return;
     }
     if (!selectedSlotId && slots.length > 0) {
-      return toast({ title: "Atención", description: "Por favor selecciona un horario disponible", variant: "destructive" });
+      toast({ title: "Atención", description: "Por favor selecciona un horario disponible", variant: "destructive" });
+      return;
     }
 
     setCheckingOut(true);

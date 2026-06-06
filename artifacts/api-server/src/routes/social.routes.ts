@@ -70,10 +70,10 @@ router.post("/posts", requireAuth, async (req: any, res) => {
         comments_count AS "commentsCount",
         created_at AS "createdAt"
     `;
-    res.json(post);
+    return res.json(post);
   } catch (err: any) {
     console.error("[social] POST /posts error:", err.message);
-    res.status(400).json({ message: err.message });
+    return res.status(400).json({ message: err.message });
   }
 });
 
@@ -106,7 +106,7 @@ router.post("/posts/:postId/like", requireAuth, async (req: any, res) => {
     }
   } catch (err: any) {
     console.error("[social] like error:", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -127,9 +127,9 @@ router.get("/posts/:postId/comments", async (req, res) => {
       WHERE sc.post_id = ${postId}
       ORDER BY sc.created_at ASC
     `;
-    res.json({ comments });
+    return res.json({ comments });
   } catch (err: any) {
-    res.status(500).json({ comments: [] });
+    return res.status(500).json({ comments: [] });
   }
 });
 
@@ -152,10 +152,10 @@ router.post("/posts/:postId/comments", requireAuth, async (req: any, res) => {
       RETURNING id, username, content, created_at
     `;
     await sql`UPDATE social_posts SET comments_count = comments_count + 1 WHERE id = ${postId}`;
-    res.json(comment);
+    return res.json(comment);
   } catch (err: any) {
     console.error("[social] comment error:", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 

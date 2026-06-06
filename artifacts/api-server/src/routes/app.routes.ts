@@ -246,9 +246,9 @@ export async function registerRoutes(
 
       const token = generateToken(user);
       res.cookie("token", token, COOKIE_OPTIONS);
-      res.json({ user: sanitizeUser(user), token });
+      return res.json({ user: sanitizeUser(user), token });
     } catch (err) {
-      next(err);
+       return next(err);
     }
   });
 
@@ -272,9 +272,9 @@ export async function registerRoutes(
       const db = getDb();
       await db.execute(drizzleSql`UPDATE users SET is_verified = 'true', verification_token = NULL WHERE id = ${user.id}`);
       
-      res.json({ message: "Correo verificado exitosamente" });
+      return res.json({ message: "Correo verificado exitosamente" });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -303,9 +303,9 @@ export async function registerRoutes(
 
       const token = generateToken(user);
       res.cookie("token", token, COOKIE_OPTIONS);
-      res.json({ user: sanitizeUser(user), token });
+      return res.json({ user: sanitizeUser(user), token });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -314,9 +314,9 @@ export async function registerRoutes(
     try {
       const user = await storage.getUserByUsername(req.user.username);
       if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-      res.json({ user: sanitizeUser(user) });
+      return res.json({ user: sanitizeUser(user) });
     } catch (err) {
-      res.status(500).json({ message: "Error interno" });
+      return res.status(500).json({ message: "Error interno" });
     }
   });
 
@@ -367,9 +367,9 @@ export async function registerRoutes(
 
       const token = generateToken(user);
       res.cookie("token", token, COOKIE_OPTIONS);
-      res.json({ user: sanitizeUser(user), token });
+      return res.json({ user: sanitizeUser(user), token });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -404,9 +404,9 @@ export async function registerRoutes(
         console.error("Error enviando email de reset:", err.message);
       });
 
-      res.json({ message: "Te hemos enviado un código de recuperación a tu correo." });
+       return res.json({ message: "Te hemos enviado un código de recuperación a tu correo." });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -424,9 +424,9 @@ export async function registerRoutes(
         await storage.deletePasswordResetToken(token);
         return res.status(400).json({ valid: false, message: "El código ha expirado. Solicita uno nuevo." });
       }
-      res.json({ valid: true, message: "Código verificado correctamente" });
+      return res.json({ valid: true, message: "Código verificado correctamente" });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -468,9 +468,9 @@ export async function registerRoutes(
         });
       }
 
-      res.json({ message: "Contraseña actualizada exitosamente. Ya puedes iniciar sesión." });
+      return res.json({ message: "Contraseña actualizada exitosamente. Ya puedes iniciar sesión." });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -500,9 +500,9 @@ export async function registerRoutes(
       }
 
       const updated = await storage.updateUserRole(user.id, role);
-      res.json({ user: sanitizeUser(updated) });
+      return res.json({ user: sanitizeUser(updated) });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -515,9 +515,9 @@ export async function registerRoutes(
         const hashed = await hashPassword(password || "temp");
         user = await storage.createUser({ username, password: hashed, name });
       }
-      res.json({ user: sanitizeUser(user) });
+      return res.json({ user: sanitizeUser(user) });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -593,10 +593,10 @@ export async function registerRoutes(
         role: user.role || "traveler",
         roleChangedAt: user.roleChangedAt || null,
       }));
-      res.redirect(`${clientUrl}/login?google_user=${payload}&token=${encodeURIComponent(token)}`);
+      return res.redirect(`${clientUrl}/login?google_user=${payload}&token=${encodeURIComponent(token)}`);
     } catch (err) {
       console.error("Auth google error:", err);
-      next(err);
+      return next(err);
     }
   });
 
@@ -606,9 +606,9 @@ export async function registerRoutes(
       const { id } = req.params;
       const { lat, lng } = req.body || {};
       // naive update using SQL in storage is omitted; for demo, return ok
-      res.json({ ok: true, id, lat, lng });
+      return res.json({ ok: true, id, lat, lng });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -635,9 +635,9 @@ export async function registerRoutes(
 
       // write file buffer to stream
       // @ts-ignore
-      result.end(req.file.buffer);
+      return result.end(req.file.buffer);
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -646,10 +646,10 @@ export async function registerRoutes(
     try {
       const parsed = insertServiceSchema.parse(req.body || {});
       const created = await storage.insertService(parsed);
-      res.json({ service: created });
+      return res.json({ service: created });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.message });
-      next(err);
+      return next(err);
     }
   });
 
@@ -661,9 +661,9 @@ export async function registerRoutes(
       if (city && city !== "all") {
         list = list.filter((s: any) => (s.city ?? "Neiva") === city);
       }
-      res.json({ services: list });
+      return res.json({ services: list });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -671,9 +671,9 @@ export async function registerRoutes(
     try {
       const { username } = req.params;
       const list = await storage.listProviderServices(username);
-      res.json({ services: list });
+      return res.json({ services: list });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -683,9 +683,9 @@ export async function registerRoutes(
       const { providerUsername, ...data } = req.body || {};
       if (!providerUsername) return res.status(400).json({ message: "providerUsername required" });
       const updated = await storage.updateService(id, data);
-      res.json({ service: updated });
+      return res.json({ service: updated });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -695,9 +695,9 @@ export async function registerRoutes(
       const { providerUsername } = req.body || {};
       if (!providerUsername) return res.status(400).json({ message: "providerUsername required" });
       await storage.deleteService(id, providerUsername);
-      res.json({ success: true, message: "Servicio eliminado" });
+      return res.json({ success: true, message: "Servicio eliminado" });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -706,10 +706,10 @@ export async function registerRoutes(
       const parsed = insertCommentSchema.parse(req.body || {});
       const cleanContent = profanityFilter.clean(parsed.content);
       const created = await storage.insertComment({ ...parsed, content: cleanContent });
-      res.json({ comment: created });
+      return res.json({ comment: created });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.message });
-      next(err);
+      return next(err);
     }
   });
 
@@ -718,9 +718,9 @@ export async function registerRoutes(
       const { locationId } = req.query as { locationId?: string };
       if (!locationId) return res.status(400).json({ message: "locationId required" });
       const list = await storage.listCommentsByLocation(locationId);
-      res.json({ comments: list });
+      return res.json({ comments: list });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -731,9 +731,9 @@ export async function registerRoutes(
       const db = getDb();
 
       await db.delete(comments).where(and(eq(comments.id, id), eq(comments.authorUsername, username)));
-      res.json({ success: true, message: "Comentario eliminado" });
+      return res.json({ success: true, message: "Comentario eliminado" });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -759,9 +759,9 @@ export async function registerRoutes(
         image: m.metadata?.image ?? null,
         createdAt: m.createdAt,
       }));
-      res.json(normalized);
+      return res.json(normalized);
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -952,9 +952,9 @@ export async function registerRoutes(
       const content = data.choices?.[0]?.message?.content || "";
 
       const assistantMsg = await storage.addMessage(conversation.id, "assistant", content);
-      res.json({ reply: assistantMsg.content, conversationId: conversation.id });
+      return res.json({ reply: assistantMsg.content, conversationId: conversation.id });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1013,9 +1013,9 @@ export async function registerRoutes(
         }
       }
 
-      res.json({ message: "Reservas procesadas", results });
+      return res.json({ message: "Reservas procesadas", results });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1025,18 +1025,18 @@ export async function registerRoutes(
       const username = req.query.username as string;
       if (!username) return res.status(401).json({ message: "No autenticado" });
       const notifications = await storage.getProviderNotifications(username);
-      res.json(notifications);
+      return res.json(notifications);
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
   app.patch("/api/notifications/:id/read", async (req, res, next) => {
     try {
       await storage.markNotificationAsRead(req.params.id);
-      res.sendStatus(200);
+      return res.sendStatus(200);
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1080,9 +1080,9 @@ export async function registerRoutes(
 
       // node-fetch expone la URL final tras seguir los redirects
       const finalUrl = (response as any).url || url;
-      res.json({ url: finalUrl });
+      return res.json({ url: finalUrl });
     } catch (err: any) {
-      res.status(500).json({ error: err?.message || "No se pudo resolver el link" });
+      return res.status(500).json({ error: err?.message || "No se pudo resolver el link" });
     }
   });
 
@@ -1092,9 +1092,9 @@ export async function registerRoutes(
   app.get("/api/users/:username/roles", async (req, res, next) => {
     try {
       const roles = await storage.getUserRolesByUsername(req.params.username);
-      res.json({ roles });
+      return res.json({ roles });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1133,9 +1133,9 @@ export async function registerRoutes(
         if (phone) await db.execute(drizzleSql`UPDATE users SET phone = ${phone} WHERE id = ${user.id}`);
       }
 
-      res.json({ role: roleRecord, user: sanitizeUser(updated) });
+      return res.json({ role: roleRecord, user: sanitizeUser(updated) });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1158,9 +1158,9 @@ export async function registerRoutes(
 
       await storage.removeUserRole(user.id, role);
       const updatedUser = await storage.getUser(user.id);
-      res.json({ success: true, user: updatedUser ? sanitizeUser(updatedUser) : null });
+      return res.json({ success: true, user: updatedUser ? sanitizeUser(updatedUser) : null });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1179,9 +1179,9 @@ export async function registerRoutes(
       if (!hasRole) return res.status(400).json({ message: "No tienes este tipo de cuenta" });
 
       const updated = await storage.setActiveRole(user.id, role);
-      res.json({ user: sanitizeUser(updated) });
+      return res.json({ user: sanitizeUser(updated) });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1211,9 +1211,9 @@ export async function registerRoutes(
         });
       }
 
-      res.json({ ok: true, message: "Datos del vehículo actualizados" });
+      return res.json({ ok: true, message: "Datos del vehículo actualizados" });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1234,9 +1234,9 @@ export async function registerRoutes(
       const review = await storage.createReview({
         rideId, authorUsername, targetUsername, rating, comment: comment || null, authorRole,
       });
-      res.status(201).json({ review });
+      return res.status(201).json({ review });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1244,18 +1244,18 @@ export async function registerRoutes(
     try {
       const revs = await storage.getReviewsByUsername(req.params.username);
       const avg = await storage.getAverageRating(req.params.username);
-      res.json({ reviews: revs, averageRating: avg });
+      return res.json({ reviews: revs, averageRating: avg });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
   app.get("/api/reviews/ride/:rideId", async (req, res, next) => {
     try {
       const revs = await storage.getReviewsByRide(req.params.rideId);
-      res.json({ reviews: revs });
+      return res.json({ reviews: revs });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1264,9 +1264,9 @@ export async function registerRoutes(
   app.get("/api/payment-methods/:username", async (req, res, next) => {
     try {
       const methods = await storage.getPaymentMethods(req.params.username);
-      res.json({ methods });
+      return res.json({ methods });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1281,9 +1281,9 @@ export async function registerRoutes(
       const method = await storage.addPaymentMethod({
         username, type, label, details: details || null, isDefault: isDefault ? "true" : "false",
       });
-      res.status(201).json({ method });
+      return res.status(201).json({ method });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1292,9 +1292,9 @@ export async function registerRoutes(
       const { username } = req.body || {};
       if (!username) return res.status(400).json({ message: "username requerido" });
       await storage.removePaymentMethod(req.params.id, username);
-      res.json({ success: true });
+      return res.json({ success: true });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1303,9 +1303,9 @@ export async function registerRoutes(
       const { username } = req.body || {};
       if (!username) return res.status(400).json({ message: "username requerido" });
       await storage.setDefaultPaymentMethod(req.params.id, username);
-      res.json({ success: true });
+      return res.json({ success: true });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1327,9 +1327,9 @@ export async function registerRoutes(
       if (city !== undefined) updates.city = city;
 
       const updatedRows = await db.update(users).set(updates).where(eq(users.id, user.id)).returning();
-      res.json({ user: sanitizeUser(updatedRows[0]) });
+      return res.json({ user: sanitizeUser(updatedRows[0]) });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1337,9 +1337,9 @@ export async function registerRoutes(
     try {
       const profile = await storage.getUserProfile(req.params.username);
       if (!profile) return res.status(404).json({ message: "Usuario no encontrado" });
-      res.json({ profile });
+      return res.json({ profile });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1361,7 +1361,7 @@ export async function registerRoutes(
         ORDER BY updated_at DESC LIMIT 10
       `);
 
-      res.json({
+      return res.json({
         totalUsers: Number(((usersRes as any).rows ?? usersRes)[0]?.c || 0),
         totalProviders: Number(((providersRes as any).rows ?? providersRes)[0]?.c || 0),
         verifiedUsers: Number(((verifiedRes as any).rows ?? verifiedRes)[0]?.c || 0),
@@ -1373,7 +1373,7 @@ export async function registerRoutes(
         }))
       });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 
@@ -1405,8 +1405,8 @@ export async function registerRoutes(
       `);
       const total = parseInt(((countRow as any).rows ?? (countRow as any))[0]?.total ?? "0");
 
-      res.json({ products, total, hasMore: offset + limit < total });
-    } catch (err) { next(err); }
+      return res.json({ products, total, hasMore: offset + limit < total });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/products/provider/:username
@@ -1421,8 +1421,8 @@ export async function registerRoutes(
         WHERE p.provider_username = ${req.params.username}
         ORDER BY p.created_at DESC
       `);
-      res.json({ products: (rows as any).rows ?? (rows as any) ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ products: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/products — create product with cover image
@@ -1459,8 +1459,8 @@ export async function registerRoutes(
         RETURNING *
       `);
       const product = ((inserted as any).rows ?? (inserted as any))[0];
-      res.json({ product });
-    } catch (err) { next(err); }
+      return res.json({ product });
+    } catch (err) { return next(err); }
   });
 
   // PATCH /api/products/:id — update product
@@ -1499,8 +1499,8 @@ export async function registerRoutes(
         WHERE id = ${req.params.id} AND provider_id = ${user.id}
       `);
       const row = await db.execute(drizzleSql`SELECT * FROM products WHERE id = ${req.params.id}`);
-      res.json({ product: ((row as any).rows ?? (row as any))[0] });
-    } catch (err) { next(err); }
+      return res.json({ product: ((row as any).rows ?? (row as any))[0] });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/products/:id
@@ -1513,8 +1513,8 @@ export async function registerRoutes(
 
       const db = getDb();
       await db.execute(drizzleSql`DELETE FROM products WHERE id = ${req.params.id} AND provider_id = ${user.id}`);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/products/:id/media — add extra media asset (360, video, 3D)
@@ -1546,8 +1546,8 @@ export async function registerRoutes(
         VALUES (${req.params.id}, 'product', ${url}, ${mediaType || 'image'}, ${caption || null}, ${sortOrder})
         RETURNING *
       `);
-      res.json({ asset: ((inserted as any).rows ?? (inserted as any))[0] });
-    } catch (err) { next(err); }
+      return res.json({ asset: ((inserted as any).rows ?? (inserted as any))[0] });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/products/:id/media/:assetId
@@ -1555,8 +1555,8 @@ export async function registerRoutes(
     try {
       const db = getDb();
       await db.execute(drizzleSql`DELETE FROM media_assets WHERE id = ${req.params.assetId} AND entity_id = ${req.params.id}`);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/orders — create order
@@ -1594,8 +1594,8 @@ export async function registerRoutes(
         }).catch(() => {});
       }
 
-      res.json({ order });
-    } catch (err) { next(err); }
+      return res.json({ order });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/orders/buyer/:username
@@ -1610,8 +1610,8 @@ export async function registerRoutes(
         WHERE o.buyer_id = ${buyer.id}
         ORDER BY o.created_at DESC LIMIT 50
       `);
-      res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/orders/provider/:username
@@ -1626,8 +1626,8 @@ export async function registerRoutes(
         WHERE p.provider_username = ${req.params.username}
         ORDER BY o.created_at DESC LIMIT 50
       `);
-      res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // PATCH /api/orders/:id/status
@@ -1639,8 +1639,8 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         UPDATE orders SET status = ${status}, updated_at = now() WHERE id = ${req.params.id}
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/stripe/create-checkout-session
@@ -1685,8 +1685,8 @@ export async function registerRoutes(
         }
       });
 
-      res.json({ url: session.url });
-    } catch (err) { next(err); }
+      return res.json({ url: session.url });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/stripe/webhook
@@ -1700,7 +1700,7 @@ export async function registerRoutes(
 
       const sig = req.headers["stripe-signature"] as string;
       // req.rawBody is provided by express.json verification inside server/index.ts
-      let event = stripe.webhooks.constructEvent(req.rawBody as Buffer, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      let event = stripe.webhooks.constructEvent((req as any).rawBody as Buffer, sig, process.env.STRIPE_WEBHOOK_SECRET);
 
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as any;
@@ -1733,10 +1733,10 @@ export async function registerRoutes(
           }
         }
       }
-      res.json({ received: true });
+      return res.json({ received: true });
     } catch (err: any) {
       console.error("Webhook Error:", err.message);
-      res.status(400).send(`Webhook Error: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
   });
 
@@ -1768,8 +1768,8 @@ export async function registerRoutes(
       const result = hasMore ? posts.slice(0, limit) : posts;
       const nextCursor = hasMore ? result[result.length - 1].created_at : null;
 
-      res.json({ posts: result, nextCursor, hasMore });
-    } catch (err) { next(err); }
+      return res.json({ posts: result, nextCursor, hasMore });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/social/posts — create post with optional media
@@ -1808,8 +1808,8 @@ export async function registerRoutes(
         RETURNING *
       `);
       const post = ((inserted as any).rows ?? (inserted as any))[0];
-      res.json({ post });
-    } catch (err) { next(err); }
+      return res.json({ post });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/social/posts/:id
@@ -1821,8 +1821,8 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_posts WHERE id = ${req.params.id} AND username = ${username}
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/social/posts/:id/like  { username }
@@ -1844,8 +1844,8 @@ export async function registerRoutes(
       `);
       const row = await db.execute(drizzleSql`SELECT likes_count FROM social_posts WHERE id = ${req.params.id}`);
       const count = ((row as any).rows ?? (row as any))[0]?.likes_count ?? 0;
-      res.json({ likes: count });
-    } catch (err) { next(err); }
+      return res.json({ likes: count });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/social/posts/:id/like  { username }
@@ -1868,8 +1868,8 @@ export async function registerRoutes(
       }
       const row = await db.execute(drizzleSql`SELECT likes_count FROM social_posts WHERE id = ${req.params.id}`);
       const count = ((row as any).rows ?? (row as any))[0]?.likes_count ?? 0;
-      res.json({ likes: count });
-    } catch (err) { next(err); }
+      return res.json({ likes: count });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/social/posts/:id/likes/check?username=xxx
@@ -1884,8 +1884,8 @@ export async function registerRoutes(
         SELECT 1 FROM social_likes WHERE post_id = ${req.params.id} AND user_id = ${user.id} LIMIT 1
       `);
       const liked = ((row as any).rows ?? (row as any)).length > 0;
-      res.json({ liked });
-    } catch (err) { next(err); }
+      return res.json({ liked });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/social/posts/:id/comments
@@ -1900,8 +1900,8 @@ export async function registerRoutes(
         ORDER BY c.created_at ASC
         LIMIT 50
       `);
-      res.json({ comments: (rows as any).rows ?? (rows as any) ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ comments: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/social/posts/:id/comments  { username, content }
@@ -1920,8 +1920,8 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         UPDATE social_posts SET comments_count = comments_count + 1 WHERE id = ${req.params.id}
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/social/follow  { followerUsername, followingUsername }
@@ -1939,8 +1939,8 @@ export async function registerRoutes(
         VALUES (${follower.id}, ${following.id})
         ON CONFLICT DO NOTHING
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/social/follow  { followerUsername, followingUsername }
@@ -1956,8 +1956,8 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_followers WHERE follower_id = ${follower.id} AND following_id = ${following.id}
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/social/posts/user/:username — user's own posts
@@ -1972,8 +1972,8 @@ export async function registerRoutes(
         ORDER BY p.created_at DESC
         LIMIT 30
       `);
-      res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // ── DIRECT MESSAGES ───────────────────────────────────────────────────────
@@ -1998,8 +1998,8 @@ export async function registerRoutes(
         ORDER BY last_time DESC
         LIMIT 50
       `);
-      res.json({ conversations: (rows as any).rows ?? rows ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ conversations: (rows as any).rows ?? rows ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/dm/:username/:other — messages between two users
@@ -2019,8 +2019,8 @@ export async function registerRoutes(
         UPDATE direct_messages SET is_read = true
         WHERE to_username = ${username} AND from_username = ${other} AND is_read = false
       `);
-      res.json({ messages: (rows as any).rows ?? rows ?? [] });
-    } catch (err) { next(err); }
+      return res.json({ messages: (rows as any).rows ?? rows ?? [] });
+    } catch (err) { return next(err); }
   });
 
   // POST /api/dm/send — send a direct message
@@ -2037,8 +2037,8 @@ export async function registerRoutes(
         RETURNING *
       `);
       const msg = ((rows as any).rows ?? rows)[0];
-      res.status(201).json({ message: msg });
-    } catch (err) { next(err); }
+      return res.status(201).json({ message: msg });
+    } catch (err) { return next(err); }
   });
 
   // DELETE /api/social/posts/:id — delete own post
@@ -2050,8 +2050,8 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_posts WHERE id = ${req.params.id} AND username = ${username}
       `);
-      res.json({ success: true });
-    } catch (err) { next(err); }
+      return res.json({ success: true });
+    } catch (err) { return next(err); }
   });
 
   // GET /api/users/:username/activity — user activity history
