@@ -27,6 +27,7 @@ function InteriorSphere() {
 interface VRViewerProps {
   mode: 'product' | 'interior';
   onClose: () => void;
+  url?: string;
 }
 
 export default function VRViewer({ mode, onClose }: VRViewerProps) {

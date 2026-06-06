@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development pnpm run build && pnpm run start",
+    "dev": "cross-env NODE_ENV=development PORT=8080 tsx watch src/index.ts",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -51,6 +51,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/pg": "^8.20.0",
+    "@types/stripe": "^8.0.417",
     "cross-env": "^10.1.0",
     "drizzle-kit": "^0.31.10",
     "esbuild": "0.27.3",

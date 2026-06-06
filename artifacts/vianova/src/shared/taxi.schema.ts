@@ -127,5 +127,5 @@ export const withdrawSchema = z.object({
 export type Ride = typeof rides.$inferSelect;
 export type Earning = typeof earnings.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
-export type InsertRide = z.infer<typeof insertRideSchema>;
-export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
+export type InsertRide = typeof rides.$inferInsert;
+export type InsertWithdrawal = typeof withdrawals.$inferInsert;

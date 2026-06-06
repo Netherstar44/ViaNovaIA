@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -45,6 +45,8 @@ export const users = pgTable("users", {
   failedLoginAttempts: integer("failed_login_attempts").default(0),
   lockUntil: timestamp("lock_until"),
   preferences: jsonb("preferences"), // stores user tastes, travel styles, chatbot memory
+  bio: text("bio"),
+  city: text("city").default("Neiva"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -104,15 +106,21 @@ export const services = pgTable("services", {
   whatToBring: text("what_to_bring"),
   schedule: text("schedule"),
   parentHotelId: varchar("parent_hotel_id"),
+  city: text("city").default("Neiva"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  locationId: text("location_id").notNull(), // puede referir a mockData id o services.id
+  locationId: text("location_id").notNull(),
   authorUsername: text("author_username").notNull(),
   content: text("content").notNull(),
   rating: integer("rating"),
+  hidden: boolean("hidden").default(false),
+  replyContent: text("reply_content"),
+  replyCreatedAt: timestamp("reply_created_at"),
+  updatedAt: timestamp("updated_at"),
+  parentCommentId: varchar("parent_comment_id"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -271,6 +279,7 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
   authorUsername: true,
   content: true,
   rating: true,
+  parentCommentId: true,
 });
 
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).pick({
@@ -323,14 +332,14 @@ export const insertBookingSchema = createInsertSchema(bookings);
 export const insertPostSchema = createInsertSchema(posts);
 export const insertPostCommentSchema = createInsertSchema(postComments);
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type InsertService = z.infer<typeof insertServiceSchema>;
-export type InsertComment = z.infer<typeof insertCommentSchema>;
-export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
-export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
+export type InsertUser = typeof users.$inferInsert;
+export type InsertNotification = typeof notifications.$inferInsert;
+export type InsertService = typeof services.$inferInsert;
+export type InsertComment = typeof comments.$inferInsert;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+export type InsertUserRole = typeof userRoles.$inferInsert;
+export type InsertReview = typeof reviews.$inferInsert;
+export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;

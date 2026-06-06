@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -107,7 +107,25 @@ export const services = pgTable("services", {
   schedule: text("schedule"),
   parentHotelId: varchar("parent_hotel_id"),
   city: text("city").default("Neiva"),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  isActive: boolean("is_active").default(true),
+  priceRange: text("price_range"),
+  whatsappNumber: text("whatsapp_number"),
+  paymentMethods: text("payment_methods"),
+  foodCategories: jsonb("food_categories"),
+  acceptsOrders: boolean("accepts_orders").default(true),
+  roomService: boolean("room_service").default(false),
+  roomServiceSchedule: text("room_service_schedule"),
+  hotelMenuSupport: boolean("hotel_menu_support").default(false),
+  hasVR: boolean("has_vr").default(false),
+  hasAR: boolean("has_ar").default(false),
+  vrType: text("vr_type"),
+  vrModelUrl: text("vr_model_url"),
+  vrInteriorUrl: text("vr_interior_url"),
+  externalVrUrl: text("external_vr_url"),
+  menuData: jsonb("menu_data"),
+  mediaGallery: jsonb("media_gallery"),
+  googleMapsUrl: text("google_maps_url"),
+  createdAt: timestamp("created_at").default(sql`now()`), 
 });
 
 export const comments = pgTable("comments", {
@@ -116,7 +134,24 @@ export const comments = pgTable("comments", {
   authorUsername: text("author_username").notNull(),
   content: text("content").notNull(),
   rating: integer("rating"),
+  // Moderación por restaurante (persistidas en BD)
+  hidden: boolean("hidden").default(false),
+  replyContent: text("reply_content"),
+  replyCreatedAt: timestamp("reply_created_at"),
+  // Ventana de edición de 10 minutos para el autor
+  updatedAt: timestamp("updated_at"),
+  // Respuestas anidadas de otros usuarios
+  parentCommentId: varchar("parent_comment_id"),
   createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// ── Analytics de vistas reales de servicios ──────────────────────────────────
+export const serviceViews = pgTable("service_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  serviceId: varchar("service_id").notNull(),
+  viewerUsername: text("viewer_username"),
+  viewType: text("view_type").default("profile"),
+  viewedAt: timestamp("viewed_at").default(sql`now()`),
 });
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
@@ -274,6 +309,7 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
   authorUsername: true,
   content: true,
   rating: true,
+  parentCommentId: true,
 });
 
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).pick({
@@ -326,14 +362,15 @@ export const insertBookingSchema = createInsertSchema(bookings);
 export const insertPostSchema = createInsertSchema(posts);
 export const insertPostCommentSchema = createInsertSchema(postComments);
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type InsertService = z.infer<typeof insertServiceSchema>;
-export type InsertComment = z.infer<typeof insertCommentSchema>;
-export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
-export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
+export type InsertUser = typeof users.$inferInsert;
+export type InsertNotification = typeof notifications.$inferInsert;
+export type InsertService = typeof services.$inferInsert;
+export type InsertComment = typeof comments.$inferInsert;
+export type InsertServiceView = typeof serviceViews.$inferInsert;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+export type InsertUserRole = typeof userRoles.$inferInsert;
+export type InsertReview = typeof reviews.$inferInsert;
+export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
@@ -341,6 +378,7 @@ export type Message = typeof messages.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+export type ServiceView = typeof serviceViews.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type UserRoleRecord = typeof userRoles.$inferSelect;
 export type Review = typeof reviews.$inferSelect;

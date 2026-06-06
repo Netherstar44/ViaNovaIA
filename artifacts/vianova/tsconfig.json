@@ -12,7 +12,7 @@
     "types": ["node", "vite/client"],
     "paths": {
       "@/*": ["./src/*"],
-       "@shared/*": ["../api-server/src/shared/*"]
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "references": [

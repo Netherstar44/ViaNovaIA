@@ -31,24 +31,29 @@ app.use(
   }),
 );
 
-app.use(cors({
-  origin: process.env.NODE_ENV === "production"
-    ? [process.env.CLIENT_URL || "", "http://localhost", "capacitor://localhost"]
-    : true,
-  credentials: true
-}));
-const sessionSecret = process.env.SESSION_SECRET;
-if (!sessionSecret) {
-  logger.warn("SESSION_SECRET env var is not set. Set it in Replit secrets for secure cookie signing.");
-}
-app.use(cookieParser(sessionSecret || undefined));
-app.use(express.json({
-  verify: (req: any, _res, buf) => {
-    req.rawBody = buf;
-  },
-}));
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+import session from "express-session";
+
+// Session middleware (required for Google OAuth)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "default-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { sameSite: "lax", secure: false },
+  })
+);
+
+// Content Security Policy (allows Google auth iframe scripts)
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; frame-src https://accounts.google.com; img-src 'self' data: https://*.cloudinary.com; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5000 https://accounts.google.com;"
+  );
+  next();
+});
 app.use("/api", router);
 
 const httpServer = createServer(app);

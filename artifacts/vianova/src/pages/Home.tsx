@@ -28,7 +28,12 @@ import {
   ArrowLeft,
   Search,
   Filter,
-  Navigation2
+  Navigation2,
+  Clock,
+  DollarSign,
+  ConciergeBell,
+  ImageIcon,
+  Map
 } from "lucide-react";
 
 import Chatbot from "@/components/Chatbot";
@@ -230,11 +235,18 @@ export default function Home() {
                 coordinates: [lat, lng],
                 rating: s.rating || 0,
                 city: s.city ?? 'Neiva',
-                priceRange: undefined,
-                hasVR: false,
-                hasAR: false,
-                contact: undefined,
+                priceRange: s.priceRange || undefined,
+                price: s.price != null ? Number(s.price) : undefined,
+                schedule: s.schedule || undefined,
+                roomService: !!s.roomService,
+                roomServiceSchedule: s.roomServiceSchedule || undefined,
+                hasVR: !!s.hasVR,
+                hasAR: !!s.hasAR,
+                contact: s.contact || undefined,
                 parentHotelId: s.parentHotelId || undefined,
+                googleMapsUrl: s.googleMapsUrl || undefined,
+                mediaGallery: s.mediaGallery || undefined,
+                menuData: s.menuData || undefined,
               });
             }
           }
@@ -459,6 +471,52 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {/* SUB-FILTERS FOR GASTROMONY (V4.1) */}
+                  <AnimatePresence>
+                    {selectedCategory === 'restaurant' && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -20, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -20, height: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        className="flex flex-wrap gap-2 mb-8 p-6 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[32px] border border-primary/20 backdrop-blur-sm"
+                      >
+                        <div className="w-full mb-3 flex items-center gap-2">
+                          <div className="h-1 w-8 bg-primary rounded-full" />
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Especialidades Disponibles</span>
+                        </div>
+                        {['Todos']
+                          .concat(
+                            Array.from(new Set(allLocations
+                              .filter(l => l.category === 'restaurant' && (l as any).foodCategories)
+                              .flatMap(l => (l as any).foodCategories || [])
+                            ))
+                          )
+                          .concat(['Italiana', 'Sushi', 'Carnes'])
+                          .filter((v, i, a) => a.indexOf(v) === i)
+                          .map((sub, idx) => (
+                          <motion.button
+                            key={sub}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.05 }}
+                            onClick={() => {
+                              if (sub === 'Todos') setSearchQuery("");
+                              else setSearchQuery(sub);
+                            }}
+                            className={`px-6 py-2 rounded-2xl border transition-all duration-300 text-xs font-bold ${
+                              searchQuery.toLowerCase() === sub.toLowerCase()
+                                ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(255,215,0,0.3)] scale-105"
+                                : "bg-background/40 border-white/10 text-muted-foreground hover:border-primary/50 hover:text-white"
+                            }`}
+                          >
+                            {sub}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {/* Layout Grid For Cards */}
                   {filteredAll.length === 0 ? (
                     <div className="w-full py-20 text-center flex flex-col items-center justify-center opacity-60">
@@ -536,9 +594,9 @@ export default function Home() {
               <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
               <img src={selectedItem?.image} alt={selectedItem?.name} className="w-full h-full object-cover" />
 
-              <div className="absolute top-6 left-6 z-20">
-                <Button variant="secondary" onClick={handleBackToLanding} className="gap-2 bg-background/60 backdrop-blur hover:bg-background rounded-full pl-3 pr-6 transition-all hover:scale-105">
-                  <ArrowLeft className="h-4 w-4" /> {t('home.back')}
+              <div className="absolute top-20 left-4 md:left-8 z-20">
+                <Button variant="secondary" onClick={handleBackToLanding} className="gap-2 bg-background/80 backdrop-blur-xl hover:bg-background rounded-full pl-4 pr-6 shadow-xl transition-all hover:scale-105 border border-white/10 text-foreground font-semibold">
+                  <ArrowLeft className="h-5 w-5" /> {t('home.back')}
                 </Button>
               </div>
             </div>
@@ -618,19 +676,110 @@ export default function Home() {
                     );
                   })()}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-y border-border/40">
+                  {/* ─── MEDIA GALLERY STRIP ─── */}
+                  {selectedItem?.mediaGallery?.images && selectedItem.mediaGallery.images.length > 0 && (
+                    <div className="mt-6">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-3"><ImageIcon className="h-4 w-4 inline mr-1 text-primary" />Galería ({selectedItem.mediaGallery.images.length} fotos)</p>
+                      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        {selectedItem.mediaGallery.images.slice(0, 8).map((img: string, i: number) => (
+                          <div key={i} className="h-24 w-32 shrink-0 rounded-xl overflow-hidden border border-border/30 shadow-md">
+                            <img src={img} alt={`Foto ${i+1}`} className="h-full w-full object-cover hover:scale-110 transition-transform duration-500 cursor-pointer" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── DIGITAL MENU PREVIEW ─── */}
+                  {selectedItem?.category === 'restaurant' && selectedItem?.menuData && (
+                    <div className="mt-6 bg-secondary/30 rounded-2xl p-5 border border-border/30">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-4">Menú</p>
+                      
+                      {selectedItem.menuData.categories && selectedItem.menuData.categories.length > 0 && (
+                        <div className="space-y-4 max-h-64 overflow-y-auto pr-1 mb-4">
+                          {selectedItem.menuData.categories.map((cat: any) => (
+                            <div key={cat.id}>
+                              <p className="text-sm font-bold text-primary mb-2">{cat.name}</p>
+                              <div className="space-y-1.5">
+                                {cat.items?.filter((it: any) => it.available).slice(0, 5).map((item: any) => (
+                                  <div key={item.id} className="flex justify-between items-center text-sm">
+                                    <span className="text-foreground/90">{item.name}</span>
+                                    <span className="text-primary font-bold ml-4 shrink-0">${item.price?.toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(selectedItem.menuData.pdfUrl || selectedItem.menuData.imageUrl) && (
+                        <div className="flex gap-4">
+                          <Button 
+                            onClick={() => window.open(selectedItem.menuData!.pdfUrl || selectedItem.menuData!.imageUrl, '_blank')} 
+                            className="bg-orange-500 hover:bg-orange-600 text-white font-bold gap-2"
+                          >
+                            <Utensils className="h-4 w-4" /> Ver Carta
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 py-6 border-y border-border/40">
+                    {/* Ubicación / Google Maps */}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Ubicación</span>
-                      <div className="flex items-center gap-2 text-foreground font-medium"><MapPin className="h-4 w-4 text-primary" /> Ver Mapa</div>
+                      {selectedItem?.googleMapsUrl ? (
+                        <a href={selectedItem.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors">
+                          <Map className="h-4 w-4 text-primary" /> Ver en Google Maps
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-2 text-foreground font-medium"><MapPin className="h-4 w-4 text-primary" /> Ver Mapa</div>
+                      )}
                     </div>
+
+                    {/* Rango de Precio */}
                     {selectedItem?.priceRange && (
                       <div className="flex flex-col gap-1">
                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Rango de Precio</span>
                         <div className="flex items-center gap-1 text-foreground font-medium"><span className="text-primary">$</span> {selectedItem.priceRange}</div>
                       </div>
                     )}
+
+                    {/* Precio Promedio */}
+                    {selectedItem?.price != null && selectedItem.price > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Precio Promedio</span>
+                        <div className="flex items-center gap-1 text-foreground font-medium">
+                          <DollarSign className="h-4 w-4 text-emerald-400" />
+                          ~{selectedItem.price.toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Horario */}
+                    {selectedItem?.schedule && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Horario</span>
+                        <div className="flex items-center gap-2 text-foreground font-medium"><Clock className="h-4 w-4 text-primary" /> {selectedItem.schedule}</div>
+                      </div>
+                    )}
+
+                    {/* Room Service */}
+                    {selectedItem?.category === 'restaurant' && selectedItem?.roomService && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Room Service</span>
+                        <div className="flex items-center gap-2 text-foreground font-medium">
+                          <ConciergeBell className="h-4 w-4 text-emerald-400" />
+                          {selectedItem.roomServiceSchedule || 'Disponible'}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contacto */}
                     {selectedItem?.contact && (
-                      <div className="flex flex-col gap-1 col-span-2">
+                      <div className="flex flex-col gap-1">
                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Contacto</span>
                         <div className="flex items-center gap-2 text-foreground font-medium"><Phone className="h-4 w-4 text-primary" /> {selectedItem.contact}</div>
                       </div>
@@ -661,7 +810,17 @@ export default function Home() {
 
                     {selectedItem?.hasVR ? (
                       <>
-                        <Button onClick={(e) => { e.stopPropagation(); setVrMode('product') }} variant="outline" className="h-12 px-6 rounded-xl border-primary/50 text-foreground hover:bg-primary/10 hover:text-primary transition-all">
+                        <Button onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setVrMode('product');
+                          if (selectedItem?.id) {
+                            fetch(`${apiBase}/api/services/${selectedItem.id}/track-click`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ viewerUsername: user?.username || 'anon', type: 'vr' })
+                            }).catch(console.error);
+                          }
+                        }} variant="outline" className="h-12 px-6 rounded-xl border-primary/50 text-foreground hover:bg-primary/10 hover:text-primary transition-all">
                           <Box className="mr-2 h-5 w-5 text-primary" />
                           {t('home.3d_model')}
                         </Button>
@@ -678,7 +837,17 @@ export default function Home() {
                           </DialogContent>
                         </Dialog>
 
-                        <Button onClick={(e) => { e.stopPropagation(); setVrMode('interior') }} className="h-12 px-8 rounded-xl bg-primary text-black font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all">
+                        <Button onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setVrMode('interior');
+                          if (selectedItem?.id) {
+                            fetch(`${apiBase}/api/services/${selectedItem.id}/track-click`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ viewerUsername: user?.username || 'anon', type: 'vr' })
+                            }).catch(console.error);
+                          }
+                        }} className="h-12 px-8 rounded-xl bg-primary text-black font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all">
                           <Eye className="mr-2 h-5 w-5" />
                           {t('home.virtual_tour')}
                         </Button>

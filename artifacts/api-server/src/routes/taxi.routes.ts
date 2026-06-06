@@ -254,7 +254,7 @@ export function registerTaxiRoutes(app: Express): void {
         withdrawals: withdrawalsList,
       });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   });
 

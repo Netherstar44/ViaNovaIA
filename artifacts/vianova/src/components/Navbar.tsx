@@ -303,7 +303,7 @@ export default function Navbar() {
                   </DropdownMenuItem>
                   
                   {isProvider && (
-                    <DropdownMenuItem onClick={() => setLocation("/products")} className="cursor-pointer gap-2">
+                    <DropdownMenuItem onClick={() => setLocation("/my-products")} className="cursor-pointer gap-2">
                       <Package className="h-4 w-4 text-primary" />
                       {t('navbar.products', 'Mis Productos')}
                     </DropdownMenuItem>

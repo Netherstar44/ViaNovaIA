@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "dev": "concurrently --kill-others --names \"API,FE\" --prefix-colors \"cyan,magenta\" \"pnpm --filter @workspace/api-server run dev\" \"pnpm --filter @workspace/vianova run dev\"",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {
+    "concurrently": "^10.0.3",
     "prettier": "^3.8.3",
     "typescript": "~5.6.3"
   }

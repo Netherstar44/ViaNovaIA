@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import RestaurantDashboard from "@/components/RestaurantDashboard";
 
 interface Service {
   id: string;
@@ -215,6 +216,10 @@ export default function MyProducts() {
 
   if (!user || user.role === "traveler") {
     return null;
+  }
+
+  if (user && user.role === "restaurant") {
+    return <RestaurantDashboard />;
   }
 
   // Procesa el link de Google Maps y rellena lat/lng automáticamente

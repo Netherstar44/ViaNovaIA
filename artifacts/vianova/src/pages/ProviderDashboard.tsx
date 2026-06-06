@@ -28,6 +28,7 @@ export default function ProviderDashboard() {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [rating, setRating] = useState<number>(5);
   const [services, setServices] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   const categoryFromRole = (role?: string) => {
     switch (role) {
@@ -48,6 +49,12 @@ export default function ProviderDashboard() {
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message || 'No se pudieron cargar tus servicios');
         setServices(data.services || []);
+        
+        // Fetch analytics for the first service if exists
+        const firstService = data.services?.[0];
+        const analyticsRes = await fetch(`${apiBase}/api/restaurant/analytics/${encodeURIComponent(user.username)}${firstService ? `?serviceId=${firstService.id}` : ''}`);
+        const analyticsData = await analyticsRes.json();
+        setAnalytics(analyticsData);
       } catch (e: any) {
         toast({ title: 'Error', description: e.message || 'No se pudieron cargar tus servicios', variant: 'destructive' });
       }
@@ -290,13 +297,21 @@ export default function ProviderDashboard() {
                      <CardTitle className="text-xl">Métricas de Alto Impacto</CardTitle>
                    </CardHeader>
                    <CardContent className="space-y-5 pt-6">
-                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl">
+                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl border border-white/5">
                        <span className="text-sm font-medium text-white/70">Vistas de Perfil (Mes)</span>
-                       <span className="font-extrabold text-2xl text-white">1,234</span>
+                       <span className="font-extrabold text-2xl text-white">{analytics?.totalViews || 0}</span>
                      </div>
-                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl">
-                       <span className="text-sm font-medium text-white/70">Contactos generados</span>
-                       <span className="font-extrabold text-2xl text-primary">45</span>
+                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl border border-white/5">
+                       <span className="text-sm font-medium text-white/70">Interacciones en VR / 3D</span>
+                       <span className="font-extrabold text-2xl text-primary">{analytics?.vrEngagement || 0}</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl border border-white/5">
+                       <span className="text-sm font-medium text-white/70">Comentarios</span>
+                       <span className="font-extrabold text-2xl text-white">{analytics?.totalComments || 0}</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl border border-white/5">
+                       <span className="text-sm font-medium text-white/70">Rating Promedio</span>
+                       <span className="font-extrabold text-2xl text-yellow-400">{analytics?.avgRating || 0} ★</span>
                      </div>
                    </CardContent>
                 </Card>
