@@ -759,10 +759,6 @@ export async function registerRoutes(
     try {
       const { locationId, includeHidden } = req.query as { locationId?: string; includeHidden?: string };
       if (!locationId) return res.status(400).json({ message: "locationId required" });
-<<<<<<< HEAD
-      const list = await storage.listCommentsByLocation(locationId);
-      return res.json({ comments: list });
-=======
 
       const db = getDb();
       // Obtener todos los comentarios de la ubicación ordenados por fecha
@@ -793,7 +789,6 @@ export async function registerRoutes(
       }));
 
       res.json({ comments: result });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) {
       return next(err);
     }
@@ -1480,11 +1475,7 @@ export async function registerRoutes(
       `);
       const total = parseInt(((countRow as any).rows ?? (countRow as any))[0]?.total ?? "0");
 
-<<<<<<< HEAD
-      return res.json({ products, total, hasMore: offset + limit < total });
-=======
       res.json({ products, total, hasMore: offset + limit < total });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -1500,11 +1491,7 @@ export async function registerRoutes(
         WHERE p.provider_username = ${req.params.username}
         ORDER BY p.created_at DESC
       `);
-<<<<<<< HEAD
-      return res.json({ products: (rows as any).rows ?? (rows as any) ?? [] });
-=======
       res.json({ products: (rows as any).rows ?? (rows as any) ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -1542,11 +1529,7 @@ export async function registerRoutes(
         RETURNING *
       `);
       const product = ((inserted as any).rows ?? (inserted as any))[0];
-<<<<<<< HEAD
-      return res.json({ product });
-=======
       res.json({ product });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -1586,11 +1569,7 @@ export async function registerRoutes(
         WHERE id = ${req.params.id} AND provider_id = ${user.id}
       `);
       const row = await db.execute(drizzleSql`SELECT * FROM products WHERE id = ${req.params.id}`);
-<<<<<<< HEAD
-      return res.json({ product: ((row as any).rows ?? (row as any))[0] });
-=======
       res.json({ product: ((row as any).rows ?? (row as any))[0] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -1604,11 +1583,7 @@ export async function registerRoutes(
 
       const db = getDb();
       await db.execute(drizzleSql`DELETE FROM products WHERE id = ${req.params.id} AND provider_id = ${user.id}`);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -1641,11 +1616,11 @@ export async function registerRoutes(
         VALUES (${req.params.id}, 'product', ${url}, ${mediaType || 'image'}, ${caption || null}, ${sortOrder})
         RETURNING *
       `);
-<<<<<<< HEAD
-      return res.json({ asset: ((inserted as any).rows ?? (inserted as any))[0] });
-=======
+
+            res.json({ asset: ((inserted as any).rows ?? (inserted as any))[0] })
+
       res.json({ asset: ((inserted as any).rows ?? (inserted as any))[0] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1654,11 +1629,11 @@ export async function registerRoutes(
     try {
       const db = getDb();
       await db.execute(drizzleSql`DELETE FROM media_assets WHERE id = ${req.params.assetId} AND entity_id = ${req.params.id}`);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1697,11 +1672,11 @@ export async function registerRoutes(
         }).catch(() => {});
       }
 
-<<<<<<< HEAD
-      return res.json({ order });
-=======
+
+            res.json({ order })
+
       res.json({ order });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1717,11 +1692,11 @@ export async function registerRoutes(
         WHERE o.buyer_id = ${buyer.id}
         ORDER BY o.created_at DESC LIMIT 50
       `);
-<<<<<<< HEAD
-      return res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
-=======
+
+            res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] })
+
       res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1737,11 +1712,11 @@ export async function registerRoutes(
         WHERE p.provider_username = ${req.params.username}
         ORDER BY o.created_at DESC LIMIT 50
       `);
-<<<<<<< HEAD
-      return res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
-=======
+
+            res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] })
+
       res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1762,11 +1737,11 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         UPDATE orders SET status = ${status}, updated_at = now() WHERE id = ${req.params.id}
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1812,11 +1787,11 @@ export async function registerRoutes(
         }
       });
 
-<<<<<<< HEAD
-      return res.json({ url: session.url });
-=======
+
+            res.json({ url: session.url })
+
       res.json({ url: session.url });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1830,11 +1805,7 @@ export async function registerRoutes(
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
       const sig = req.headers["stripe-signature"] as string;
-<<<<<<< HEAD
-      // req.rawBody is provided by express.json verification inside server/index.ts
-=======
       // (req as any).rawBody is provided by express.json verification inside server/index.ts
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
       let event = stripe.webhooks.constructEvent((req as any).rawBody as Buffer, sig, process.env.STRIPE_WEBHOOK_SECRET);
 
       if (event.type === "checkout.session.completed") {
@@ -1903,11 +1874,11 @@ export async function registerRoutes(
       const result = hasMore ? posts.slice(0, limit) : posts;
       const nextCursor = hasMore ? result[result.length - 1].created_at : null;
 
-<<<<<<< HEAD
-      return res.json({ posts: result, nextCursor, hasMore });
-=======
+
+            res.json({ posts: result, nextCursor, hasMore })
+
       res.json({ posts: result, nextCursor, hasMore });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1947,11 +1918,11 @@ export async function registerRoutes(
         RETURNING *
       `);
       const post = ((inserted as any).rows ?? (inserted as any))[0];
-<<<<<<< HEAD
-      return res.json({ post });
-=======
+
+            res.json({ post })
+
       res.json({ post });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1964,11 +1935,11 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_posts WHERE id = ${req.params.id} AND username = ${username}
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -1991,11 +1962,11 @@ export async function registerRoutes(
       `);
       const row = await db.execute(drizzleSql`SELECT likes_count FROM social_posts WHERE id = ${req.params.id}`);
       const count = ((row as any).rows ?? (row as any))[0]?.likes_count ?? 0;
-<<<<<<< HEAD
-      return res.json({ likes: count });
-=======
+
+            res.json({ likes: count })
+
       res.json({ likes: count });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2019,11 +1990,11 @@ export async function registerRoutes(
       }
       const row = await db.execute(drizzleSql`SELECT likes_count FROM social_posts WHERE id = ${req.params.id}`);
       const count = ((row as any).rows ?? (row as any))[0]?.likes_count ?? 0;
-<<<<<<< HEAD
-      return res.json({ likes: count });
-=======
+
+            res.json({ likes: count })
+
       res.json({ likes: count });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2039,11 +2010,11 @@ export async function registerRoutes(
         SELECT 1 FROM social_likes WHERE post_id = ${req.params.id} AND user_id = ${user.id} LIMIT 1
       `);
       const liked = ((row as any).rows ?? (row as any)).length > 0;
-<<<<<<< HEAD
-      return res.json({ liked });
-=======
+
+            res.json({ liked })
+
       res.json({ liked });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2059,11 +2030,11 @@ export async function registerRoutes(
         ORDER BY c.created_at ASC
         LIMIT 50
       `);
-<<<<<<< HEAD
-      return res.json({ comments: (rows as any).rows ?? (rows as any) ?? [] });
-=======
+
+            res.json({ comments: (rows as any).rows ?? (rows as any) ?? [] })
+
       res.json({ comments: (rows as any).rows ?? (rows as any) ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2083,11 +2054,11 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         UPDATE social_posts SET comments_count = comments_count + 1 WHERE id = ${req.params.id}
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2106,11 +2077,11 @@ export async function registerRoutes(
         VALUES (${follower.id}, ${following.id})
         ON CONFLICT DO NOTHING
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2127,11 +2098,11 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_followers WHERE follower_id = ${follower.id} AND following_id = ${following.id}
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2147,11 +2118,11 @@ export async function registerRoutes(
         ORDER BY p.created_at DESC
         LIMIT 30
       `);
-<<<<<<< HEAD
-      return res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] });
-=======
+
+            res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] })
+
       res.json({ posts: (rows as any).rows ?? (rows as any) ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2177,11 +2148,11 @@ export async function registerRoutes(
         ORDER BY last_time DESC
         LIMIT 50
       `);
-<<<<<<< HEAD
-      return res.json({ conversations: (rows as any).rows ?? rows ?? [] });
-=======
+
+            res.json({ conversations: (rows as any).rows ?? rows ?? [] })
+
       res.json({ conversations: (rows as any).rows ?? rows ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2202,11 +2173,11 @@ export async function registerRoutes(
         UPDATE direct_messages SET is_read = true
         WHERE to_username = ${username} AND from_username = ${other} AND is_read = false
       `);
-<<<<<<< HEAD
-      return res.json({ messages: (rows as any).rows ?? rows ?? [] });
-=======
+
+            res.json({ messages: (rows as any).rows ?? rows ?? [] })
+
       res.json({ messages: (rows as any).rows ?? rows ?? [] });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2224,11 +2195,7 @@ export async function registerRoutes(
         RETURNING *
       `);
       const msg = ((rows as any).rows ?? rows)[0];
-<<<<<<< HEAD
-      return res.status(201).json({ message: msg });
-=======
       res.status(201).json({ message: msg });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
     } catch (err) { return next(err); }
   });
 
@@ -2241,11 +2208,11 @@ export async function registerRoutes(
       await db.execute(drizzleSql`
         DELETE FROM social_posts WHERE id = ${req.params.id} AND username = ${username}
       `);
-<<<<<<< HEAD
-      return res.json({ success: true });
-=======
+
+            res.json({ success: true })
+
       res.json({ success: true });
->>>>>>> 869d3a1 (Integracion del dashboard restaurante y vista turista)
+
     } catch (err) { return next(err); }
   });
 
@@ -2562,3 +2529,5 @@ export async function registerRoutes(
 
   return httpServer;
 }
+
+
