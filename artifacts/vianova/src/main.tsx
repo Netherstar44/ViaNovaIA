@@ -1,15 +1,21 @@
 import { createRoot } from "react-dom/client";
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 import App from "./App";
 import "./index.css";
 import "./i18n";
-try {
-  GoogleAuth.initialize({
-    clientId: '963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com',
-    scopes: ['profile', 'email'],
-    grantOfflineAccess: true,
-  });
-} catch (_) {
+// Solo inicializar GoogleAuth en plataformas nativas (Android/iOS)
+// En web, el plugin intenta usar gapi/iframe y genera errores de CSP
+if (Capacitor.isNativePlatform()) {
+  try {
+    GoogleAuth.initialize({
+      clientId: '963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com',
+      scopes: ['profile', 'email'],
+      grantOfflineAccess: true,
+    });
+  } catch (_) {
+    // Ignorar errores de inicialización en plataformas no soportadas
+  }
 }
 // Inject auth token into all /api requests (works in web and Capacitor)
 const originalFetch = window.fetch;

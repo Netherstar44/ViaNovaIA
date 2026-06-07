@@ -46,12 +46,26 @@ app.use(
   })
 );
 
-// Content Security Policy (allows Google auth iframe scripts)
+// Security headers — CSP configurado para permitir Google OAuth correctamente
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; frame-src https://accounts.google.com; img-src 'self' data: https://*.cloudinary.com; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5000 https://accounts.google.com;"
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://www.gstatic.com https://apis.google.com https://accounts.google.com",
+      "frame-src https://accounts.google.com",
+      "frame-ancestors 'none'",
+      "img-src 'self' data: blob: https://*.cloudinary.com https://lh3.googleusercontent.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' http://localhost:* ws://localhost:* https://accounts.google.com https://oauth2.googleapis.com https://openidconnect.googleapis.com https://*.cloudinary.com",
+      "worker-src 'self' blob:",
+    ].join("; ")
   );
+  // Evita que el navegador adivine el MIME type (reduce warnings de consola)
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // Reduce la información de referrer enviada a terceros
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   next();
 });
 app.use("/api", router);
