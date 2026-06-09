@@ -11,25 +11,23 @@ const app: Express = express();
 
 app.set("trust proxy", true);
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req: Request) {
-        return {
-          id: (req as any).id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res: Response) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }) as any
-);
+// Initialize pino-http middleware with proper type handling
+const httpLogger = pinoHttp({
+  logger,
+  serializers: {
+    req: (req: any) => ({
+      id: req.id,
+      method: req.method,
+      url: req.url?.split("?")[0],
+    }),
+    res: (res: any) => ({
+      statusCode: res.statusCode,
+    }),
+  },
+});
+
+// Use the middleware
+app.use(httpLogger);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
