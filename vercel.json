@@ -1,9 +1,12 @@
 {
   "version": 2,
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/vianova run build",
   "outputDirectory": "artifacts/vianova/dist/public",
-  "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
