@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -11,25 +11,23 @@ const app: Express = express();
 
 app.set("trust proxy", true);
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
+// Initialize pino-http middleware with proper type handling
+const httpLogger = pinoHttp({
+  logger,
+  serializers: {
+    req: (req: any) => ({
+      id: req.id,
+      method: req.method,
+      url: req.url?.split("?")[0],
+    }),
+    res: (res: any) => ({
+      statusCode: res.statusCode,
+    }),
+  },
+});
+
+// Use the middleware
+app.use(httpLogger);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -47,7 +45,7 @@ app.use(
 );
 
 // Security headers — CSP configurado para permitir Google OAuth correctamente
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader(
     "Content-Security-Policy",
     [
