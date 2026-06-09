@@ -19,6 +19,7 @@
     "@types/nodemailer": "^8.0.0",
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
+    "@types/pino-http": "^5.8.4",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "bcryptjs": "^3.0.3",
