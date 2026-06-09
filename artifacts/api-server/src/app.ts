@@ -1,4 +1,4 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
@@ -17,7 +17,7 @@ app.use(
     serializers: {
       req(req: Request) {
         return {
-          id: req.id,
+          id: (req as any).id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
@@ -28,7 +28,7 @@ app.use(
         };
       },
     },
-  }),
+  }) as any
 );
 
 app.use(express.json());
@@ -47,7 +47,7 @@ app.use(
 );
 
 // Security headers — CSP configurado para permitir Google OAuth correctamente
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader(
     "Content-Security-Policy",
     [
