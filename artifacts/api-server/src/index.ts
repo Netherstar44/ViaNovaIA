@@ -1,5 +1,9 @@
-import { httpServer } from "./app";
-import { logger } from "./lib/logger";
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+
+import { httpServer } from "./app.js";
+import { logger } from "./lib/logger.js";
 
 const rawPort = process.env["PORT"] ?? "8080";
 

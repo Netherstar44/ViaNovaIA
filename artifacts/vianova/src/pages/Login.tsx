@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { apiBase } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
@@ -20,6 +21,8 @@ export default function Login() {
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPass, setShowLoginPass] = useState(false);
+  const [loginTotpCode, setLoginTotpCode] = useState("");
+  const [showTotpInput, setShowTotpInput] = useState(false);
 
   // Register state
   const [regUsername, setRegUsername] = useState("");
@@ -39,8 +42,9 @@ export default function Login() {
 
   // UI state
   const [viewMode, setViewMode] = useState<ViewMode>("auth");
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [googleTempToken, setGoogleTempToken] = useState<string | null>(null);
 
   const { login, loginDirect, register, isAuthenticated, forgotPassword, verifyResetToken, resetPassword, loading } = useAuth();
   const [_, setLocation] = useLocation();
@@ -48,19 +52,26 @@ export default function Login() {
   // Parse google_user or reset_token from URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const g = params.get("google_user");
     const t = params.get("token");
-    if (g) {
-      try {
-        if (t) localStorage.setItem('auth_token', t);
-        const { username: u, name, email, role, roleChangedAt } = JSON.parse(decodeURIComponent(g));
-        loginDirect(u, role || "traveler", name, email, roleChangedAt);
-        setLocation("/");
-      } catch (err) {
-        console.error("failed to parse google_user", err);
-      }
-    }
+    const g2fa = params.get("google_2fa");
     const rt = params.get("reset_token");
+    
+    if (t && !g2fa && !rt) {
+      localStorage.setItem('auth_token', t);
+      fetch(`${apiBase}/api/auth/me`, { 
+        headers: { "Authorization": `Bearer ${t}` } 
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.user) {
+            loginDirect(data.user.username, data.user.role, data.user.name, data.user.email, data.user.roleChangedAt);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setLocation("/");
+          }
+        })
+        .catch(err => console.error("failed to fetch user after google auth", err));
+    }
+
     if (rt) {
       setResetToken(rt);
       setViewMode("forgot");
@@ -74,6 +85,14 @@ export default function Login() {
           setMessage({ type: "error", text: result.message || "Código inválido o expirado" });
         }
       });
+    }
+
+    const gTempToken = params.get("temp_token");
+    if (g2fa && gTempToken) {
+      setGoogleTempToken(gTempToken);
+      setShowTotpInput(true);
+      setMessage({ type: "info", text: "Verificación de dos pasos requerida por Google" });
+      window.history.replaceState({}, document.title, window.location.pathname); // clear URL
     }
   }, [loginDirect, setLocation]);
 
@@ -139,8 +158,14 @@ export default function Login() {
           
           if (res.ok) {
             const data = await res.json();
-            loginDirect(data.user.username, data.user.role, data.user.name, data.user.email, data.user.roleChangedAt);
-            setLocation("/");
+            if (data.requires2FA) {
+              setGoogleTempToken(data.tempToken);
+              setShowTotpInput(true);
+              setMessage({ type: "info", text: data.message });
+            } else {
+              loginDirect(data.user.username, data.user.role, data.user.name, data.user.email, data.user.roleChangedAt);
+              setLocation("/");
+            }
           } else {
             const data = await res.json();
             setMessage({ type: "error", text: data.message || "Error al iniciar sesión con Google." });
@@ -162,9 +187,42 @@ export default function Login() {
     e.preventDefault();
     clearMessage();
     setIsSubmitting(true);
-    const result = await login(loginUsername, loginPassword);
+
+    if (googleTempToken) {
+      // Complete Google 2FA
+      try {
+        const res = await fetch(`${apiBase}/api/auth/google/2fa`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tempToken: googleTempToken, totpCode: loginTotpCode }),
+          credentials: "include"
+        });
+        const data = await res.json();
+        setIsSubmitting(false);
+        if (res.ok) {
+          loginDirect(data.user.username, data.user.role, data.user.name, data.user.email, data.user.roleChangedAt);
+          setLocation("/");
+        } else {
+          setMessage({ type: "error", text: data.message || "Código inválido" });
+        }
+      } catch (err: any) {
+        setIsSubmitting(false);
+        setMessage({ type: "error", text: "Error de conexión" });
+      }
+      return;
+    }
+
+    const result = await login(loginUsername, loginPassword, loginTotpCode);
     setIsSubmitting(false);
+    
+    if (result.requires2FA) {
+      setShowTotpInput(true);
+      setMessage({ type: "success", text: result.message || "Se requiere código de verificación 2FA" });
+      return;
+    }
+
     if (result.ok) {
+      setShowTotpInput(false);
       setLocation("/");
     } else {
       setMessage({ type: "error", text: result.message || "Error al iniciar sesión" });
@@ -309,7 +367,7 @@ export default function Login() {
 
           <AnimatePresence mode="wait">
             {/* ═══════════════ AUTH VIEW ═══════════════ */}
-            {viewMode === "auth" && (
+            {viewMode === "auth" && !showTotpInput && (
               <motion.div key="auth" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                 <div className="mb-10 lg:text-left text-center">
                   <h2 className="text-3xl font-semibold mb-2">Ingresar</h2>
@@ -356,6 +414,7 @@ export default function Login() {
                           </button>
                         </div>
                       </div>
+
                       <Button className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-4 text-md group" type="submit" disabled={isSubmitting || loading}>
                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verificando...</> : <>Acceder a mi cuenta <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" /></>}
                       </Button>
@@ -404,6 +463,53 @@ export default function Login() {
                     </form>
                   </TabsContent>
                 </Tabs>
+              </motion.div>
+            )}
+
+            {/* ═══════════════ 2FA VERIFICATION VIEW ═══════════════ */}
+            {showTotpInput && (
+              <motion.div key="2fa" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <div className="mb-10 lg:text-left text-center">
+                  <h2 className="text-3xl font-semibold mb-2 flex items-center justify-center lg:justify-start gap-3">
+                    <ShieldCheck className="h-8 w-8 text-primary" />
+                    Seguridad
+                  </h2>
+                  <p className="text-muted-foreground text-sm">Ingresa tu código de doble factor para continuar</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-8">
+                  <div className="bg-secondary/20 p-8 rounded-3xl border border-border/50 text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed px-4">
+                      Tu cuenta está protegida con <strong className="text-foreground">2FA</strong>. Abre tu aplicación de autenticación (ej. Google Authenticator) e ingresa el código actual de 6 dígitos.
+                    </p>
+                    <div className="flex justify-center">
+                      <Input 
+                        id="login-totp-distinct" 
+                        type="text" 
+                        placeholder="000000" 
+                        value={loginTotpCode} 
+                        onChange={(e) => setLoginTotpCode(e.target.value)} 
+                        required 
+                        className="bg-background h-16 w-48 rounded-2xl border-border focus-visible:ring-primary focus-visible:border-primary transition-all font-mono tracking-[0.3em] text-center text-3xl shadow-inner" 
+                        maxLength={6} 
+                        autoFocus
+                        autoComplete="one-time-code"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <Button className="w-full h-14 bg-primary text-black hover:bg-primary/90 font-bold rounded-xl text-lg group shadow-lg shadow-primary/20" type="submit" disabled={isSubmitting || loading}>
+                      {isSubmitting ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verificando...</> : <>Autenticar <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></>}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => { setShowTotpInput(false); setGoogleTempToken(null); }} className="w-full h-12 rounded-xl text-muted-foreground hover:bg-secondary/50">
+                      Cancelar y volver
+                    </Button>
+                  </div>
+                </form>
               </motion.div>
             )}
 

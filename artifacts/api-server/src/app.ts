@@ -11,6 +11,30 @@ const app: Express = express();
 
 app.set("trust proxy", true);
 
+// ── CORS ────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.NGROK_URL,
+  process.env.CLIENT_URL,
+  "http://localhost:5000",
+  "http://localhost:3000",
+].filter(Boolean) as string[];
+
+app.use(
+  cors({
+    origin(requestOrigin, cb) {
+      if (!requestOrigin) return cb(null, true);
+      if (allowedOrigins.some((o) => requestOrigin.startsWith(o))) {
+        return cb(null, true);
+      }
+      cb(new Error(`CORS: origin "${requestOrigin}" not allowed`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    maxAge: 86400,
+  }),
+);
+
 app.use(
   pinoHttp({
     logger,
@@ -33,6 +57,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 import session from "express-session";
 
@@ -42,7 +67,10 @@ app.use(
     secret: process.env.SESSION_SECRET || "default-secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { sameSite: "lax", secure: false },
+    cookie: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
   })
 );
 
@@ -69,6 +97,17 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/api", router);
+
+// ── Global error handler — oculta detalles internos en producción ───────
+app.use((err: any, _req: any, res: any, _next: any) => {
+  const status = err.status || err.statusCode || 500;
+  const isProduction = process.env.NODE_ENV === "production";
+  logger.error({ err, status }, "Unhandled error");
+  res.status(status).json({
+    message: isProduction ? "Error interno del servidor" : (err.message || "Error interno"),
+    ...(isProduction ? {} : { stack: err.stack }),
+  });
+});
 
 const httpServer = createServer(app);
 

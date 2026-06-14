@@ -27,14 +27,19 @@ export default function RoleSelection() {
 
   const handleConfirm = async () => {
     setSubmitting(true);
+    let result;
     if (selected === "traveler") {
-      // Just mark role as "chosen" by calling changeRole even with same value
-      await changeRole("traveler");
+      result = await changeRole("traveler");
     } else {
-      await changeRole(selected);
+      result = await changeRole(selected);
     }
     setSubmitting(false);
-    setLocation("/");
+
+    if (result.ok) {
+      setLocation("/");
+    } else {
+      alert("Error al cambiar rol: " + result.message);
+    }
   };
 
   return (

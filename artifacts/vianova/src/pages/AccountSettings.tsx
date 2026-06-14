@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, User, Building2, Utensils, TentTree, Car, Shield, Check,
   AlertCircle, Loader2, Plus, ChevronDown, Pencil, Save, X, Trash2,
-  Wallet, Star, Languages, MapPin, Camera, Activity,
+  Wallet, Star, Languages, MapPin, Camera, Activity, Lock, Smartphone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PaymentMethods from "@/components/PaymentMethods";
 import { ReviewList } from "@/components/ReviewSystem";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 const ROLES: { value: UserRole; label: string; icon: React.ReactElement; desc: string; color: string; fields: string[] }[] = [
   { value: "traveler", label: "Viajero", icon: <User className="h-5 w-5" />, desc: "Explora destinos, hoteles y experiencias", color: "text-blue-400", fields: [] },
@@ -43,7 +45,8 @@ const FIELD_PLACEHOLDERS: Record<string, string> = {
 };
 
 export default function AccountSettings() {
-  const { user, switchActiveRole, addRole, removeRole, fetchRoles } = useAuth();
+  const { user, logout, switchActiveRole, addRole, removeRole, fetchRoles } = useAuth();
+  const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,12 +78,36 @@ export default function AccountSettings() {
   const [newCity, setNewCity] = useState("");
 
   // Activity
-  const [activityItems, setActivityItems] = useState<any[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activityItems, setActivityItems] = useState<any[]>([]);
+  // 2FA state
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null);
+  const [manualEntryKey, setManualEntryKey] = useState<string | null>(null);
+  const [totpVerifyCode, setTotpVerifyCode] = useState("");
+  const [totpVerifyCode2, setTotpVerifyCode2] = useState("");
+  const [setupTotpMode, setSetupTotpMode] = useState(false);
+  const [loading2FA, setLoading2FA] = useState(false);
+  const [disable2FAStep, setDisable2FAStep] = useState(0);
+
+  // Delete Account State
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleteTotp, setDeleteTotp] = useState("");
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchRoles();
+      // Load current user profile for 2FA status
+      fetch(`${apiBase}/api/auth/me`, { 
+        credentials: "include",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("auth_token")}` }
+      })
+        .then(r => r.json())
+        .then(d => { if (d.user) setTotpEnabled(d.user.totpEnabled); })
+        .catch(() => {});
+
       // Load activity
       setLoadingActivity(true);
       fetch(`${apiBase}/api/users/${user.username}/activity`, { credentials: "include" })
@@ -105,6 +132,31 @@ export default function AccountSettings() {
       }
     }
   }, [user?.username, user?.role]);
+
+  const handleDeleteAccount = async () => {
+    setLoadingDelete(true);
+    try {
+      const res = await fetch(`${apiBase}/api/users/me`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ confirmText, totpCode: deleteTotp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al eliminar cuenta");
+
+      toast({ title: "Cuenta Eliminada", description: "Tu cuenta y todos tus datos han sido borrados." });
+      logout();
+      setLocation("/");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
 
   if (!user) {
     setLocation("/login");
@@ -229,6 +281,87 @@ export default function AccountSettings() {
     if (!newCity.trim()) return;
     await patchProfile({ city: newCity });
     setIsEditingCity(false);
+  };
+
+  const handleSetup2FA = async () => {
+    setLoading2FA(true);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/2fa/setup`, { 
+        method: "POST", 
+        credentials: "include",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("auth_token")}` }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        // Backend says 2FA is already enabled — switch UI to show "activated" panel
+        if (res.status === 400 && data.message?.includes("activado")) {
+          setTotpEnabled(true);
+          return;
+        }
+        throw new Error(data.message);
+      }
+      setQrCodeData(data.qrDataUrl);
+      setManualEntryKey(data.manualEntry);
+      setSetupTotpMode(true);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Error al configurar 2FA" });
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    setLoading2FA(true);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/2fa/verify`, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ token: totpVerifyCode }),
+        credentials: "include" 
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setTotpEnabled(true);
+      setSetupTotpMode(false);
+      setTotpVerifyCode("");
+      setMessage({ type: "success", text: "Autenticación 2FA activada correctamente" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Código inválido o expirado" });
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    if (!totpVerifyCode) {
+      setMessage({ type: "error", text: "Ingresa el código para desactivar el 2FA" });
+      return;
+    }
+    setLoading2FA(true);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/2fa/disable`, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`
+        },
+        body: JSON.stringify({ code: totpVerifyCode }),
+        credentials: "include" 
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setTotpEnabled(false);
+      setTotpVerifyCode("");
+      setDisable2FAStep(0);
+      setMessage({ type: "success", text: "Autenticación 2FA desactivada" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Código inválido" });
+    } finally {
+      setLoading2FA(false);
+    }
   };
 
   return (
@@ -601,6 +734,135 @@ export default function AccountSettings() {
                 </motion.div>
               )}
 
+              {/* ── Security / 2FA ── */}
+              <div className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                  <Shield className="w-32 h-32" />
+                </div>
+                <h2 className="text-lg font-bold flex items-center gap-2 mb-4 relative z-10">
+                  <Lock className="h-5 w-5 text-primary" />
+                  Seguridad Avanzada (2FA)
+                </h2>
+                
+                <div className="relative z-10">
+                  {totpEnabled ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                        <Check className="h-6 w-6 text-green-500" />
+                        <div>
+                          <p className="font-semibold text-green-400">Protección Activa</p>
+                          <p className="text-xs text-green-500/70">Tu cuenta está protegida con autenticación de dos factores.</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-border/40 space-y-3">
+                        {disable2FAStep === 0 && (
+                          <>
+                            <p className="text-sm font-medium">Desactivar 2FA</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Si desactivas la autenticación de dos factores, tu cuenta será menos segura.
+                            </p>
+                            <Button variant="outline" onClick={() => setDisable2FAStep(1)} className="rounded-lg text-xs w-full max-w-sm mt-2 border-red-500/50 text-red-500 hover:bg-red-500/10">
+                              Desactivar 2FA
+                            </Button>
+                          </>
+                        )}
+                        {disable2FAStep === 1 && (
+                          <>
+                            <p className="text-sm font-medium">1. Verificación de Identidad</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Ingresa un código actual generado por tu aplicación para confirmar tu identidad.
+                            </p>
+                            <div className="max-w-sm">
+                              <input 
+                                type="text" 
+                                placeholder="Código 2FA" 
+                                value={totpVerifyCode} 
+                                onChange={(e) => setTotpVerifyCode(e.target.value)} 
+                                className="w-full bg-secondary/30 border border-border/50 rounded-lg px-3 py-2 text-sm font-mono tracking-widest text-center focus:outline-none focus:border-primary/50" 
+                                maxLength={6}
+                              />
+                            </div>
+                            <div className="flex gap-2 max-w-sm mt-2">
+                              <Button variant="ghost" onClick={() => { setDisable2FAStep(0); setTotpVerifyCode(""); }} className="rounded-lg text-xs flex-1">
+                                Cancelar
+                              </Button>
+                              <Button disabled={!totpVerifyCode || totpVerifyCode.length !== 6} onClick={() => setDisable2FAStep(2)} className="rounded-lg text-xs flex-1 bg-primary text-black hover:bg-primary/90">
+                                Continuar
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                        {disable2FAStep === 2 && (
+                          <>
+                            <p className="text-sm font-medium text-red-500">2. Confirmación Final</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              ¿Estás absolutamente seguro de que deseas deshabilitar la seguridad 2FA?
+                            </p>
+                            <div className="flex gap-2 max-w-sm mt-2">
+                              <Button variant="ghost" disabled={loading2FA} onClick={() => { setDisable2FAStep(0); setTotpVerifyCode(""); }} className="rounded-lg text-xs flex-1">
+                                Cancelar
+                              </Button>
+                              <Button variant="destructive" disabled={loading2FA} onClick={handleDisable2FA} className="rounded-lg text-xs flex-1 bg-red-600 hover:bg-red-700">
+                                {loading2FA ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sí, desactivar"}
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : !setupTotpMode ? (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Protege tu cuenta con la <strong>Autenticación de Dos Factores (2FA)</strong>. Te pediremos un código generado por tu aplicación móvil (como Google Authenticator o Authy) cada vez que inicies sesión.
+                      </p>
+                      <Button onClick={handleSetup2FA} disabled={loading2FA} className="gap-2 bg-primary text-black hover:bg-primary/90 font-semibold rounded-xl">
+                        {loading2FA ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smartphone className="h-4 w-4" />}
+                        Configurar Autenticador
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
+                      <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-secondary/20 rounded-xl border border-border/40">
+                        {qrCodeData && (
+                          <div className="bg-white p-2 rounded-lg shrink-0">
+                            <img src={qrCodeData} alt="QR Code" className="w-32 h-32" />
+                          </div>
+                        )}
+                        <div className="space-y-2 flex-1 text-center sm:text-left">
+                          <p className="text-sm font-medium">1. Escanea el código QR</p>
+                          <p className="text-xs text-muted-foreground">Abre tu aplicación de autenticación y escanea el código. Si no puedes escanearlo, ingresa esta clave manualmente:</p>
+                          <div className="bg-background/80 p-2 rounded border border-border font-mono text-xs tracking-wider break-all text-center">
+                            {manualEntryKey}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">2. Verifica el código</p>
+                        <p className="text-xs text-muted-foreground">Ingresa el código de 6 dígitos generado por la aplicación para confirmar la configuración.</p>
+                        <div className="flex gap-2 max-w-sm">
+                          <input 
+                            type="text" 
+                            placeholder="000000" 
+                            value={totpVerifyCode} 
+                            onChange={(e) => setTotpVerifyCode(e.target.value)} 
+                            className="flex-1 bg-background border border-primary/40 focus:border-primary rounded-lg px-3 py-2 text-lg font-mono tracking-widest text-center focus:outline-none" 
+                            maxLength={6}
+                          />
+                          <Button onClick={handleVerify2FA} disabled={loading2FA || totpVerifyCode.length !== 6} className="bg-primary text-black hover:bg-primary/90 rounded-lg">
+                            {loading2FA ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <Button variant="ghost" size="sm" onClick={() => { setSetupTotpMode(false); setTotpVerifyCode(""); }} className="text-xs text-muted-foreground hover:text-foreground -ml-2">
+                        <X className="h-3.5 w-3.5 mr-1" /> Cancelar configuración
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* ── Reviews ── */}
               <div className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
@@ -653,6 +915,96 @@ export default function AccountSettings() {
                       );
                     })}
                   </div>
+                )}
+              </div>
+
+              {/* ── Zona de Peligro: Eliminar Cuenta ── */}
+              <div className="bg-red-950/20 border border-red-900/30 rounded-2xl p-6 shadow-sm">
+                <h2 className="text-lg font-bold flex items-center gap-2 mb-2 text-red-500">
+                  <AlertCircle className="h-5 w-5" />
+                  Zona de Peligro
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Una vez que elimines tu cuenta, no hay vuelta atrás. Se borrarán permanentemente tus datos, reservas, comentarios y perfil (Derecho al olvido).
+                </p>
+
+                {deleteStep === 0 && (
+                  <Button variant="destructive" onClick={() => setDeleteStep(1)} className="w-full sm:w-auto">
+                    Eliminar mi cuenta
+                  </Button>
+                )}
+
+                {deleteStep === 1 && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 bg-background/50 p-4 rounded-xl border border-border">
+                    <p className="text-sm font-medium">1. Verificación de identidad</p>
+                    {totpEnabled ? (
+                      <div className="space-y-2">
+                        <Label>Código 2FA</Label>
+                        <p className="text-xs text-muted-foreground mb-2">Ingresa el código de 6 dígitos de tu aplicación autenticadora.</p>
+                        <input 
+                          type="text" 
+                          value={deleteTotp} 
+                          onChange={(e) => setDeleteTotp(e.target.value)} 
+                          className="w-full bg-background border border-border focus:border-red-500/50 rounded-lg px-3 py-2 text-lg font-mono tracking-widest text-center focus:outline-none" 
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label>Confirmación Manual</Label>
+                        <p className="text-xs text-muted-foreground mb-2">Para continuar, escribe la palabra <strong>ELIMINAR</strong> en mayúsculas.</p>
+                        <input 
+                          type="text" 
+                          value={confirmText} 
+                          onChange={(e) => setConfirmText(e.target.value)} 
+                          className="w-full bg-background border border-border focus:border-red-500/50 rounded-lg px-3 py-2 text-sm text-center font-bold tracking-widest focus:outline-none" 
+                          placeholder="ELIMINAR"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="ghost" onClick={() => { setDeleteStep(0); setConfirmText(""); setDeleteTotp(""); }} className="flex-1">
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => setDeleteStep(2)} 
+                        disabled={totpEnabled ? deleteTotp.length !== 6 : confirmText !== "ELIMINAR"}
+                        className="flex-1"
+                      >
+                        Siguiente
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {deleteStep === 2 && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 bg-red-950/40 p-4 rounded-xl border border-red-900/50">
+                    <div className="flex items-start gap-3 text-red-500">
+                      <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold">¿Estás absolutamente seguro?</p>
+                        <p className="text-xs text-red-400">Esta acción no se puede deshacer. Todos tus datos desaparecerán de nuestros servidores inmediatamente.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="ghost" onClick={() => { setDeleteStep(0); setConfirmText(""); setDeleteTotp(""); }} className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-900/20">
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteAccount} 
+                        disabled={loadingDelete}
+                        className="flex-1 bg-red-600 hover:bg-red-700"
+                      >
+                        {loadingDelete ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Sí, eliminar para siempre
+                      </Button>
+                    </div>
+                  </motion.div>
                 )}
               </div>
 

@@ -16,7 +16,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (username: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  login: (username: string, password: string, totpCode?: string) => Promise<{ ok: boolean; message?: string; requires2FA?: boolean }>;
   loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null) => void;
   register: (data: {
     username: string;
@@ -67,16 +67,22 @@ export const useAuth = create<AuthState>((set, get) => {
     isAuthenticated: !!localStorage.getItem('user'),
     loading: true,
 
-    login: async (username: string, password: string) => {
+    login: async (username: string, password: string, totpCode?: string) => {
       set({ loading: true });
       try {
         const res = await fetch(apiBase + '/api/auth/login', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password, totpCode }),
         });
         const data = await res.json();
+        
+        if (res.status === 200 && data.requires2FA) {
+          set({ loading: false });
+          return { ok: false, requires2FA: true, message: data.message };
+        }
+
         if (!res.ok) {
           set({ loading: false });
           return { ok: false, message: data.message || 'Error al iniciar sesión' };

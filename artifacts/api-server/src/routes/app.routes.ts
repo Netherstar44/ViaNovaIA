@@ -8,12 +8,17 @@ import { socialRouter } from "./social.routes.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { z } from "zod";
-import { insertServiceSchema, insertCommentSchema, comments, users, serviceViews } from "../shared/schema.js";
+import { insertServiceSchema, insertCommentSchema, comments, users, serviceViews, conversations, messages, reviews, paymentMethods, userRoles, services, passwordResetTokens, userKeyPairs } from "../shared/schema.js";
 import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail, sendCustomEmail } from "../mailer.js";
+import { logger } from "../lib/logger.js";
+import { logAction } from "../lib/audit.js";
+import { generateTotpSetup, verifyTotp } from "../lib/totp.js";
+import { generateAccessToken, createRefreshToken, rotateRefreshToken, revokeAllUserTokens, hashToken, getJwtSecret } from "../lib/refresh-tokens.js";
+import { refreshTokens } from "../shared/schema.js";
 import rateLimit from "express-rate-limit";
 // Filtro básico de groserías (reemplaza 'bad-words' por problemas de ESM)
 class Filter {
@@ -45,7 +50,21 @@ profanityFilter.addWords('puta', 'mierda', 'malparido', 'gonorrea', 'hijueputa',
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 10, // 10 peticiones por ventana
-  message: { message: "Demasiados intentos. Por favor, inténtalo de nuevo más tarde." }
+  message: { message: "Demasiados intentos. Por favor, inténtalo de nuevo más tarde." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 5, // 5 intentos por hora
+  message: { message: "Demasiados intentos de recuperación. Inténtalo más tarde." },
+});
+
+const totpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 30, // 30 intentos temporalmente
+  message: { message: "Demasiados intentos de verificación 2FA." },
 });
 
 const uploadLimiter = rateLimit({
@@ -90,7 +109,7 @@ function configureCloudinary() {
 
 // Helper: strip sensitive fields from user object before sending to client
 function sanitizeUser(user: any) {
-  const { password, ...safe } = user;
+  const { password, totpSecret, ...safe } = user;
   // Convertir roleChangedAt null a undefined para no disparar redirect de nuevo rol
   // Solo debe ser null cuando el backend específicamente quiere indicar "usuario nuevo sin rol"
   // Para usuarios existentes (creados antes del sistema de roles) usamos undefined
@@ -100,35 +119,77 @@ function sanitizeUser(user: any) {
   return safe;
 }
 
-// Configuración de JWT
-if (!process.env.JWT_SECRET) {
-  console.warn("[WARN] JWT_SECRET env var is not set — using a random ephemeral secret. Set JWT_SECRET in Replit secrets for persistent sessions.");
-}
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
+// JWT secret is now lazily loaded via getJwtSecret() from refresh-tokens.ts
+// This ensures the .env file is already loaded by dotenv before the secret is read.
 const isProd = process.env.NODE_ENV === "production";
-const COOKIE_OPTIONS = {
+const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: isProd,
   sameSite: isProd ? "none" as const : "lax" as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+  maxAge: 15 * 60 * 1000, // 15 minutos (access token)
 };
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" as const : "lax" as const,
+  path: "/api/auth", // solo se envía a rutas de auth
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 días
+};
+// Legacy alias for backward compatibility with existing endpoints
+const COOKIE_OPTIONS = ACCESS_COOKIE_OPTIONS;
 
 function generateToken(user: any) {
-  return jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, getJwtSecret(), { expiresIn: '15m' });
+}
+
+/** Issue both cookies (access + refresh) and return tokens. */
+async function issueTokenPair(res: any, user: any, req?: any) {
+  const accessToken = generateAccessToken(user);
+  const { rawToken: refreshToken } = await createRefreshToken(user.id, {
+    userAgent: req?.headers?.["user-agent"],
+    ipAddress: (req?.headers?.["x-forwarded-for"] as string)?.split(",")[0] || req?.socket?.remoteAddress,
+  });
+  res.cookie("token", accessToken, ACCESS_COOKIE_OPTIONS);
+  res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
+  return { accessToken, refreshToken };
 }
 
 // Middleware de Autenticación
-export function requireAuth(req: any, res: any, next: any) {
+export async function requireAuth(req: any, res: any, next: any) {
   const token = req.cookies?.token || req.headers.authorization?.split(" ")[1];
   if (!token) {
     return res.status(401).json({ message: "No autenticado" });
   }
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded;
     next();
-  } catch (err) {
-    res.status(401).json({ message: "Sesión inválida o expirada" });
+  } catch (err: any) {
+    // Si el token expiró, intenta refrescarlo
+    if (err.name === "TokenExpiredError") {
+      const rt = req.cookies?.refreshToken;
+      if (!rt) {
+        return res.status(401).json({ message: "Sesión expirada. Inicia sesión nuevamente." });
+      }
+      try {
+        const result = await rotateRefreshToken(rt, {
+          userAgent: req.headers["user-agent"],
+          ipAddress: (req.headers["x-forwarded-for"] as string)?.split(",")[0] || req.socket?.remoteAddress,
+        });
+        if (!result) {
+          return res.status(401).json({ message: "No se pudo renovar la sesión" });
+        }
+        // Actualiza las cookies y req.user
+        res.cookie("token", result.accessToken, ACCESS_COOKIE_OPTIONS);
+        res.cookie("refreshToken", result.rawRefreshToken, REFRESH_COOKIE_OPTIONS);
+        req.user = jwt.verify(result.accessToken, getJwtSecret());
+        next();
+      } catch (refreshErr) {
+        return res.status(401).json({ message: "Sesión expirada. Inicia sesión nuevamente." });
+      }
+    } else {
+      res.status(401).json({ message: "Sesión inválida" });
+    }
   }
 }
 
@@ -157,8 +218,14 @@ export async function registerRoutes(
   // Setup Socket.IO
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
+      origin: [
+        process.env.NGROK_URL,
+        process.env.CLIENT_URL,
+        "http://localhost:5000",
+        "http://localhost:3000",
+      ].filter(Boolean) as string[],
+      methods: ["GET", "POST"],
+      credentials: true,
     }
   });
 
@@ -247,9 +314,9 @@ export async function registerRoutes(
         html: `<p>Hola ${name || username},</p><p>Tu código de verificación es: <strong>${verificationToken}</strong></p>`
       }).catch(console.error);
 
-      const token = generateToken(user);
-      res.cookie("token", token, COOKIE_OPTIONS);
-      return res.json({ user: sanitizeUser(user), token });
+      const { accessToken } = await issueTokenPair(res, user, req);
+      logAction("register", { userId: user.id, username: user.username, req });
+      return res.json({ user: sanitizeUser(user), token: accessToken });
     } catch (err) {
       return next(err);
     }
@@ -281,10 +348,10 @@ export async function registerRoutes(
     }
   });
 
-  // ─── AUTH: Login ─────────────────────────────────────────────────────────────
+  // ─── AUTH: Login (con lockout + 2FA) ─────────────────────────────────────────
   app.post("/api/auth/login", authLimiter, async (req, res, next) => {
     try {
-      const { username, password } = req.body || {};
+      const { username, password, totpCode } = req.body || {};
 
       if (!username || !password) {
         return res.status(400).json({ message: "username y password son obligatorios" });
@@ -296,17 +363,46 @@ export async function registerRoutes(
         user = await storage.getUserByEmail(username);
       }
       if (!user) {
-        return res.status(401).json({ message: "Usuario no encontrado" });
+        logAction("login_failed", { username, details: { reason: "user_not_found" }, status: "failure", req });
+        return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+
+      // Account lockout check
+      if (user.lockUntil && new Date(user.lockUntil) > new Date()) {
+        const remaining = Math.ceil((new Date(user.lockUntil).getTime() - Date.now()) / 60000);
+        return res.status(423).json({ message: `Cuenta bloqueada. Intenta en ${remaining} minuto(s).` });
       }
 
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) {
-        return res.status(401).json({ message: "Contraseña incorrecta" });
+        const db = getDb();
+        const attempts = (user.failedLoginAttempts || 0) + 1;
+        const lockUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null; // lock 15min after 5 fails
+        await db.update(users).set({ failedLoginAttempts: attempts, lockUntil }).where(eq(users.id, user.id));
+        logAction("login_failed", { userId: user.id, username: user.username, details: { attempts }, status: "failure", req });
+        return res.status(401).json({ message: "Credenciales inválidas" });
       }
 
-      const token = generateToken(user);
-      res.cookie("token", token, COOKIE_OPTIONS);
-      return res.json({ user: sanitizeUser(user), token });
+      // 2FA check
+      if (user.totpEnabled && user.totpSecret) {
+        if (!totpCode) {
+          return res.status(200).json({ requires2FA: true, message: "Se requiere código 2FA" });
+        }
+        if (!verifyTotp(user.totpSecret, totpCode)) {
+          logAction("login_failed", { userId: user.id, username: user.username, details: { reason: "invalid_2fa" }, status: "failure", req });
+          return res.status(401).json({ message: "Código 2FA inválido" });
+        }
+      }
+
+      // Reset failed attempts on success
+      if (user.failedLoginAttempts && user.failedLoginAttempts > 0) {
+        const db = getDb();
+        await db.update(users).set({ failedLoginAttempts: 0, lockUntil: null }).where(eq(users.id, user.id));
+      }
+
+      const { accessToken } = await issueTokenPair(res, user, req);
+      logAction("login", { userId: user.id, username: user.username, req });
+      return res.json({ user: sanitizeUser(user), token: accessToken });
     } catch (err) {
       return next(err);
     }
@@ -323,15 +419,275 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/logout", (req, res) => {
-    res.clearCookie("token", COOKIE_OPTIONS);
+  app.post("/api/auth/logout", async (req: any, res) => {
+    // Revoke refresh token if present
+    const rt = req.cookies?.refreshToken;
+    if (rt) {
+      const db = getDb();
+      const h = hashToken(rt);
+      await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.tokenHash, h)).catch(() => {});
+    }
+    const decoded = req.user || (req.cookies?.token ? jwt.decode(req.cookies.token) as any : null);
+    if (decoded) logAction("logout", { userId: decoded.id, username: decoded.username, req });
+    res.clearCookie("token", ACCESS_COOKIE_OPTIONS);
+    res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
     res.json({ message: "Sesión cerrada" });
+  });
+
+  // ─── AUTH: Refresh Token ────────────────────────────────────────────────────
+  app.post("/api/auth/refresh", async (req, res) => {
+    const rt = req.cookies?.refreshToken || req.body?.refreshToken;
+    if (!rt) return res.status(401).json({ message: "No refresh token" });
+
+    const result = await rotateRefreshToken(rt, {
+      userAgent: req.headers["user-agent"],
+      ipAddress: (req.headers["x-forwarded-for"] as string)?.split(",")[0] || req.socket?.remoteAddress,
+    });
+    if (!result) return res.status(401).json({ message: "Refresh token inválido o expirado" });
+
+    res.cookie("token", result.accessToken, ACCESS_COOKIE_OPTIONS);
+    res.cookie("refreshToken", result.rawRefreshToken, REFRESH_COOKIE_OPTIONS);
+    logAction("token_refresh", { userId: result.user.id, username: result.user.username, req });
+    return res.json({ token: result.accessToken });
+  });
+
+  // ─── 2FA: Setup ─────────────────────────────────────────────────────────────
+  app.post("/api/auth/2fa/setup", requireAuth, async (req: any, res, next) => {
+    try {
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      if (user.totpEnabled) return res.status(400).json({ message: "2FA ya está activado" });
+
+      const { encryptedSecret, qrDataUrl, manualEntry } = await generateTotpSetup(user.username);
+
+      // Store encrypted secret temporarily (not enabled yet)
+      const db = getDb();
+      await db.update(users).set({ totpSecret: encryptedSecret }).where(eq(users.id, user.id));
+
+      return res.json({ qrDataUrl, manualEntry });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ─── 2FA: Verify & Enable ───────────────────────────────────────────────────
+  app.post("/api/auth/2fa/verify", requireAuth, totpLimiter, async (req: any, res, next) => {
+    try {
+      const { code, token } = req.body || {};
+      const verifyCode = code || token;
+      if (!verifyCode) return res.status(400).json({ message: "Código requerido" });
+
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user || !user.totpSecret) return res.status(400).json({ message: "Primero ejecuta /2fa/setup" });
+
+      if (!verifyTotp(user.totpSecret, verifyCode)) {
+        return res.status(400).json({ message: "Código inválido. Intenta de nuevo." });
+      }
+
+      const db = getDb();
+      await db.update(users).set({ totpEnabled: true }).where(eq(users.id, user.id));
+      logAction("2fa_enable", { userId: user.id, username: user.username, req });
+      return res.json({ message: "2FA activado exitosamente" });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ─── 2FA: Disable ───────────────────────────────────────────────────────────
+  app.post("/api/auth/2fa/disable", requireAuth, async (req: any, res, next) => {
+    try {
+      const { code1, code2, code } = req.body || {};
+      const verifyCode = code || code1;
+      if (!verifyCode) return res.status(400).json({ message: "Se requiere un código de verificación" });
+
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      if (!user.totpSecret) return res.status(400).json({ message: "2FA no está activado" });
+
+      if (!verifyTotp(user.totpSecret, verifyCode)) {
+        return res.status(400).json({ message: "El código es inválido o ha expirado. Intenta de nuevo." });
+      }
+
+      const db = getDb();
+      await db.update(users).set({ totpEnabled: false, totpSecret: null }).where(eq(users.id, user.id));
+      logAction("2fa_disable", { userId: user.id, username: user.username, req });
+      return res.json({ message: "2FA desactivado" });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ─── AUTH: Audit Log ────────────────────────────────────────────────────────
+  app.get("/api/auth/audit-log", requireAuth, async (req: any, res, next) => {
+    try {
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      const { getUserAuditLogs } = await import("../lib/audit.js");
+      const logs = await getUserAuditLogs(user.id, 50);
+      return res.json({ logs });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ─── AUTH: Eliminar cuenta (Derecho al olvido) ─────────────────────────────
+  app.delete("/api/auth/account", requireAuth, async (req: any, res, next) => {
+    try {
+      const { password } = req.body || {};
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      // Verificar contraseña antes de eliminar (skip para cuentas Google)
+      const isGoogleAccount = user.password.startsWith("google_oauth_") ||
+        (!await bcrypt.compare(password || "", user.password) && !password);
+      
+      if (!isGoogleAccount) {
+        if (!password) return res.status(400).json({ message: "La contraseña es obligatoria para confirmar la eliminación" });
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) return res.status(401).json({ message: "Contraseña incorrecta" });
+      }
+
+      const db = getDb();
+
+      // Cascada de eliminación de todos los datos del usuario
+      // 1. Mensajes del chatbot (via conversations)
+      const convos = await db.select({ id: conversations.id }).from(conversations).where(eq(conversations.userId, user.id));
+      for (const c of convos) {
+        await db.delete(messages).where(eq(messages.conversationId, c.id));
+      }
+      await db.delete(conversations).where(eq(conversations.userId, user.id));
+
+      // 2. Comentarios del usuario
+      await db.delete(comments).where(eq(comments.authorUsername, user.username));
+
+      // 3. Reviews escritas por el usuario
+      await db.delete(reviews).where(eq(reviews.authorUsername, user.username));
+
+      // 4. Notificaciones
+      await db.execute(drizzleSql`DELETE FROM notifications WHERE provider_username = ${user.username} OR traveler_username = ${user.username}`);
+
+      // 5. Métodos de pago
+      await db.delete(paymentMethods).where(eq(paymentMethods.username, user.username));
+
+      // 6. Roles del usuario
+      await db.delete(userRoles).where(eq(userRoles.userId, user.id));
+
+      // 7. Servicios del usuario
+      await db.delete(services).where(eq(services.providerUsername, user.username));
+
+      // 8. Password reset tokens
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, user.id));
+
+      // 9. Posts sociales
+      await db.execute(drizzleSql`DELETE FROM post_likes WHERE username = ${user.username}`);
+      await db.execute(drizzleSql`DELETE FROM post_comments WHERE username = ${user.username}`);
+      await db.execute(drizzleSql`
+        DELETE FROM post_likes WHERE post_id IN (SELECT id FROM posts WHERE author_username = ${user.username})
+      `);
+      await db.execute(drizzleSql`
+        DELETE FROM post_comments WHERE post_id IN (SELECT id FROM posts WHERE author_username = ${user.username})
+      `);
+      await db.execute(drizzleSql`DELETE FROM posts WHERE author_username = ${user.username}`);
+
+      // 10. Finalmente, eliminar el usuario
+      await db.delete(users).where(eq(users.id, user.id));
+
+      res.clearCookie("token", COOKIE_OPTIONS);
+      logger.info({ username: user.username }, "Account deleted (right to be forgotten)");
+      return res.json({ message: "Tu cuenta y todos tus datos han sido eliminados permanentemente." });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ─── E2EE (End-to-End Encryption) Keys ──────────────────────────────────────
+  app.post("/api/e2ee/keys", requireAuth, async (req: any, res, next) => {
+    try {
+      const { publicKey, encryptedPrivateKey, algorithm } = req.body;
+      if (!publicKey || !encryptedPrivateKey) {
+        return res.status(400).json({ message: "publicKey and encryptedPrivateKey are required" });
+      }
+
+      const db = getDb();
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Upsert the keys
+      await db.insert(userKeyPairs)
+        .values({
+          userId: user.id,
+          publicKey,
+          encryptedPrivateKey,
+          algorithm: algorithm || "X25519",
+          updatedAt: new Date()
+        })
+        .onConflictDoUpdate({
+          target: userKeyPairs.userId,
+          set: {
+            publicKey,
+            encryptedPrivateKey,
+            algorithm: algorithm || "X25519",
+            updatedAt: new Date()
+          }
+        });
+
+      return res.json({ message: "Keys saved successfully" });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  app.get("/api/e2ee/keys/:username", requireAuth, async (req: any, res, next) => {
+    try {
+      const targetUsername = req.params.username;
+      const targetUser = await storage.getUserByUsername(targetUsername);
+      if (!targetUser) return res.status(404).json({ message: "User not found" });
+
+      const db = getDb();
+      const keys = await db.select({ publicKey: userKeyPairs.publicKey, algorithm: userKeyPairs.algorithm })
+        .from(userKeyPairs)
+        .where(eq(userKeyPairs.userId, targetUser.id))
+        .limit(1);
+
+      if (keys.length === 0) {
+        return res.status(404).json({ message: "No public key found for this user" });
+      }
+
+      return res.json({ publicKey: keys[0].publicKey, algorithm: keys[0].algorithm });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  app.get("/api/e2ee/my-keys", requireAuth, async (req: any, res, next) => {
+    try {
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const db = getDb();
+      const keys = await db.select()
+        .from(userKeyPairs)
+        .where(eq(userKeyPairs.userId, user.id))
+        .limit(1);
+
+      if (keys.length === 0) {
+        return res.status(404).json({ message: "No keys found" });
+      }
+
+      return res.json({ 
+        publicKey: keys[0].publicKey, 
+        encryptedPrivateKey: keys[0].encryptedPrivateKey,
+        algorithm: keys[0].algorithm 
+      });
+    } catch (err) {
+      return next(err);
+    }
   });
 
   // ─── AUTH: Google Mobile (ID Token verification) ────────────────────────────
   app.post("/api/auth/google/mobile", async (req, res, next) => {
     try {
-      const { idToken } = req.body || {};
+      const { idToken, totpCode } = req.body || {};
       if (!idToken) {
         return res.status(400).json({ message: "idToken es obligatorio" });
       }
@@ -368,6 +724,18 @@ export async function registerRoutes(
         });
       }
 
+      // 2FA check for mobile Google auth
+      if (user.totpEnabled && user.totpSecret) {
+        if (!totpCode) {
+          // Send temporary token to be used with the TOTP code
+          const tempToken = jwt.sign({ tempUser: user.username }, getJwtSecret(), { expiresIn: "5m" });
+          return res.status(200).json({ requires2FA: true, message: "Se requiere código 2FA", tempToken });
+        }
+        if (!verifyTotp(user.totpSecret, totpCode)) {
+          return res.status(401).json({ message: "Código 2FA inválido" });
+        }
+      }
+
       const token = generateToken(user);
       res.cookie("token", token, COOKIE_OPTIONS);
       return res.json({ user: sanitizeUser(user), token });
@@ -377,7 +745,7 @@ export async function registerRoutes(
   });
 
   // ─── AUTH: Forgot Password ──────────────────────────────────────────────────
-  app.post("/api/auth/forgot-password", async (req, res, next) => {
+  app.post("/api/auth/forgot-password", passwordResetLimiter, async (req, res, next) => {
     try {
       const { email } = req.body || {};
       if (!email) {
@@ -401,6 +769,8 @@ export async function registerRoutes(
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
       await storage.createPasswordResetToken(user.id, token, expiresAt);
+
+      logAction("password_reset_request", { userId: user.id, username: user.username, req });
 
       // Send email (non-blocking)
       sendPasswordResetEmail(email, user.name || user.username, token).catch((err) => {
@@ -434,7 +804,7 @@ export async function registerRoutes(
   });
 
   // ─── AUTH: Reset Password ───────────────────────────────────────────────────
-  app.post("/api/auth/reset-password", async (req, res, next) => {
+  app.post("/api/auth/reset-password", passwordResetLimiter, async (req, res, next) => {
     try {
       const { token, newPassword } = req.body || {};
 
@@ -457,9 +827,15 @@ export async function registerRoutes(
       const hashed = await hashPassword(newPassword);
       await storage.updateUserPassword(resetToken.userId, hashed);
       await storage.deletePasswordResetToken(token);
+      
+      // Revoke all refresh tokens on password change to secure the account
+      await revokeAllUserTokens(resetToken.userId);
 
       // Send password changed notification with emergency reset link
       const user = await storage.getUser(resetToken.userId);
+      if (user) {
+        logAction("password_reset_complete", { userId: user.id, username: user.username, req });
+      }
       if (user?.email) {
         const emergencyToken = crypto.randomBytes(4).toString("hex").toUpperCase();
         const emergencyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -484,7 +860,7 @@ export async function registerRoutes(
       if (!username || !role) {
         return res.status(400).json({ message: "username y role son obligatorios" });
       }
-      const validRoles = ["traveler", "hotel", "restaurant", "recreation", "taxi"];
+      const validRoles = ["traveler", "hotel", "restaurant", "recreation", "taxi", "translator"];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ message: "Rol inválido" });
       }
@@ -585,21 +961,43 @@ export async function registerRoutes(
         });
       }
 
+      const clientUrl = getBaseUrl(req);
+
+      // 2FA Check for Web OAuth
+      if (user.totpEnabled && user.totpSecret) {
+        const tempToken = jwt.sign({ tempUser: user.username }, getJwtSecret(), { expiresIn: "5m" });
+        return res.redirect(`${clientUrl}/login?google_2fa=true&temp_token=${encodeURIComponent(tempToken)}`);
+      }
+
+      // No 2FA required: Issue real token
       const token = generateToken(user);
       res.cookie("token", token, COOKIE_OPTIONS);
 
-      const clientUrl = getBaseUrl(req);
-      const payload = encodeURIComponent(JSON.stringify({
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        role: user.role || "traveler",
-        roleChangedAt: user.roleChangedAt || null,
-      }));
-      return res.redirect(`${clientUrl}/login?google_user=${payload}&token=${encodeURIComponent(token)}`);
+      return res.redirect(`${clientUrl}/login?token=${encodeURIComponent(token)}`);
     } catch (err) {
       console.error("Auth google error:", err);
       return next(err);
+    }
+  });
+
+  // ─── AUTH: Google 2FA Verification ──────────────────────────────────────────
+  app.post("/api/auth/google/2fa", async (req, res, next) => {
+    try {
+      const { tempToken, totpCode } = req.body || {};
+      if (!tempToken || !totpCode) return res.status(400).json({ message: "Faltan parámetros" });
+
+      const decoded = jwt.verify(tempToken, getJwtSecret()) as any;
+      const user = await storage.getUserByUsername(decoded.tempUser);
+
+      if (!user || !user.totpSecret || !verifyTotp(user.totpSecret, totpCode)) {
+        return res.status(401).json({ message: "Código 2FA inválido o expirado" });
+      }
+
+      const { accessToken } = await issueTokenPair(res, user, req);
+      logAction("login", { userId: user.id, username: user.username, req });
+      return res.json({ user: sanitizeUser(user), token: accessToken });
+    } catch (err) {
+      return res.status(401).json({ message: "Sesión expirada. Intenta de nuevo." });
     }
   });
 
@@ -1251,6 +1649,48 @@ export async function registerRoutes(
       const updated = await storage.setActiveRole(user.id, role);
       return res.json({ user: sanitizeUser(updated) });
     } catch (err) {
+      return next(err);
+    }
+  });
+
+  // ── ELIMINACIÓN DE CUENTA (Derecho al olvido) ───────────────────────────
+  app.delete("/api/users/me", requireAuth, async (req, res, next) => {
+    try {
+      const user = (req as any).user;
+      if (!user) return res.status(401).json({ message: "No autenticado" });
+      
+      const dbUser = await storage.getUserByUsername(user.username);
+      if (!dbUser) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      // Verificación de seguridad
+      const { totpCode, confirmText } = req.body || {};
+
+      // 2FA check si aplica
+      if (dbUser.totpEnabled && dbUser.totpSecret) {
+        if (!totpCode || !verifyTotp(dbUser.totpSecret, totpCode)) {
+          return res.status(401).json({ message: "Código 2FA inválido o requerido" });
+        }
+      } else {
+        // Si no tiene 2FA, pedimos que escriba ELIMINAR para mayor seguridad accidental
+        if (confirmText !== "ELIMINAR") {
+          return res.status(400).json({ message: "Debes confirmar escribiendo ELIMINAR" });
+        }
+      }
+
+      // Registrar antes de borrar
+      logAction("account_delete", { userId: dbUser.id, username: dbUser.username, req });
+
+      // Ejecutar borrado en cascada
+      await storage.deleteUser(dbUser.id);
+      
+      // Revocar sesiones
+      await revokeAllUserTokens(dbUser.id);
+      res.clearCookie("token", COOKIE_OPTIONS);
+      res.clearCookie("refreshToken", REFRESH_COOKIE_OPTIONS);
+
+      return res.json({ message: "Cuenta eliminada permanentemente" });
+    } catch (err) {
+      console.error("Error al eliminar cuenta:", err);
       return next(err);
     }
   });

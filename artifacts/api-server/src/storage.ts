@@ -13,6 +13,11 @@ import {
   reviews,
   paymentMethods,
   notifications,
+  availabilitySlots,
+  bookings,
+  posts,
+  postLikes,
+  postComments,
   type User,
   type InsertUser,
   type Message,
@@ -41,6 +46,7 @@ export interface IStorage {
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   updateUserRole(userId: string, role: string): Promise<User>;
   updateUserProfile(userId: string, data: { name?: string; email?: string }): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
   upsertConversation(userId: string, title?: string): Promise<Conversation>;
   addMessage(conversationId: string, role: string, content: string, metadata?: any): Promise<Message>;
   getMessages(conversationId: string, limit?: number): Promise<Message[]>;
@@ -160,6 +166,54 @@ export class DbStorage implements IStorage {
     const db = getDb();
     const rows = await db.insert(users).values(insertUser).returning();
     return rows[0];
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    const db = getDb();
+    const user = await this.getUser(userId);
+    if (!user) return;
+    
+    // Helper to safely delete without crashing if a phase 3/4 table isn't migrated yet
+    const safeDelete = async (query: any) => {
+      try {
+        await query;
+      } catch (err: any) {
+        // Ignore "relation does not exist" or "column does not exist"
+        console.warn(`[SafeDelete] Ignored error: ${err.message}`);
+      }
+    };
+
+    // Dereferencing / Right to be forgotten (Derecho al olvido)
+    // Delete data referencing the user's username
+    await safeDelete(db.delete(services).where(eq(services.providerUsername, user.username)));
+    await safeDelete(db.delete(comments).where(eq(comments.authorUsername, user.username)));
+    await safeDelete(db.delete(reviews).where(eq(reviews.authorUsername, user.username)));
+    await safeDelete(db.delete(reviews).where(eq(reviews.targetUsername, user.username)));
+    await safeDelete(db.delete(paymentMethods).where(eq(paymentMethods.username, user.username)));
+    await safeDelete(db.delete(availabilitySlots).where(eq(availabilitySlots.providerUsername, user.username)));
+    await safeDelete(db.delete(bookings).where(eq(bookings.travelerUsername, user.username)));
+    await safeDelete(db.delete(bookings).where(eq(bookings.providerUsername, user.username)));
+    await safeDelete(db.delete(posts).where(eq(posts.authorUsername, user.username)));
+    await safeDelete(db.delete(postLikes).where(eq(postLikes.username, user.username)));
+    await safeDelete(db.delete(postComments).where(eq(postComments.username, user.username)));
+    await safeDelete(db.delete(notifications).where(eq(notifications.providerUsername, user.username)));
+    await safeDelete(db.delete(notifications).where(eq(notifications.travelerUsername, user.username)));
+    
+    // Delete data referencing the userId
+    try {
+      const userConvos = await db.select().from(conversations).where(eq(conversations.userId, userId));
+      for (const c of userConvos) {
+        await safeDelete(db.delete(messages).where(eq(messages.conversationId, c.id)));
+      }
+      await safeDelete(db.delete(conversations).where(eq(conversations.userId, userId)));
+    } catch (e) {}
+
+    await safeDelete(db.delete(media).where(eq(media.userId, userId)));
+    await safeDelete(db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId)));
+    await safeDelete(db.delete(userRoles).where(eq(userRoles.userId, userId)));
+    
+    // Delete the user record (refreshTokens and userKeyPairs cascade automatically)
+    await safeDelete(db.delete(users).where(eq(users.id, userId)));
   }
 
   async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
