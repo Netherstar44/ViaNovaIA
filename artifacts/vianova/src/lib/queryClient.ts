@@ -20,14 +20,30 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  _retry = false
 ): Promise<Response> {
   const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
-  const res = await fetch(finalUrl, {
+  const options: RequestInit = {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
-  });
+  };
+  
+  let res = await fetch(finalUrl, options);
+
+  // Intercept 401 and try to refresh token (if not already retrying or logging in)
+  if (res.status === 401 && !_retry && !url.includes("/api/auth/login") && !url.includes("/api/auth/refresh")) {
+    try {
+      const refreshRes = await fetch(`${getBaseUrl()}/api/auth/refresh`, { method: "POST", credentials: "include" });
+      if (refreshRes.ok) {
+        // Retry original request
+        res = await fetch(finalUrl, options);
+      }
+    } catch (e) {
+      console.error("Token refresh failed", e);
+    }
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -41,9 +57,21 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const url = queryKey.join("/") as string;
     const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
-    const res = await fetch(finalUrl, {
-      credentials: "include",
-    });
+    const options: RequestInit = { credentials: "include" };
+    
+    let res = await fetch(finalUrl, options);
+
+    // Intercept 401 and try to refresh
+    if (res.status === 401 && !url.includes("/api/auth/refresh")) {
+      try {
+        const refreshRes = await fetch(`${getBaseUrl()}/api/auth/refresh`, { method: "POST", credentials: "include" });
+        if (refreshRes.ok) {
+          res = await fetch(finalUrl, options);
+        }
+      } catch (e) {
+        console.error("Query token refresh failed", e);
+      }
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

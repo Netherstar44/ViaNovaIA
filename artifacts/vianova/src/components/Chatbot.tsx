@@ -72,7 +72,7 @@ export default function Chatbot() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.continuous = true; // Listen continuously like Gemini
+        recognition.continuous = false; // Listen until user stops talking
         recognition.interimResults = true;
         const langMap: Record<string, string> = { es: 'es-ES', en: 'en-US', fr: 'fr-FR', pt: 'pt-BR', zh: 'zh-CN' };
         recognition.lang = langMap[i18n.language] || 'es-ES';
@@ -80,45 +80,34 @@ export default function Chatbot() {
         recognition.onresult = (event: any) => {
           let interimTranscript = '';
           let finalTranscript = '';
-          let isFinal = false;
 
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
               finalTranscript += event.results[i][0].transcript;
-              isFinal = true;
             } else {
               interimTranscript += event.results[i][0].transcript;
             }
           }
           
-          const currentText = (transcriptRef.current + " " + finalTranscript).trim() + (interimTranscript ? " " + interimTranscript : "");
-          setVoiceTranscript(currentText);
-          
-          if (isFinal) {
-            transcriptRef.current = (transcriptRef.current + " " + finalTranscript).trim();
-            // Auto-send after 2 seconds of silence (Gemini style)
-            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-            silenceTimerRef.current = setTimeout(() => {
-              if (transcriptRef.current.trim() && !isHandlingVoiceRef.current) {
-                handleVoiceSend(transcriptRef.current.trim());
-              }
-            }, 2000);
+          if (finalTranscript) {
+             transcriptRef.current = (transcriptRef.current + " " + finalTranscript).trim();
           }
+          const currentText = transcriptRef.current + (interimTranscript ? " " + interimTranscript : "");
+          setVoiceTranscript(currentText.trim());
         };
 
         recognition.onerror = (event: any) => {
           if (event.error !== 'no-speech') {
-            console.error('Speech recognition error', event.error);
-            setIsListening(false);
+            console.error('Speech recognition error:', event.error);
           }
+          setIsListening(false);
         };
 
         recognition.onend = () => {
-          // Restart automatically if still in voice mode and not speaking (continuous mode drops sometimes)
-          if (!isHandlingVoiceRef.current && isVoiceMode) {
-             try { recognition.start(); } catch(e) {}
-          } else {
-             setIsListening(false);
+          setIsListening(false);
+          const textToSend = transcriptRef.current.trim();
+          if (textToSend && !isHandlingVoiceRef.current) {
+             handleVoiceSend(textToSend);
           }
         };
 
@@ -132,7 +121,7 @@ export default function Chatbot() {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (recognitionRef.current) {
         try {
-          recognitionRef.current.stop();
+          recognitionRef.current.abort();
         } catch(e) {}
       }
       if (audioRef.current) {
@@ -142,12 +131,12 @@ export default function Chatbot() {
         } catch(e) {}
       }
     };
-  }, []);
+  }, [isVoiceMode]);
 
   const playTTS = async (text: string, onReady?: () => void) => {
-    // Clean text: remove asterisks completely, remove code blocks, and markdown structure
+    // Clean text
     const cleanText = text
-      .replace(/\*/g, '') // Remove all asterisks
+      .replace(/\*/g, '')
       .replace(/###.*/g, '')
       .replace(/\[.*?\]/g, '')
       .replace(/```[\s\S]*?```/g, '')
@@ -160,7 +149,6 @@ export default function Chatbot() {
       return;
     }
 
-    // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -178,7 +166,6 @@ export default function Chatbot() {
       };
       const selectedVoice = edgeVoices[i18n.language] || 'es-CO-GonzaloNeural';
 
-      // Edge TTS – Microsoft Neural Voice
       const res = await fetch(apiBase + '/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,10 +183,7 @@ export default function Chatbot() {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
-        // Resume listening after speaking (Gemini style)
-        if (isVoiceMode) {
-          try { recognitionRef.current?.start(); setIsListening(true); } catch(e) {}
-        }
+        // User must manually press mic to speak again
       };
 
       audio.onerror = () => {
@@ -207,19 +191,22 @@ export default function Chatbot() {
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
         if (isVoiceMode) {
-          try { recognitionRef.current?.start(); setIsListening(true); } catch(e) {}
+          try { 
+            recognitionRef.current?.abort(); 
+            setTimeout(() => {
+              try { recognitionRef.current?.start(); setIsListening(true); } catch(e) {}
+            }, 100);
+          } catch(e) {}
         }
       };
 
-      // Pause mic while speaking so it doesn't hear itself
-      try { recognitionRef.current?.stop(); setIsListening(false); } catch(e) {}
+      try { recognitionRef.current?.abort(); setIsListening(false); } catch(e) {}
       
       if (onReady) onReady();
       await audio.play();
     } catch (err) {
       console.error('Edge TTS error, falling back to Web Speech:', err);
       setIsSpeaking(false);
-      // Fallback: Web Speech API
       try {
         const synth = window.speechSynthesis;
         const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -229,13 +216,11 @@ export default function Chatbot() {
         utterance.pitch = 1.1;
         utterance.onstart = () => {
           setIsSpeaking(true);
-          try { recognitionRef.current?.stop(); setIsListening(false); } catch(e) {}
+          try { recognitionRef.current?.abort(); setIsListening(false); } catch(e) {}
         };
         utterance.onend = () => {
           setIsSpeaking(false);
-          if (isVoiceMode) {
-            try { recognitionRef.current?.start(); setIsListening(true); } catch(e) {}
-          }
+          // User must manually press mic to speak again
         };
         synth.cancel();
         if (onReady) onReady();
@@ -251,7 +236,7 @@ export default function Chatbot() {
     if (isVoiceMode) {
       setIsVoiceMode(false);
       setIsListening(false);
-      recognitionRef.current?.stop();
+      try { recognitionRef.current?.abort(); } catch(e) {}
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -267,19 +252,22 @@ export default function Chatbot() {
   };
 
   const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      setVoiceTranscript('');
-      transcriptRef.current = '';
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-      try { window.speechSynthesis?.cancel(); } catch(e) {}
-      setIsSpeaking(false);
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (e) {
-        console.error(e);
-      }
+    if (!recognitionRef.current || isListening) return;
+    
+    setVoiceTranscript('');
+    transcriptRef.current = '';
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    try { window.speechSynthesis?.cancel(); } catch(e) {}
+    setIsSpeaking(false);
+    
+    try {
+      recognitionRef.current.abort(); // Clear any previous state
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (e) {
+      console.error('Error starting recognition:', e);
+      setIsListening(false);
     }
   };
 
@@ -753,7 +741,7 @@ export default function Chatbot() {
 
                       <div className="relative z-10 max-w-full">
                         <p className={`text-lg font-medium transition-colors ${isListening ? 'text-foreground' : 'text-primary'}`}>
-                          {isListening ? t('chatbot.listening', 'Escuchando...') : isSpeaking ? t('chatbot.speaking', 'VIANova está hablando...') : t('chatbot.tap_mic', 'Toca el micrófono para hablar')}
+                          {isListening ? t('chatbot.listening', 'Escuchando...') : isSpeaking ? t('chatbot.speaking', 'VIANova está hablando...') : t('chatbot.tap_mic', 'Presiona para hablar o para detener')}
                         </p>
                         <p className="mt-4 text-sm text-muted-foreground min-h-[3rem] line-clamp-4 px-4 italic">
                           {voiceTranscript ? `"${voiceTranscript}"` : ""}
@@ -762,7 +750,7 @@ export default function Chatbot() {
 
                       <div className="mt-8 relative z-10">
                         <Button
-                          onClick={isListening ? () => recognitionRef.current?.stop() : startListening}
+                          onClick={isListening ? () => { try { recognitionRef.current?.abort(); } catch(e) {} setIsListening(false); } : startListening}
                           className={`h-20 w-20 rounded-full shadow-2xl transition-all duration-300 ${isListening ? 'bg-red-500/20 text-red-500 border border-red-500/50 hover:bg-red-500/30' : 'bg-primary text-black hover:bg-primary/80 hover:scale-105'}`}
                         >
                           {isListening ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}

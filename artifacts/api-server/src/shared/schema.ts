@@ -47,6 +47,15 @@ export const users = pgTable("users", {
   preferences: jsonb("preferences"), // stores user tastes, travel styles, chatbot memory
   bio: text("bio"),
   city: text("city").default("Neiva"),
+  // 2FA TOTP fields
+  totpSecret: text("totp_secret"),      // AES-256 encrypted TOTP secret
+  totpEnabled: boolean("totp_enabled").default(false),
+  // Taxi-specific columns (used by raw SQL in taxi.storage.ts)
+  isAvailableTaxi: boolean("is_available").default(false),
+  vehicleType: text("vehicle_type"),
+  plate: text("plate"),
+  taxiLat: text("taxi_lat"),
+  taxiLng: text("taxi_lng"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -125,7 +134,11 @@ export const services = pgTable("services", {
   menuData: jsonb("menu_data"),
   mediaGallery: jsonb("media_gallery"),
   googleMapsUrl: text("google_maps_url"),
-  createdAt: timestamp("created_at").default(sql`now()`), 
+  // Analytics columns (used by raw SQL in app.routes.ts)
+  viewCount: integer("view_count").default(0),
+  mapClicks: integer("map_clicks").default(0),
+  vrEngagement: integer("vr_engagement").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
 });
 
 export const comments = pgTable("comments", {
@@ -259,6 +272,89 @@ export const postComments = pgTable("post_comments", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+// ── REFRESH TOKENS (JWT Rotation) ─────────────────────────────────────────
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(), // SHA-256 hash of the refresh token
+  family: text("family").notNull(), // Token family for rotation detection
+  expiresAt: timestamp("expires_at").notNull(),
+  revokedAt: timestamp("revoked_at"), // null = active, set = revoked
+  replacedByHash: text("replaced_by_hash"), // points to the new token that replaced this one
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// ── AUDIT / ACTION LOGS ───────────────────────────────────────────────────
+export const actionLogs = pgTable("action_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  username: text("username"),
+  action: text("action").notNull(), // 'login' | 'logout' | 'register' | 'password_reset' | 'profile_update' | '2fa_enable' | '2fa_disable' | 'role_change' | 'account_delete' | etc.
+  details: jsonb("details"), // extra context (e.g. { ip, userAgent, oldRole, newRole })
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  status: text("status").default("success"), // 'success' | 'failure'
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// ── E2EE KEY PAIRS (Preparación) ──────────────────────────────────────────
+export const userKeyPairs = pgTable("user_key_pairs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  publicKey: text("public_key").notNull(),          // Base64 public key (X25519 or ECDH P-256)
+  encryptedPrivateKey: text("encrypted_private_key").notNull(), // AES-256 encrypted with user's passphrase
+  algorithm: text("algorithm").default("X25519"),   // Key exchange algorithm
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at"),
+});
+
+// ── SOCIAL NETWORK (Legacy raw-SQL tables) ────────────────────────────────────
+// These tables are used via raw SQL in social.routes.ts and app.routes.ts
+// They must be in the schema so Drizzle doesn't delete them during migration.
+
+export const socialPosts = pgTable("social_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  username: text("username").notNull(),
+  caption: text("caption"),
+  mediaUrl: text("media_url"),
+  mediaType: text("media_type").default("image"),
+  likesCount: integer("likes_count").default(0),
+  commentsCount: integer("comments_count").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const socialLikes = pgTable("social_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => socialPosts.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const socialComments = pgTable("social_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").notNull().references(() => socialPosts.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  username: text("username").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+// ── MEDIA ASSETS (used by product gallery via raw SQL) ────────────────────────
+
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityId: varchar("entity_id").notNull(),
+  entityType: text("entity_type").notNull().default("product"),
+  url: text("url").notNull(),
+  type: text("type").default("image"),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -389,6 +485,12 @@ export type Booking = typeof bookings.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostLike = typeof postLikes.$inferSelect;
 export type PostComment = typeof postComments.$inferSelect;
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type ActionLog = typeof actionLogs.$inferSelect;
+export type UserKeyPair = typeof userKeyPairs.$inferSelect;
+export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
+export type InsertActionLog = typeof actionLogs.$inferInsert;
+export type InsertUserKeyPair = typeof userKeyPairs.$inferInsert;
 
 
 export type LocationItem = {
