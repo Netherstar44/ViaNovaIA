@@ -57,18 +57,32 @@ router.post("/posts", requireAuth, async (req: any, res) => {
     const [u] = await sql`SELECT id FROM users WHERE username = ${username} LIMIT 1`;
     if (!u) return res.status(404).json({ message: "Usuario no encontrado" });
 
+    let normalizedMediaType = "image";
+    if (mediaType) {
+      const mt = mediaType.toLowerCase();
+      if (mt === "image" || mt === "video" || mt === "360_image" || mt === "360_video" || mt === "3d_model" || mt === "vr_tour") {
+        normalizedMediaType = mt;
+      } else if (mt === "image_360" || mt === "360") {
+        normalizedMediaType = "360_image";
+      } else if (mt === "model_3d" || mt === "3d") {
+        normalizedMediaType = "3d_model";
+      } else if (mt === "vr_tour" || mt === "vr") {
+        normalizedMediaType = "vr_tour";
+      }
+    }
+
     const [post] = await sql`
       INSERT INTO social_posts (id, user_id, username, caption, media_url, media_type, likes_count, comments_count, created_at)
-      VALUES (gen_random_uuid(), ${u.id}, ${username}, ${content?.trim() || null}, ${mediaUrl || null}, ${mediaType || 'image'}, 0, 0, now())
+      VALUES (gen_random_uuid(), ${u.id}, ${username}, ${content?.trim() || null}, ${mediaUrl || null}, ${normalizedMediaType}, 0, 0, now())
       RETURNING 
-        id,
-        username AS "authorUsername",
-        caption  AS content,
-        media_url AS "mediaUrl",
-        media_type AS "mediaType",
-        likes_count AS "likesCount",
-        comments_count AS "commentsCount",
-        created_at AS "createdAt"
+      id,
+      username AS "authorUsername",
+      caption  AS content,
+      media_url AS "mediaUrl",
+      media_type AS "mediaType",
+      likes_count AS "likesCount",
+      comments_count AS "commentsCount",
+      created_at AS "createdAt"
     `;
     return res.json(post);
   } catch (err: any) {

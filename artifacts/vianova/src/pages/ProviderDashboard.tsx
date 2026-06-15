@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProviderCalendar from "@/components/ProviderCalendar";
+import { MediaUploader } from "@/components/multimedia/MediaUploader";
+import { MediaGallery, MediaAsset } from "@/components/multimedia/MediaGallery";
+import { MediaViewer } from "@/components/multimedia/MediaViewer";
 
 export default function ProviderDashboard() {
   const { user, isAuthenticated } = useAuth();
@@ -20,6 +23,8 @@ export default function ProviderDashboard() {
   const { toast } = useToast();
 
   const [name, setName] = useState<string>(user?.role === 'taxi' ? 'Juan Pérez - Taxi Rápido' : 'Mi Negocio');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
   const [description, setDescription] = useState<string>(user?.role === 'taxi' ? 'Servicio de transporte seguro y confiable. Disponible 24/7.' : 'Ofrecemos la mejor experiencia para nuestros clientes...');
   const [contact, setContact] = useState<string>("+34 600 000 000");
   const [locationText, setLocationText] = useState<string>('Madrid, Centro');
@@ -154,12 +159,15 @@ export default function ProviderDashboard() {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8 bg-black/40 border border-white/10 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8 bg-black/40 border border-white/10 p-1 rounded-xl">
             <TabsTrigger value="profile" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-white/70">
               <Settings className="w-4 h-4 mr-2" /> Mi Negocio
             </TabsTrigger>
             <TabsTrigger value="calendar" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-white/70">
               <CalendarIcon className="w-4 h-4 mr-2" /> Disponibilidad
+            </TabsTrigger>
+            <TabsTrigger value="multimedia" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-white/70">
+              <ImageIcon className="w-4 h-4 mr-2" /> Multimedia
             </TabsTrigger>
           </TabsList>
 
@@ -365,7 +373,23 @@ export default function ProviderDashboard() {
           <TabsContent value="calendar" className="mt-0">
             <ProviderCalendar services={services} />
           </TabsContent>
+
+          <TabsContent value="multimedia" className="mt-0 space-y-6">
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="md:col-span-1">
+                <MediaUploader onUploadSuccess={() => setRefreshTrigger(p => p + 1)} />
+              </div>
+              <div className="md:col-span-2 bg-slate-900/60 border border-slate-800 p-6 rounded-[2rem] shadow-xl">
+                <h3 className="font-bold text-slate-100 text-lg mb-4">Mis Archivos Multimedia</h3>
+                <MediaGallery refreshTrigger={refreshTrigger} onSelectAsset={setSelectedAsset} />
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
+        
+        {selectedAsset && (
+          <MediaViewer asset={selectedAsset} onClose={() => setSelectedAsset(null)} />
+        )}
       </motion.main>
     </div>
   );

@@ -2,12 +2,14 @@ import { apiBase } from "@/lib/queryClient";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
-import { Heart, MessageCircle, Share2, Plus, X, Send, Image as ImageIcon, Video, Loader2, Trash2, MapPin } from "lucide-react";
+import { Heart, MessageCircle, Share2, Plus, X, Send, Image as ImageIcon, Video, Loader2, Trash2, MapPin, Rotate3d, Glasses, Compass } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import TranslatedText from "@/components/TranslatedText";
+import { MediaViewer } from "@/components/multimedia/MediaViewer";
+import { MediaAsset } from "@/components/multimedia/MediaGallery";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 interface Post {
@@ -15,7 +17,7 @@ interface Post {
   username: string;
   caption: string | null;
   media_url: string | null;
-  media_type: "image" | "video" | "360_image" | "360_video" | "3d_model";
+  media_type: string | null;
   likes_count: number;
   comments_count: number;
   created_at: string;
@@ -63,7 +65,7 @@ function Avatar({ username, src, size = 36 }: { username: string; src?: string |
 }
 
 /* ─── PostCard ────────────────────────────────────────────────────────────── */
-function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: string | null; onDelete: (id: string) => void }) {
+function PostCard({ post, currentUser, onDelete, onOpenMedia }: { post: Post; currentUser: string | null; onDelete: (id: string) => void; onOpenMedia: (post: Post) => void }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes_count);
   const [showComments, setShowComments] = useState(false);
@@ -187,7 +189,7 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
       {/* Media */}
       {post.media_url && (
         <div className="relative bg-black/30">
-          {post.media_type.includes("video") ? (
+          {post.media_type === "video" || post.media_type === "video/mp4" || post.media_type?.includes("video") ? (
             <video
               src={post.media_url}
               className="w-full max-h-[500px] object-cover"
@@ -195,6 +197,28 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
               playsInline
               preload="metadata"
             />
+          ) : post.media_type === "360" || post.media_type === "360_image" || post.media_type === "3d" || post.media_type === "3d_model" || post.media_type === "vr" || post.media_type === "vr_tour" || post.media_type === "IMAGE_360" || post.media_type === "MODEL_3D" || post.media_type === "VR_TOUR" ? (
+            <div className="relative w-full h-64 bg-slate-950 flex flex-col items-center justify-center p-6 border-y border-white/5 overflow-hidden">
+              {/* Blur background */}
+              <div className="absolute inset-0 bg-cover bg-center opacity-20 filter blur-lg" style={{ backgroundImage: `url(${post.media_url})` }}></div>
+              <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+                <div className="p-4 bg-cyan-500/15 border border-cyan-400/20 rounded-full text-cyan-400">
+                  {post.media_type?.includes("3d") || post.media_type?.includes("3D") ? <Rotate3d className="w-8 h-8" /> : (post.media_type?.includes("vr") || post.media_type?.includes("VR") ? <Glasses className="w-8 h-8" /> : <Compass className="w-8 h-8" />)}
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-200 text-sm uppercase tracking-wider">
+                    {post.media_type?.includes("3d") || post.media_type?.includes("3D") ? "Contenido 3D Interactivo" : (post.media_type?.includes("vr") || post.media_type?.includes("VR") ? "Recorrido Virtual VR" : "Fotografía 360° Panorámica")}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs">Haz clic abajo para sumergirte en la experiencia completa.</p>
+                </div>
+                <button
+                  onClick={() => onOpenMedia(post)}
+                  className="px-6 py-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
+                >
+                  {post.media_type?.includes("3d") || post.media_type?.includes("3D") ? "Abrir Visor 3D" : (post.media_type?.includes("vr") || post.media_type?.includes("VR") ? "Iniciar VR" : "Explorar en 360°")}
+                </button>
+              </div>
+            </div>
           ) : (
             <img
               src={post.media_url}
@@ -293,15 +317,21 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
   const [caption, setCaption] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [mediaType, setMediaType] = useState<"image" | "video" | "360" | "3d" | "vr">("image");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const pickFile = (type: "image" | "video") => {
+  const pickFile = (type: "image" | "video" | "360" | "3d" | "vr") => {
     setMediaType(type);
     if (fileRef.current) {
-      fileRef.current.accept = type === "video" ? "video/*" : "image/*";
+      if (type === "video") {
+        fileRef.current.accept = "video/mp4,video/webm";
+      } else if (type === "3d") {
+        fileRef.current.accept = ".glb,.gltf";
+      } else {
+        fileRef.current.accept = "image/jpeg,image/png,image/webp";
+      }
       fileRef.current.click();
     }
   };
@@ -319,21 +349,30 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
     setLoading(true);
     try {
       let uploadedUrl = null;
+      let finalMediaType: string = mediaType;
       if (mediaFile) {
         const uploadForm = new FormData();
         uploadForm.append("file", mediaFile);
-        uploadForm.append("category", "social");
-        uploadForm.append("userId", username);
-        const uploadRes = await fetch(apiBase + "/api/upload", { method: "POST", body: uploadForm });
+        uploadForm.append("title", caption ? caption.substring(0, 30) : mediaFile.name);
+        uploadForm.append("entityType", "post");
+        if (mediaType === "360") {
+          uploadForm.append("is360", "true");
+        } else if (mediaType === "vr") {
+          uploadForm.append("isVR", "true");
+        }
+        
+        // Call unified media assets uploader
+        const uploadRes = await fetch(apiBase + "/api/media-assets/upload", { method: "POST", body: uploadForm, credentials: "include" });
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(uploadData.message || "Failed to upload file");
-        uploadedUrl = uploadData.url;
+        uploadedUrl = uploadData.fileUrl;
+        finalMediaType = uploadData.assetType;
       }
 
       const postBody = {
         content: caption.trim(),
         mediaUrl: uploadedUrl,
-        mediaType: mediaType
+        mediaType: finalMediaType
       };
 
       const r = await fetch(apiBase + "/api/social/posts", { 
@@ -414,18 +453,36 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => pickFile("image")}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${mediaType === "image" ? "border-primary text-primary bg-primary/5" : "border-white/10 text-muted-foreground hover:text-primary"}`}
             >
               <ImageIcon className="h-4 w-4" /> Foto
             </button>
             <button
               onClick={() => pickFile("video")}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${mediaType === "video" ? "border-primary text-primary bg-primary/5" : "border-white/10 text-muted-foreground hover:text-primary"}`}
             >
               <Video className="h-4 w-4" /> Video
+            </button>
+            <button
+              onClick={() => pickFile("360")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${mediaType === "360" ? "border-primary text-primary bg-primary/5" : "border-white/10 text-muted-foreground hover:text-primary"}`}
+            >
+              <Compass className="h-4 w-4 text-cyan-400" /> Foto 360°
+            </button>
+            <button
+              onClick={() => pickFile("3d")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${mediaType === "3d" ? "border-primary text-primary bg-primary/5" : "border-white/10 text-muted-foreground hover:text-primary"}`}
+            >
+              <Rotate3d className="h-4 w-4 text-purple-400" /> 3D GLB
+            </button>
+            <button
+              onClick={() => pickFile("vr")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-colors ${mediaType === "vr" ? "border-primary text-primary bg-primary/5" : "border-white/10 text-muted-foreground hover:text-primary"}`}
+            >
+              <Glasses className="h-4 w-4 text-pink-400" /> VR Tour
             </button>
             <input ref={fileRef} type="file" className="hidden" onChange={onFileChange} />
           </div>
@@ -456,6 +513,7 @@ export default function SocialFeed() {
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
@@ -491,7 +549,15 @@ export default function SocialFeed() {
         avatar_url: p.authorAvatar ?? p.avatar_url ?? null,
       }));
 
-      setPosts(prev => reset ? mappedPosts : [...prev, ...mappedPosts]);
+      setPosts(prev => {
+        const list = reset ? mappedPosts : [...prev, ...mappedPosts];
+        const seen = new Set();
+        return list.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+      });
       setHasMore(false);
     } catch (err) {
       console.error("[SocialFeed] Error al cargar posts:", err);
@@ -573,6 +639,35 @@ export default function SocialFeed() {
               post={post}
               currentUser={user?.username ?? null}
               onDelete={handleDelete}
+              onOpenMedia={(p) => {
+                let assetType: any = "IMAGE";
+                if (p.media_type === "MODEL_3D" || p.media_type === "3d" || p.media_type === "3d_model") assetType = "MODEL_3D";
+                else if (p.media_type === "IMAGE_360" || p.media_type === "360" || p.media_type === "360_image") assetType = "IMAGE_360";
+                else if (p.media_type === "VR_TOUR" || p.media_type === "vr" || p.media_type === "vr_tour") assetType = "VR_TOUR";
+                else if (p.media_type === "VIDEO" || p.media_type === "video") assetType = "VIDEO";
+
+                setSelectedAsset({
+                  id: p.id,
+                  ownerId: p.username,
+                  ownerRole: "traveler",
+                  entityType: "post",
+                  entityId: p.id,
+                  title: p.caption || "Publicación",
+                  description: "",
+                  assetType,
+                  fileUrl: p.media_url || "",
+                  thumbnailUrl: p.media_url || "",
+                  cloudinaryPublicId: "",
+                  mimeType: assetType === "MODEL_3D" ? "application/octet-stream" : (assetType === "VIDEO" ? "video/mp4" : "image/jpeg"),
+                  fileSize: 0,
+                  width: null,
+                  height: null,
+                  duration: null,
+                  is360: assetType === "IMAGE_360",
+                  isVR: assetType === "VR_TOUR",
+                  createdAt: p.created_at
+                });
+              }}
             />
           ))}
         </AnimatePresence>
@@ -620,6 +715,10 @@ export default function SocialFeed() {
           />
         )}
       </AnimatePresence>
+
+      {selectedAsset && (
+        <MediaViewer asset={selectedAsset} onClose={() => setSelectedAsset(null)} />
+      )}
     </div>
   );
 }

@@ -31,6 +31,7 @@ app.use(httpLogger);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 import session from "express-session";
 

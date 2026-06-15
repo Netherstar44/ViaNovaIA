@@ -3,6 +3,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage, getDb } from "../storage.js";
 import { registerTaxiRoutes } from "./taxi.routes.js";
+import { registerMediaAssetsRoutes } from "./media-assets.routes.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
 import multer from "multer";
@@ -2526,6 +2527,9 @@ export async function registerRoutes(
 
   // ── Módulo Taxi ────────────────────────────────────────────────────────────
   registerTaxiRoutes(app);
+
+  // ── Módulo Multimedia ───────────────────────────────────────────────────────
+  registerMediaAssetsRoutes(app);
 
   return httpServer;
 }

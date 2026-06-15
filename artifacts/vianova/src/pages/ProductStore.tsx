@@ -40,23 +40,55 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
 
   useEffect(() => {
-    // Fetch full product details including all media assets
-    fetch(`${apiBase}/api/products/provider/${product.provider_username}`)
-      .then(r => r.json())
-      .then(d => {
-        const fullProduct = d.products?.find((p: any) => p.id === product.id);
-        const assets = fullProduct?.media || [];
-        // always put cover_image first if it exists
-        const formatted = [];
+    // Fetch legacy product details
+    const loadMedia = async () => {
+      try {
+        const legacyRes = await fetch(`${apiBase}/api/products/provider/${product.provider_username}`);
+        const legacyData = await legacyRes.json();
+        const fullProduct = legacyData.products?.find((p: any) => p.id === product.id);
+        const legacyAssets = fullProduct?.media || [];
+
+        // Fetch new media assets by entity
+        const newRes = await fetch(`${apiBase}/api/media-assets/entity/product/${product.id}`, { credentials: "include" });
+        const newAssets = newRes.ok ? await newRes.json() : [];
+
+        const formatted: any[] = [];
         if (product.cover_image) {
           formatted.push({ id: 'cover', url: product.cover_image, type: 'image', caption: product.name });
         }
-        assets.forEach((a: any) => {
+
+        // Map legacy assets
+        legacyAssets.forEach((a: any) => {
           if (a.url !== product.cover_image) formatted.push(a);
         });
+
+        // Map and merge new assets
+        newAssets.forEach((a: any) => {
+          const typeMap: Record<string, string> = {
+            MODEL_3D: "3d_model",
+            IMAGE_360: "360_image",
+            VIDEO: "video",
+            IMAGE: "image"
+          };
+          if (a.fileUrl !== product.cover_image) {
+            formatted.push({
+              id: a.id,
+              url: a.fileUrl,
+              type: typeMap[a.assetType] || "image",
+              caption: a.title || a.description
+            });
+          }
+        });
+
         setMedia(formatted);
-      })
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error("Error loading product media:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMedia();
 
     // Fetch availability slots
     fetch(`${apiBase}/api/bookings/slots/${product.id}`)

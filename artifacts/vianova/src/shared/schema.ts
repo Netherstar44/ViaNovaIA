@@ -77,6 +77,38 @@ export const media = pgTable("media", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const assetTypeEnum = pgEnum("asset_type", [
+  "IMAGE",
+  "VIDEO",
+  "IMAGE_360",
+  "MODEL_3D",
+  "VR_TOUR",
+]);
+
+export const mediaAssets = pgTable("media_assets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ownerId: varchar("owner_id").notNull().references(() => users.id),
+  ownerRole: text("owner_role").notNull(),
+  entityType: text("entity_type").notNull(), // 'user', 'post', 'product', 'service', 'room', etc.
+  entityId: varchar("entity_id"),
+  title: text("title"),
+  description: text("description"),
+  assetType: assetTypeEnum("asset_type").notNull(),
+  fileUrl: text("file_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  cloudinaryPublicId: text("cloudinary_public_id").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  duration: integer("duration"),
+  is360: boolean("is_360").default(false).notNull(),
+  isVR: boolean("is_vr").default(false).notNull(),
+  status: text("status").default("active").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`now()`).notNull(),
+});
+
 export const serviceCategoryEnum = pgEnum("service_category", [
   "hotel",
   "restaurant",
@@ -331,6 +363,7 @@ export const insertAvailabilitySlotSchema = createInsertSchema(availabilitySlots
 export const insertBookingSchema = createInsertSchema(bookings);
 export const insertPostSchema = createInsertSchema(posts);
 export const insertPostCommentSchema = createInsertSchema(postComments);
+export const insertMediaAssetSchema = createInsertSchema(mediaAssets);
 
 export type InsertUser = typeof users.$inferInsert;
 export type InsertNotification = typeof notifications.$inferInsert;
@@ -340,6 +373,7 @@ export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type InsertUserRole = typeof userRoles.$inferInsert;
 export type InsertReview = typeof reviews.$inferInsert;
 export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
+export type InsertMediaAsset = typeof mediaAssets.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
@@ -357,6 +391,7 @@ export type Booking = typeof bookings.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostLike = typeof postLikes.$inferSelect;
 export type PostComment = typeof postComments.$inferSelect;
+export type MediaAsset = typeof mediaAssets.$inferSelect;
 
 
 export type LocationItem = {
