@@ -8,6 +8,9 @@ import { MessageCircle, MapPin, Star, Image, Car, Calendar, ArrowLeft } from "lu
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { MediaUploader } from "@/components/multimedia/MediaUploader";
+import { MediaGallery, MediaAsset } from "@/components/multimedia/MediaGallery";
+import { MediaViewer } from "@/components/multimedia/MediaViewer";
 
 interface ProfileData {
   id: string;
@@ -57,6 +60,8 @@ export default function UserProfile() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
 
   const username = params.username;
   const isOwn = user?.username === username;
@@ -148,6 +153,33 @@ export default function UserProfile() {
           )}
         </motion.div>
 
+        {/* Galería Multimedia Personal */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-card border border-border rounded-2xl p-5"
+        >
+          <h2 className="font-semibold mb-4 flex items-center gap-2">
+            <Image className="h-4 w-4 text-cyan-400" /> Galería Multimedia
+          </h2>
+          <div className="space-y-6">
+            {isOwn && (
+              <div className="border-b border-border/50 pb-6 mb-6">
+                <MediaUploader onUploadSuccess={() => setRefreshTrigger((p) => p + 1)} />
+              </div>
+            )}
+            <MediaGallery
+              refreshTrigger={refreshTrigger}
+              onSelectAsset={setSelectedAsset}
+              isEditable={isOwn}
+              showFilters={true}
+              entityType="user"
+              entityId={profile.id}
+            />
+          </div>
+        </motion.div>
+
         {/* Reviews */}
         {reviews.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card border border-border rounded-2xl p-5">
@@ -199,6 +231,10 @@ export default function UserProfile() {
 
         {activity.length === 0 && reviews.length === 0 && (
           <div className="text-center text-muted-foreground py-8 text-sm">Sin actividad reciente.</div>
+        )}
+
+        {selectedAsset && (
+          <MediaViewer asset={selectedAsset} onClose={() => setSelectedAsset(null)} />
         )}
       </div>
     </div>

@@ -1,12 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import { Users, ShieldAlert, Activity, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Users, ShieldAlert, Activity, AlertTriangle, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { MediaUploader } from "@/components/multimedia/MediaUploader";
+import { MediaGallery, MediaAsset } from "@/components/multimedia/MediaGallery";
+import { MediaViewer } from "@/components/multimedia/MediaViewer";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [_, setLocation] = useLocation();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedAsset, setSelectedAsset] = useState<MediaAsset | null>(null);
 
   if (!user || user.role !== "admin") {
     setLocation("/");
@@ -72,7 +78,7 @@ export default function AdminDashboard() {
         )}
 
         {/* System Logs / Alerts */}
-        <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
+        <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm mb-8">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-primary" /> Anomalías Detectadas (Log)</h3>
           <div className="space-y-4">
             {stats?.logs?.length ? (
@@ -90,6 +96,25 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+
+        {/* Gestión Global de Multimedia */}
+        <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-primary" /> Gestión Global de Multimedia (Administrador)
+          </h3>
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-1">
+              <MediaUploader onUploadSuccess={() => setRefreshTrigger(p => p + 1)} />
+            </div>
+            <div className="md:col-span-2">
+              <MediaGallery refreshTrigger={refreshTrigger} onSelectAsset={setSelectedAsset} />
+            </div>
+          </div>
+        </div>
+
+        {selectedAsset && (
+          <MediaViewer asset={selectedAsset} onClose={() => setSelectedAsset(null)} />
+        )}
       </div>
     </div>
   );
