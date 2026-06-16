@@ -374,18 +374,6 @@ export const socialComments = pgTable("social_comments", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
-// ── MEDIA ASSETS (used by product gallery via raw SQL) ────────────────────────
-
-export const mediaAssets = pgTable("media_assets", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  entityId: varchar("entity_id").notNull(),
-  entityType: text("entity_type").notNull().default("product"),
-  url: text("url").notNull(),
-  type: text("type").default("image"),
-  caption: text("caption"),
-  sortOrder: integer("sort_order").default(0),
-  createdAt: timestamp("created_at").default(sql`now()`),
-});
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
