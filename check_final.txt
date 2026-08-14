@@ -1,0 +1,5 @@
+
+> rest-express@1.0.0 check
+> tsc
+
+¨Desea terminar el trabajo por lotes (S/N)? ¨Desea terminar el trabajo por lotes (S/N)? 

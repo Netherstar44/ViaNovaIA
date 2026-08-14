@@ -1,0 +1,242 @@
+ViaNovaIA — Plan de Trabajo | Mayo 2026
+Revision: 19 de mayo de 2026
+Documento interno — Confidencial
+
+Este documento organiza el plan de trabajo del equipo ViaNovaIA para el sprint de mayo 2026.
+Incluye asignaciones por area, check-lists tecnicas avanzadas y el roadmap de versiones del producto.
+
+================================================================================
+1. ESTRUCTURA DEL EQUIPO
+================================================================================
+
+El proyecto se divide en dos celulas de trabajo paralelas: Frontend/Calidad y Backend/Seguridad.
+
+1.1 Celula Frontend y Calidad
+-------------------------------
+Nombre           | Rol              | Responsabilidades
+Abel Ramirez     | Lider de Celula  | Coordinacion, revision de relaciones entre usuarios, red social
+Juan Penagos     | Desarrollador    | Pruebas de funciones entre usuarios, carga de ubicaciones reales
+Edwin Esquivel   | Desarrollador    | Carga de assets (360, 3D, video), check-list de calidad, reporte de errores
+
+1.2 Celula Backend y Seguridad
+--------------------------------
+Nombre           | Rol              | Responsabilidades
+Juan Bustos      | Lider de Celula  | Distribucion de tareas, optimizacion de arquitectura, pentesting
+Joseph Aguirre   | Desarrollador    | Seguridad (CORS, cookies, cifrado), pagos, encriptacion de comunicaciones
+Jose Correa      | Desarrollador    | Backend condensado, chatbot, base de datos, Docker, despliegue
+
+================================================================================
+2. FRONTEND, UX Y CALIDAD
+================================================================================
+
+Objetivo: Garantizar que cada flujo de usuario funcione correctamente en todos los roles
+y dispositivos antes de la revision del 19 de mayo.
+
+2.1 Funcionalidades de Red Social
+------------------------------------
+Implementar y probar un sistema de red social con formato moderno (similar a Instagram,
+TikTok o Facebook), que mantenga el engagement de los usuarios dentro de la plataforma.
+
+CHECK-LIST 2.1 — Red Social y Perfiles
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Crear perfiles de usuario: foto, bio, historial de actividad      | Abel / Juan P.    | Pendiente  | Alta
+2  | Validar relaciones entre usuarios: seguir, bloquear, reportar     | Abel              | Pendiente  | Alta
+3  | Chat entre usuarios: mensajeria directa en tiempo real            | Juan P.           | Pendiente  | Alta
+4  | Feed de publicaciones: scroll infinito, like, comentario, compartir| Abel / Edwin     | Pendiente  | Alta
+5  | Subida de imagenes en publicaciones (JPG, PNG, WEBP)              | Edwin             | Pendiente  | Alta
+6  | Subida de videos en publicaciones                                 | Edwin             | Pendiente  | Media
+7  | Subida de imagenes 360 grados en publicaciones y perfiles         | Edwin             | Pendiente  | Media
+8  | Visualizacion de elementos 3D en interiores                       | Edwin             | Pendiente  | Media
+9  | Sistema de reseñas y calificacion por estrellas                   | Juan P.           | Pendiente  | Alta
+10 | Notificaciones en tiempo real (likes, comentarios, seguidores)    | Abel              | Pendiente  | Alta
+11 | Historial y eliminacion de publicaciones propias                  | Juan P.           | Pendiente  | Media
+12 | Visualizacion responsiva en movil, tablet y escritorio            | Todos             | Pendiente  | Alta
+
+2.2 Funciones entre Tipos de Usuario
+---------------------------------------
+Probar todas las interacciones entre los roles existentes en la plataforma
+(cliente, taxista, empresario, administrador, etc.).
+
+CHECK-LIST 2.2 — Flujos entre Roles
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Cliente solicita taxi: formulario, parametros, confirmacion       | Juan P.           | Pendiente  | Alta
+2  | Taxista recibe solicitud con todos los parametros                 | Juan P.           | Pendiente  | Alta
+3  | Taxista acepta/rechaza solicitud; cliente ve estado en tiempo real| Abel              | Pendiente  | Alta
+4  | Seguimiento de viaje en mapa con ubicacion GPS                    | Juan P.           | Pendiente  | Alta
+5  | Calificacion mutua al finalizar el servicio                       | Edwin             | Pendiente  | Alta
+6  | Probar flujo con cada combinacion de roles existentes             | Todos             | Pendiente  | Alta
+7  | Mensajeria entre cliente y conductor durante el viaje             | Juan P.           | Pendiente  | Media
+8  | Historial de viajes por usuario                                   | Edwin             | Pendiente  | Media
+
+2.3 Carga de Ubicaciones Reales
+----------------------------------
+Cargar ubicaciones reales en Neiva, Bogota y al menos 5 capitales adicionales.
+Minimo 3-5 ubicaciones por usuario en cada ciudad.
+
+CHECK-LIST 2.3 — Datos Geograficos
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Seed de ubicaciones reales en Neiva (min. 5 puntos de interes)    | Juan P.           | Pendiente  | Alta
+2  | Seed de ubicaciones reales en Bogota (min. 5 puntos de interes)   | Juan P.           | Pendiente  | Alta
+3  | Seed en 5 capitales: Medellin, Cali, Barranquilla, Cartagena, Buc.| Edwin             | Pendiente  | Alta
+4  | Asignar min. 3 ubicaciones por usuario en cada ciudad cubierta    | Abel              | Pendiente  | Alta
+5  | Validar que los mapas rendericen correctamente en cada ciudad      | Todos             | Pendiente  | Alta
+6  | Probar autocompletado de direcciones con API de mapas             | Juan P.           | Pendiente  | Media
+
+2.4 Reajustes Visuales y de Calidad
+--------------------------------------
+CHECK-LIST 2.4 — UI/UX y Correccion de Errores
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Revision integral: recorrer cada pantalla en cada tipo de usuario | Abel              | Pendiente  | Alta
+2  | Identificar y corregir errores visuales (alineacion, colores)     | Edwin             | Realizado  | Alta
+3  | Limitar tamano maximo de archivos (imagenes, video, 3D)           | Edwin             | Pendiente  | Alta
+4  | Definir formatos permitidos: PNG, JPG, WEBP, MP4, GLB             | Edwin             | Pendiente  | Alta
+5  | Generar documento de cambios cuando se modifique la base de datos  | Todos             | Pendiente  | Alta
+6  | Reportar elementos que requieren optimizacion de rendimiento       | Todos             | Pendiente  | Media
+7  | Verificar consistencia de estilos globales (design system)         | Abel              | Realizado  | Media
+8  | Probar tiempos de carga en conexion 4G simulada                   | Edwin             | Pendiente  | Media
+9  | Revisar accesibilidad: contraste, tamano de texto, alt en imagenes | Edwin             | Pendiente  | Baja
+
+================================================================================
+3. BACKEND, SEGURIDAD Y ARQUITECTURA
+================================================================================
+
+Objetivo: Consolidar, optimizar y blindar el backend antes de la fase de produccion.
+Juan Bustos lidera la distribucion de tareas en esta celula.
+
+3.1 Optimizacion de Arquitectura
+-----------------------------------
+CHECK-LIST 3.1 — Codigo y Arquitectura
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Revision de errores de sintaxis en todo el backend                | Todos             | Pendiente  | Alta
+2  | Condensar y refactorizar modulos redundantes                      | Juan B.           | Pendiente  | Alta
+3  | Optimizar libreria WebGL (configuracion, shaders, rendimiento)    | Jose C.           | Pendiente  | Media
+4  | Implementar ScrollTrigger (GSAP) en pestanas y perfiles premium   | Jose C.           | Pendiente  | Media
+5  | Revisar y optimizar queries N+1 en la base de datos               | Juan B.           | Pendiente  | Alta
+6  | Implementar cache (Redis o similar) en endpoints de alta demanda  | Juan B.           | Pendiente  | Media
+7  | Pruebas de carga en entorno local, Vercel y servidor de prueba    | Todos             | Pendiente  | Alta
+8  | Documentar estructura del backend actualizada (diagrama)          | Juan B.           | Pendiente  | Media
+
+3.2 Seguridad
+---------------
+Aplicar hardening de seguridad ante pentesting, eliminando vulnerabilidades conocidas
+y estableciendo politicas robustas de autenticacion y sesiones.
+
+CHECK-LIST 3.2 — Seguridad Tecnica
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Eliminar JWT en URL/LocalStorage; migrar a cookies HTTPOnly+SameSite| Joseph          | Realizado  | Alta
+2  | Configurar CORS con lista blanca de dominios permitidos           | Joseph            | Realizado  | Alta
+3  | Implementar CSP (Content Security Policy) en headers HTTP         | Joseph            | Pendiente  | Alta
+4  | Agregar rate limiting en endpoints criticos (login, registro, pagos)| Juan B.         | Realizado  | Alta
+5  | Sanitizacion y validacion de inputs (XSS, inyeccion SQL)          | Juan B.           | Pendiente  | Alta
+6  | Habilitar HTTPS en todos los entornos; HSTS en produccion         | Jose C.           | Pendiente  | Alta
+7  | Ocultar info sensible en respuestas de API (stack traces, versiones)| Juan B.         | Pendiente  | Alta
+8  | Auditoria de dependencias (npm audit / Snyk); actualizar paquetes  | Joseph            | Pendiente  | Alta
+9  | Prueba de penetracion basica: OWASP Top 10                        | Juan B.           | Pendiente  | Alta
+10 | Clasificar y documentar nivel de seguridad alcanzado por modulo   | Todos             | Pendiente  | Media
+
+3.3 Autenticacion y Sesiones
+-------------------------------
+CHECK-LIST 3.3 — Autenticacion
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Cifrar sesion con tokens seguros (refresh token rotation)         | Joseph            | Realizado  | Alta
+2  | Implementar autenticacion de dos factores (2FA) opcional          | Joseph            | Pendiente  | Media
+3  | Expirar sesiones inactivas despues de X minutos configurables     | Juan B.           | Pendiente  | Alta
+4  | Registro de intentos fallidos de login y bloqueo temporal         | Juan B.           | Pendiente  | Alta
+5  | Recuperacion segura de contrasena (token de un uso, expira 15 min)| Jose C.           | Pendiente  | Alta
+
+3.4 Metodos de Pago
+---------------------
+CHECK-LIST 3.4 — Integracion de Pagos
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Integrar PSE para pagos bancarios en Colombia                     | Joseph            | Realizado  | Alta
+2  | Integrar pago en efectivo con confirmacion manual del conductor   | Jose C.           | Pendiente  | Alta
+3  | Cifrado de datos de pago con AES-256 o estandar PCI DSS          | Joseph            | Pendiente  | Alta
+4  | Webhook para confirmacion de transacciones (reintentos automaticos)| Juan B.          | Pendiente  | Alta
+5  | Panel de historial de transacciones por usuario                   | Jose C.           | Pendiente  | Media
+6  | Emision de facturas o recibos electronicos por servicio           | Jose C.           | Pendiente  | Media
+
+3.5 Chatbot e IA
+------------------
+CHECK-LIST 3.5 — Chatbot
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Vincular chatbot a la base de datos interna (sin fuentes externas)| Jose C.           | Pendiente  | Alta
+2  | Definir y limitar el contexto del chatbot (datos de la plataforma)| Juan B.           | Pendiente  | Alta
+3  | Pruebas: verificar que no filtre datos de otros usuarios          | Todos             | Pendiente  | Alta
+4  | Implementar chatbot premium con capacidades avanzadas (v12.0)     | Jose C.           | Pendiente  | Baja
+5  | Registro de conversaciones con cifrado para auditoria interna     | Joseph            | Pendiente  | Media
+
+3.6 Comunicaciones Encriptadas
+---------------------------------
+CHECK-LIST 3.6 — Mensajeria Segura
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Implementar cifrado de extremo a extremo (E2EE) en mensajeria    | Joseph            | Pendiente  | Alta
+2  | Alojamiento de copias de seguridad cifradas con Google Cloud      | Jose C.           | Pendiente  | Alta
+3  | Definir politica de retencion de mensajes                         | Juan B.           | Pendiente  | Media
+4  | Notificar al usuario cuando sus mensajes son respaldados/eliminados| Jose C.          | Pendiente  | Baja
+
+3.7 Sistema Premium, Anuncios y E-commerce
+--------------------------------------------
+CHECK-LIST 3.7 — Monetizacion
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Implementar planes premium con acceso diferenciado por nivel      | Juan B.           | Pendiente  | Alta
+2  | Integracion de sistema de anuncios propio (no Meta, no Google)    | Jose C.           | Pendiente  | Alta
+3  | Descuentos y codigos promocionales para usuarios con membresia    | Jose C.           | Pendiente  | Media
+4  | Correos automaticos: bienvenida, confirmacion, recordatorios      | Juan B.           | Pendiente  | Media
+5  | Modulo de e-commerce: inventario, productos, panel admin (v10.0)  | Juan B.           | Pendiente  | Baja
+6  | Rol de empresario y empleado en modulo de negocio (v10.0)         | Jose C.           | Pendiente  | Baja
+7  | Seed para clientes normales via codigo; pipeline para avanzados   | Juan B.           | Pendiente  | Media
+
+3.8 Legal, Privacidad y Compliance
+-------------------------------------
+CHECK-LIST 3.8 — Legal
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Redactar Politicas de Privacidad acorde a GDPR y ley colombiana 1581| Juan B.         | Pendiente  | Alta
+2  | Revision legal frente a restricciones internacionales de operacion | Juan B.          | Pendiente  | Alta
+3  | Incluir flujo de aceptacion de terminos y condiciones en registro  | Jose C.          | Pendiente  | Alta
+4  | Implementar solicitud de eliminacion de cuenta (derecho al olvido) | Joseph           | Pendiente  | Media
+5  | Documentar el cumplimiento legal alcanzado y los pendientes        | Juan B.          | Pendiente  | Media
+
+3.9 DevOps y Despliegue
+--------------------------
+CHECK-LIST 3.9 — Infraestructura
+#  | Tarea / Verificacion                                              | Responsable       | Estado     | Prio.
+1  | Pruebas de estres en local, Vercel y servidor dedicado            | Todos             | Pendiente  | Alta
+2  | Containerizar la aplicacion con Docker (Dockerfile + docker-compose)| Jose C.         | Pendiente  | Alta
+3  | Configurar CI/CD con GitHub Actions u equivalente                 | Juan B.           | Pendiente  | Media
+4  | Adquirir y configurar hosting en Hostinger (2 anios)              | Juan B.           | Pendiente  | Alta
+5  | Variables de entorno: .env protegido, secretos en vault           | Joseph            | Pendiente  | Alta
+6  | Pruebas de regresion completas: backend + frontend + base de datos | Todos             | Pendiente  | Alta
+
+================================================================================
+4. ROADMAP DE VERSIONES
+================================================================================
+
+Version | Descripcion                                                    | Responsable      | Estado
+v8.0    | Estado actual: red social, taxi, ubicaciones reales, chat basico| Equipo completo | En prueba
+v9.0    | Seguridad hardened, CORS, cookies, E2EE, PSE, Docker, Hostinger | Backend         | En desarrollo
+v10.0   | E-commerce: inventario, productos, panel admin, roles empresario | Backend         | Planificado
+v12.0   | Chatbots premium avanzados, red social con herramientas de IA   | Backend         | Planificado
+
+Nota estrategica: Si el proyecto no se comercializa externamente, el equipo puede operarlo
+directamente como negocio propio. El valor estimado del proyecto final supera los
+150 millones de pesos.
+
+================================================================================
+5. NOTAS Y ACUERDOS DEL EQUIPO
+================================================================================
+
+5.1 Gestion de Base de Datos
+- Siempre que se modifique el esquema de la base de datos, generar un documento de cambios versionado.
+- Si el acceso a ViaNova solicita un codigo de autorizacion, consultarlo directamente con Jose Correa.
+
+5.2 Reutilizacion de Artefactos
+- La check-list de frontend generada en este sprint sera reutilizada en BioSmart y Ecoguardian.
+- Los responsables seran Edwin Esquivel, Joseph Aguirre y Juan Penagos.
+
+5.3 Consideraciones Generales
+- Todo el equipo debe aportar activamente. La carga de trabajo es significativa y requiere colaboracion total.
+- Juan Bustos es el responsable de distribuir y priorizar las tareas de backend.
+- Reportar cualquier hallazgo no contemplado en este documento.
+
+— Fin del documento —
+Confidencial — Equipo ViaNovaIA 
