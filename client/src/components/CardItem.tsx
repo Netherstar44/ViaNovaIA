@@ -39,40 +39,40 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="h-full"
     >
-      <Card className="overflow-hidden transition-all hover:shadow-2xl h-full flex flex-col group border-primary/10">
-        <div className="relative h-48 w-full overflow-hidden">
+      <div className="overflow-hidden transition-all h-full flex flex-col group border-none shadow-none bg-transparent cursor-pointer">
+        <div className="relative aspect-[1/1] w-full overflow-hidden rounded-[12px] mb-3">
         <img 
           src={item.image} 
           alt={item.name} 
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-2 right-2">
-           <Badge variant="secondary" className="backdrop-blur-md bg-black/70 text-white border-none font-semibold shadow-lg">
+        <div className="absolute top-3 right-3">
+           <Badge variant="secondary" className="backdrop-blur-md bg-black/70 text-white border-none font-semibold shadow-none rounded-full px-3 py-1">
              {t(`categories.${item.category}`)}
            </Badge>
         </div>
       </div>
       
-      <CardHeader className="pb-2">
+      <div className="flex flex-col px-1 pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold notranslate">{item.name}</CardTitle>
-          <div className="flex items-center gap-1 text-amber-500">
-            <Star className="h-4 w-4 fill-current" />
-            <span className="text-sm font-medium">{realRating}</span>
+          <h3 className="text-[14px] font-bold text-foreground notranslate truncate pr-2">{item.name}</h3>
+          <div className="flex items-center gap-1 text-foreground shrink-0">
+            <Star className="h-3 w-3 fill-current" />
+            <span className="text-[14px] font-medium">{realRating}</span>
           </div>
         </div>
         {item.priceRange && (
-           <div className="text-sm text-muted-foreground">{item.priceRange} • {t(`categories.${item.category}`)}</div>
+           <div className="text-[14px] text-muted-foreground mt-1 truncate">{item.priceRange} • {t(`categories.${item.category}`)}</div>
         )}
-      </CardHeader>
+      </div>
       
-      <CardContent className="flex-grow">
-        <p className="text-sm text-muted-foreground line-clamp-2">
+      <div className="flex-grow px-1">
+        <p className="text-[14px] text-muted-foreground line-clamp-2">
           <TranslatedText text={item.description} />
         </p>
-      </CardContent>
+      </div>
       
-      <CardFooter className="flex flex-col gap-2 pt-0">
+      <div className="flex flex-col gap-2 pt-3 px-1">
         {item.hasVR && (
           <div className="grid grid-cols-2 gap-2 w-full">
              <Button 
@@ -122,8 +122,8 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
            <MapPin className="h-4 w-4" />
            {t('home.explore_btn', 'Ver en Mapa')}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
     </motion.div>
   );
 }
