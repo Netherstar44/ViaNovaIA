@@ -158,7 +158,7 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="bg-card/60 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden shadow-xl hover:shadow-primary/5 transition-shadow"
+      className="bg-transparent border-b border-border/40 pb-6 mb-6 last:border-0"
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-4">
@@ -184,11 +184,11 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
 
       {/* Media */}
       {post.media_url && (
-        <div className="relative bg-black/30">
+        <div className="relative mx-3 sm:mx-5 overflow-hidden rounded-[16px] shadow-lg">
           {post.media_type.includes("video") ? (
             <video
               src={post.media_url}
-              className="w-full max-h-[500px] object-cover"
+              className="w-full max-h-[600px] object-cover"
               controls
               playsInline
               preload="metadata"
@@ -197,7 +197,7 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
             <img
               src={post.media_url}
               alt={post.caption || "post"}
-              className="w-full max-h-[500px] object-cover"
+              className="w-full max-h-[600px] object-cover"
               loading="lazy"
             />
           )}

@@ -220,7 +220,7 @@ export default function AccountSettings() {
             {/* LEFT COLUMN: Profile & Roles */}
             <div className="md:col-span-1 space-y-6">
               {/* ── Current Info & Role Selection ── */}
-              <div className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border-none rounded-[20px] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:shadow-none">
                 <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-5">Perfil Principal</h3>
                 
                 <div className="space-y-4 text-sm">
