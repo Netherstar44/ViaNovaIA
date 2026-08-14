@@ -333,52 +333,46 @@ export default function ProductStore() {
             <p className="text-muted-foreground">Intenta cambiar los filtros de búsqueda.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 gap-y-10">
             {products.map((product, i) => (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                 key={product.id}
                 onClick={() => setSelectedProduct(product)}
-                className="group bg-card/40 border border-white/5 rounded-3xl overflow-hidden hover:border-primary/30 transition-all hover:shadow-2xl hover:shadow-primary/5 cursor-pointer flex flex-col h-full"
+                className="group flex flex-col h-full cursor-pointer"
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-secondary/30">
+                <div className="relative aspect-[1/1] w-full overflow-hidden rounded-[12px] mb-3">
                   {product.cover_image ? (
                     <img 
                       src={product.cover_image} 
                       alt={product.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/30">
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/30 text-muted-foreground/30">
                       <ShoppingCart className="h-10 w-10 mb-2" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   
                   {/* Badge */}
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
+                  <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-semibold text-white shadow-none">
                     {product.role_category}
                   </div>
                 </div>
 
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    <span className="truncate">{product.provider_name}</span>
+                <div className="flex flex-col px-1">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-[15px] text-foreground leading-tight truncate pr-2">
+                      {product.name}
+                    </h3>
                   </div>
-                  <h3 className="font-bold text-white text-lg leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4 mt-auto pt-4">
-                    {product.description}
+                  <p className="text-[15px] text-muted-foreground mt-1 truncate">
+                    {product.provider_name}
                   </p>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                    <span className="text-primary font-bold text-lg">
+                  <div className="mt-1">
+                    <span className="text-foreground font-bold text-[15px]">
                       {Number(product.price).toLocaleString("es-CO", { style: "currency", currency: product.currency, maximumFractionDigits: 0 })}
                     </span>
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-black transition-colors">
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
                   </div>
                 </div>
               </motion.div>

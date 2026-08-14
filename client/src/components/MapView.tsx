@@ -264,9 +264,11 @@ export default function MapView({ locations, selectedCategory, onMarkerClick, se
           style={{ height: '100%', width: '100%' }}
         >
           <FlyTo center={center} zoom={zoom} />
+          {/* Layer Premium (CartoDB/Mapbox) */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            className="dark:invert dark:hue-rotate-180 dark:brightness-95 dark:contrast-90 transition-all duration-300"
           />
 
           {/* User location marker with pulsing effect */}
