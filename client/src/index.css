@@ -2,126 +2,97 @@
 @import "tw-animate-css";
 
 @theme inline {
-  /* VIANova Theme - Dynamic */
+  /* Airbnb Cereal / HIG Tokens - Customized to Yellow Accent */
+  --color-rausch: #ffbf00; /* Original Yellow Accent */
+  --color-rausch-600: #e6ac00; /* Darker Yellow for hover */
+  --color-hof: #222222;
+  --color-foggy: #6a6a6a;
+  --color-grey-500: #c1c1c1;
+  --color-bebe: #ebebeb;
+  --color-deco: #dddddd;
+  --color-faint: #f7f7f7;
+  --color-white: #ffffff;
+
+  /* Mapeo Semántico al Sistema Actual */
   --color-background: var(--bg);
   --color-foreground: var(--fg);
-  
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-fg);
-  
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-fg);
-  
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-fg);
-  
   --color-card: var(--card);
   --color-card-foreground: var(--card-fg);
-  
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-fg);
-  
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  
-  --font-sans: "Inter", sans-serif;
-  --font-heading: "Poppins", sans-serif;
+
+  /* Typography */
+  --font-sans: 'Airbnb Cereal VF', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Airbnb Cereal VF', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+  --radius-3xl: 32px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: 0px 0px 0px 1px rgba(0, 0, 0, 0.02), 0px 2px 6px 0px rgba(0, 0, 0, 0.04), 0px 4px 8px 0px rgba(0, 0, 0, 0.1);
 }
 
 @layer base {
   :root {
-    --bg: hsl(0 0% 100%);
-    --fg: hsl(0 0% 5%);
-    --primary: hsl(45 100% 50%);
-    --primary-fg: hsl(0 0% 0%);
-    --secondary: hsl(0 0% 95%);
-    --secondary-fg: hsl(0 0% 10%);
-    --accent: hsl(45 90% 60%);
-    --accent-fg: hsl(0 0% 0%);
-    --card: hsl(0 0% 98%);
-    --card-fg: hsl(0 0% 5%);
-    --border: hsl(0 0% 90%);
-    --input: hsl(0 0% 90%);
-    --ring: hsl(45 100% 50%);
-    --muted: hsl(0 0% 95%);
-    --muted-fg: hsl(0 0% 40%);
+    /* Modo Claro (Airbnb Light) */
+    --bg: #f7f7f7; /* Faint */
+    --fg: #222222; /* Hof */
+    --primary: #ffbf00; /* Original Yellow Accent */
+    --primary-fg: #000000; /* Black */
+    --secondary: #ffffff; /* Card / White */
+    --secondary-fg: #222222; /* Hof */
+    --card: #ffffff; /* White */
+    --card-fg: #222222; /* Hof */
+    --border: #ebebeb; /* Bebe */
+    --input: #ebebeb; /* Bebe */
+    --ring: #ffbf00; /* Original Yellow Accent */
+    --muted: #f7f7f7; /* Faint */
+    --muted-fg: #6a6a6a; /* Foggy */
   }
 
   .dark {
-    --bg: hsl(0 0% 5%);
-    --fg: hsl(0 0% 95%);
-    --primary: hsl(45 100% 50%);
-    --primary-fg: hsl(0 0% 0%);
-    --secondary: hsl(0 0% 15%);
-    --secondary-fg: hsl(0 0% 100%);
-    --accent: hsl(45 90% 60%);
-    --accent-fg: hsl(0 0% 0%);
-    --card: hsl(0 0% 8%);
-    --card-fg: hsl(0 0% 95%);
-    --border: hsl(0 0% 20%);
-    --input: hsl(0 0% 20%);
-    --ring: hsl(45 100% 50%);
-    --muted: hsl(0 0% 15%);
-    --muted-fg: hsl(0 0% 60%);
+    /* Modo Oscuro (OLED Black / Apple HIG) */
+    --bg: #000000; /* OLED Black */
+    --fg: #ffffff; /* White text */
+    --primary: #ffbf00; /* Original Yellow Accent */
+    --primary-fg: #000000; /* Black */
+    --secondary: #222222; /* Hof surface */
+    --secondary-fg: #ffffff;
+    --card: #222222; /* Hof surface */
+    --card-fg: #ffffff;
+    --border: #6a6a6a; /* Foggy border */
+    --input: #222222; /* Hof */
+    --ring: #ffbf00;
+    --muted: #222222; /* Hof */
+    --muted-fg: #c1c1c1; /* Grey 500 */
   }
+}
 
-  .sunset {
-    --bg: hsl(15 40% 10%);
-    --fg: hsl(30 30% 90%);
-    --primary: hsl(20 90% 60%);
-    --primary-fg: hsl(0 0% 100%);
-    --secondary: hsl(15 30% 15%);
-    --secondary-fg: hsl(30 30% 90%);
-    --accent: hsl(10 80% 65%);
-    --accent-fg: hsl(0 0% 100%);
-    --card: hsl(15 35% 12%);
-    --card-fg: hsl(30 30% 90%);
-    --border: hsl(15 30% 25%);
-    --input: hsl(15 30% 25%);
-    --ring: hsl(20 90% 60%);
-    --muted: hsl(15 30% 20%);
-    --muted-fg: hsl(30 20% 65%);
+@layer utilities {
+  .glass-ultra-thin {
+    @apply bg-white/40 dark:bg-black/40 backdrop-blur-[40px] backdrop-saturate-[200%];
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
   }
-
-  .ocean {
-    --bg: hsl(220 50% 10%);
-    --fg: hsl(210 30% 90%);
-    --primary: hsl(200 90% 50%);
-    --primary-fg: hsl(0 0% 100%);
-    --secondary: hsl(220 40% 15%);
-    --secondary-fg: hsl(210 30% 90%);
-    --accent: hsl(190 80% 55%);
-    --accent-fg: hsl(0 0% 100%);
-    --card: hsl(220 45% 12%);
-    --card-fg: hsl(210 30% 90%);
-    --border: hsl(220 40% 25%);
-    --input: hsl(220 40% 25%);
-    --ring: hsl(200 90% 50%);
-    --muted: hsl(220 40% 20%);
-    --muted-fg: hsl(210 20% 65%);
-  }
-
-  .forest {
-    --bg: hsl(140 40% 10%);
-    --fg: hsl(130 30% 90%);
-    --primary: hsl(140 60% 45%);
-    --primary-fg: hsl(0 0% 100%);
-    --secondary: hsl(140 30% 15%);
-    --secondary-fg: hsl(130 30% 90%);
-    --accent: hsl(110 50% 50%);
-    --accent-fg: hsl(0 0% 100%);
-    --card: hsl(140 35% 12%);
-    --card-fg: hsl(130 30% 90%);
-    --border: hsl(140 30% 25%);
-    --input: hsl(140 30% 25%);
-    --ring: hsl(140 60% 45%);
-    --muted: hsl(140 30% 20%);
-    --muted-fg: hsl(130 20% 65%);
+  
+  .glass-thin {
+    @apply bg-white/60 dark:bg-black/60 backdrop-blur-[25px] backdrop-saturate-[150%];
+    box-shadow: var(--shadow-subtle);
+    border: 1px solid var(--border);
   }
 }
 

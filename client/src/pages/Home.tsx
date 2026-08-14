@@ -348,26 +348,27 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="mt-12 w-full max-w-5xl"
               >
-                <div className="bg-card/90 backdrop-blur-md border border-border/40 rounded-2xl p-2 shadow-xl flex flex-col md:flex-row gap-2 items-center">
+                <div className="glass-ultra-thin rounded-full p-2 shadow-2xl flex flex-col md:flex-row gap-2 items-center max-w-[880px] mx-auto">
 
-                  <div className="flex-1 min-w-[200px] w-full bg-secondary/30 rounded-xl flex items-center px-4 h-12 hover:bg-secondary/50 transition-colors border border-transparent focus-within:border-primary/50 group">
+                  <div className="flex-1 min-w-[200px] w-full bg-white/50 dark:bg-black/50 rounded-full flex items-center px-6 h-14 hover:bg-white/70 dark:hover:bg-black/70 transition-colors border border-transparent focus-within:border-primary/50 group">
                     <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors shrink-0" />
                     <input
                       type="text"
                       placeholder={t('home.search_placeholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none focus:ring-0 px-4 text-sm md:text-base text-white placeholder:text-muted-foreground"
+                      className="w-full bg-transparent border-none outline-none focus:ring-0 px-4 text-base text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
 
+                  <div className="w-[1px] h-8 bg-border hidden md:block"></div>
+
                   <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-2">
                     <div className="relative flex-1 md:flex-none">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                       <select
                         value={distanceFilter}
                         onChange={(e) => setDistanceFilter(e.target.value)}
-                        className="w-full h-12 pl-9 pr-4 rounded-xl border border-transparent bg-secondary/30 hover:bg-secondary/50 text-sm appearance-none outline-none focus:border-primary/50 transition-colors"
+                        className="w-full h-14 pl-4 pr-8 rounded-full border border-transparent bg-white/50 dark:bg-black/50 hover:bg-white/70 dark:hover:bg-black/70 text-base font-medium appearance-none outline-none focus:border-primary/50 transition-colors cursor-pointer"
                       >
                         <option value="any">{t('home.distance')}</option>
                         <option value="1">Menos de 1 km</option>
@@ -376,12 +377,13 @@ export default function Home() {
                       </select>
                     </div>
 
+                    <div className="w-[1px] h-8 bg-border hidden md:block self-center"></div>
+
                     <div className="relative flex-1 md:flex-none">
-                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                       <select
                         value={priceFilter}
                         onChange={(e) => setPriceFilter(e.target.value)}
-                        className="w-full h-12 pl-9 pr-4 rounded-xl border border-transparent bg-secondary/30 hover:bg-secondary/50 text-sm appearance-none outline-none focus:border-primary/50 transition-colors"
+                        className="w-full h-14 pl-4 pr-8 rounded-full border border-transparent bg-white/50 dark:bg-black/50 hover:bg-white/70 dark:hover:bg-black/70 text-base font-medium appearance-none outline-none focus:border-primary/50 transition-colors cursor-pointer"
                       >
                         <option value="any">{t('home.price')}</option>
                         <option value="$">Asequible ($)</option>
@@ -390,8 +392,9 @@ export default function Home() {
                       </select>
                     </div>
 
-                    <Button className="w-full md:w-auto h-12 rounded-xl bg-primary text-black font-bold px-8 hover:bg-primary/90 transition-all">
-                      {t('home.explore_btn')}
+                    <Button className="w-full md:w-14 h-14 md:rounded-full rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-lg">
+                      <Search className="h-5 w-5" />
+                      <span className="md:hidden ml-2 font-bold">{t('home.explore_btn')}</span>
                     </Button>
                   </div>
 
