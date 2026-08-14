@@ -348,52 +348,54 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="mt-12 w-full max-w-5xl"
               >
-                <div className="bg-white/70 dark:bg-black/50 backdrop-blur-xl rounded-[32px] p-2 shadow-2xl flex flex-col md:flex-row gap-2 items-center max-w-[880px] mx-auto border border-white/40 dark:border-white/10">
-
-                  <div className="flex-1 min-w-[200px] w-full bg-white/50 dark:bg-white/5 rounded-2xl flex items-center px-4 h-14 hover:bg-white/80 dark:hover:bg-white/10 transition-colors border border-transparent focus-within:border-primary/50 group">
-                    <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors shrink-0" />
-                    <input
-                      type="text"
-                      placeholder={t('home.search_placeholder')}
+                <div className="bg-white dark:bg-neutral-900 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-neutral-200 dark:border-neutral-800 flex items-center p-2 max-w-[850px] mx-auto w-full transition-all">
+                  
+                  <div className="flex-[1.5] flex flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-text group relative">
+                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.search_placeholder') || 'Destino'}</span>
+                    <input 
+                      type="text" 
+                      placeholder="¿A dónde quieres ir?" 
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 p-0 w-full truncate focus:ring-0"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent border-none outline-none focus:ring-0 px-4 text-base text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
 
-                  <div className="flex flex-wrap md:flex-nowrap w-full md:w-auto gap-2">
-                    <div className="relative flex-1 md:flex-none">
-                      <select
-                        value={distanceFilter}
-                        onChange={(e) => setDistanceFilter(e.target.value)}
-                        className="w-full h-14 pl-4 pr-8 rounded-2xl border border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 text-base font-medium appearance-none outline-none focus:border-primary/50 transition-colors cursor-pointer text-foreground"
-                      >
-                        <option value="any">{t('home.distance')}</option>
-                        <option value="1">Menos de 1 km</option>
-                        <option value="5">Menos de 5 km</option>
-                        <option value="10">Menos de 10 km</option>
-                      </select>
-                    </div>
+                  <div className="w-[1px] h-10 bg-neutral-200 dark:bg-neutral-700 hidden md:block"></div>
 
-                    <div className="relative flex-1 md:flex-none">
-                      <select
-                        value={priceFilter}
-                        onChange={(e) => setPriceFilter(e.target.value)}
-                        className="w-full h-14 pl-4 pr-8 rounded-2xl border border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 text-base font-medium appearance-none outline-none focus:border-primary/50 transition-colors cursor-pointer text-foreground"
-                      >
-                        <option value="any">{t('home.price')}</option>
-                        <option value="$">Asequible ($)</option>
-                        <option value="$$">Moderado ($$)</option>
-                        <option value="$$$">Lujo ($$$)</option>
-                      </select>
-                    </div>
-
-                    <Button className="w-full md:w-14 h-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 hover:shadow-xl">
-                      <Search className="h-5 w-5" />
-                      <span className="md:hidden ml-2 font-bold">{t('home.explore_btn')}</span>
-                    </Button>
+                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer relative">
+                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.distance') || 'Distancia'}</span>
+                    <select 
+                      value={distanceFilter}
+                      onChange={(e) => setDistanceFilter(e.target.value)}
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                    >
+                      <option value="any" className="text-black">Cualquiera</option>
+                      <option value="1" className="text-black">A menos de 1 km</option>
+                      <option value="5" className="text-black">A menos de 5 km</option>
+                      <option value="10" className="text-black">A menos de 10 km</option>
+                    </select>
                   </div>
 
+                  <div className="w-[1px] h-10 bg-neutral-200 dark:bg-neutral-700 hidden md:block"></div>
+
+                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer relative">
+                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.price') || 'Precio'}</span>
+                    <select 
+                      value={priceFilter}
+                      onChange={(e) => setPriceFilter(e.target.value)}
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                    >
+                      <option value="any" className="text-black">Cualquier precio</option>
+                      <option value="$" className="text-black">Económico ($)</option>
+                      <option value="$$" className="text-black">Moderado ($$)</option>
+                      <option value="$$$" className="text-black">Lujo ($$$)</option>
+                    </select>
+                  </div>
+
+                  <button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shrink-0 ml-2 shadow-lg transition-transform hover:scale-105 active:scale-95">
+                    <Search className="w-6 h-6 stroke-[2.5px]" />
+                  </button>
                 </div>
               </motion.div>
             </HeroSection>
