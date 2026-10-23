@@ -846,7 +846,7 @@ export default function MyProducts() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {services.map((svc) => (
               <motion.div key={svc.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="bg-card border border-border/40 rounded-2xl overflow-hidden flex flex-col group hover:border-primary/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300"
+                className="relative bg-card border border-border/40 rounded-2xl overflow-hidden flex flex-col group hover:border-primary/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all duration-300"
               >
                 {svc.imageUrl ? (
                   <div className="w-full h-48 shrink-0 relative overflow-hidden bg-secondary/20">
@@ -875,12 +875,12 @@ export default function MyProducts() {
                 <div className="flex-1 p-5 flex flex-col">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">{svc.name}</h3>
-                    <div className="flex gap-1 ml-3 transition-opacity">
+                    <div className="flex items-center gap-1 ml-3 transition-opacity">
                       <button onClick={() => openEdit(svc)} className="p-1.5 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-400 transition-colors" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </button>
                       {deleteConfirm === svc.id ? (
-                        <div className="flex items-center gap-1 absolute right-4 top-4 z-10 bg-card p-2 rounded-xl border border-red-500/30 shadow-xl">
+                        <div className="flex items-center gap-1.5 bg-destructive/15 p-1 rounded-lg border border-destructive/40">
                           <button data-testid="confirm-delete-service-btn" onClick={() => handleDelete(svc.id)} className="px-2 py-1 rounded-md bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors">Confirmar</button>
                           <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 rounded-md bg-secondary text-muted-foreground text-xs hover:bg-secondary/80 transition-colors">Cancelar</button>
                         </div>

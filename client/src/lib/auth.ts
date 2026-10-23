@@ -238,10 +238,14 @@ export const useAuth = create<AuthState>((set, get) => {
         // ignore
       }
       localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
       await clearAuthToken();
       set({ user: null, isAuthenticated: false });
       const { queryClient } = await import('./queryClient');
       queryClient.clear();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     },
 
     forgotPassword: async (email: string) => {

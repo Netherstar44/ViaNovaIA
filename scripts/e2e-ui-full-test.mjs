@@ -250,23 +250,24 @@ async function run() {
         report.dbChecks.createdService = dbSvc;
 
         if (dbSvc) {
-          // Delete via UI: click trash button
-          const delSvcBtn = page.locator(`[data-testid='delete-service-btn']`).first();
+          // Delete via UI: find the card containing the service name and click its delete button
+          const svcCard = page.locator(`div:has-text('${testSvcName}')`).last();
+          const delSvcBtn = svcCard.locator("[data-testid='delete-service-btn']").or(page.locator("[data-testid='delete-service-btn']")).first();
           if (await delSvcBtn.count()) {
             await delSvcBtn.click({ force: true });
-            await page.waitForTimeout(800);
+            await page.waitForTimeout(1000);
 
             // Click confirmation button
-            const confirmBtn = page.locator(`[data-testid='confirm-delete-service-btn']`)
-              .or(page.getByRole("button", { name: /Confirmar/i }));
+            const confirmBtn = page.locator("[data-testid='confirm-delete-service-btn']")
+              .or(page.getByRole("button", { name: /Confirmar/i })).first();
             
             if (await confirmBtn.count()) {
               await Promise.all([
                 page.waitForResponse(r => r.url().includes(`/api/services/${dbSvc.id}`) && r.request().method() === "DELETE", { timeout: 15000 }).catch(() => null),
-                confirmBtn.first().click({ force: true }),
+                confirmBtn.click({ force: true }),
               ]);
             }
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(2500);
 
             const afterSvcBody = await page.locator("body").innerText();
             const svcGone = !afterSvcBody.includes(testSvcName);
