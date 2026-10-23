@@ -54,6 +54,7 @@ const CATEGORY_MAP: Record<string, string> = {
   restaurant: "Restaurante",
   recreation: "Recreación",
   transport: "Transporte",
+  translator: "Traducción",
 };
 
 const PRICE_TYPE_LABELS: Record<string, string> = {
@@ -76,6 +77,7 @@ function roleToCat(role: string): string {
   if (role === "restaurant") return "restaurant";
   if (role === "recreation") return "recreation";
   if (role === "taxi") return "transport";
+  if (role === "translator") return "translator";
   return "hotel";
 }
 
@@ -181,7 +183,10 @@ export default function MyProducts() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`${apiBase}/api/services/provider/${user.username}`);
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${apiBase}/api/services/provider/${user.username}`, { headers, credentials: "include" });
       const data = await res.json();
       setServices(data.services || []);
     } catch (e) {
@@ -318,7 +323,10 @@ export default function MyProducts() {
     formData.append("file", imageFile);
     formData.append("category", category);
     formData.append("userId", user.username);
-    const res = await fetch(apiBase + "/api/upload", { method: "POST", body: formData });
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(apiBase + "/api/upload", { method: "POST", body: formData, headers, credentials: "include" });
     const data = await res.json();
     return data.url || imageUrl;
   };
@@ -383,10 +391,15 @@ export default function MyProducts() {
         body.parentHotelId = parentHotelId || undefined;
       }
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       if (formMode === "add") {
         const res = await fetch(apiBase + "/api/services", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
+          credentials: "include",
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error((await res.json()).message);
@@ -394,7 +407,8 @@ export default function MyProducts() {
       } else {
         const res = await fetch(`${apiBase}/api/services/${editId}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers,
+          credentials: "include",
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error((await res.json()).message);
@@ -411,9 +425,13 @@ export default function MyProducts() {
 
   const handleDelete = async (id: string) => {
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       await fetch(`${apiBase}/api/services/${id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({ providerUsername: user.username }),
       });
       setDeleteConfirm(null);
@@ -485,11 +503,11 @@ export default function MyProducts() {
                   {/* ────── INFORMACIÓN GENERAL ────── */}
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nombre *</Label>
-                    <Input placeholder="Ej: Hotel Paraíso / Tour de canopy" value={name} onChange={(e) => setName(e.target.value)} required className="bg-secondary/20 h-12 rounded-xl border-border/50" />
+                    <Input id="service-name-input" placeholder="Ej: Hotel Paraíso / Tour de canopy" value={name} onChange={(e) => setName(e.target.value)} required className="bg-secondary/20 h-12 rounded-xl border-border/50" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descripción</Label>
-                    <Textarea placeholder="Describe tu servicio..." value={description} onChange={(e) => setDescription(e.target.value)} className="bg-secondary/20 rounded-xl border-border/50 min-h-[100px]" />
+                    <Textarea id="service-desc-input" placeholder="Describe tu servicio..." value={description} onChange={(e) => setDescription(e.target.value)} className="bg-secondary/20 rounded-xl border-border/50 min-h-[100px]" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Imagen</Label>
@@ -798,7 +816,7 @@ export default function MyProducts() {
 
                   <div className="flex gap-3 pt-2">
                     <Button type="button" variant="outline" onClick={resetForm} className="flex-1 h-12 rounded-xl border-border/50">Cancelar</Button>
-                    <Button type="submit" disabled={submitting} className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold">
+                    <Button id="service-submit-btn" type="submit" disabled={submitting} className="flex-1 h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold">
                       {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...</> : formMode === "add" ? "Agregar Producto" : "Guardar Cambios"}
                     </Button>
                   </div>
@@ -857,17 +875,17 @@ export default function MyProducts() {
                 <div className="flex-1 p-5 flex flex-col">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">{svc.name}</h3>
-                    <div className="flex gap-1 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 ml-3 transition-opacity">
                       <button onClick={() => openEdit(svc)} className="p-1.5 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-400 transition-colors" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </button>
                       {deleteConfirm === svc.id ? (
                         <div className="flex items-center gap-1 absolute right-4 top-4 z-10 bg-card p-2 rounded-xl border border-red-500/30 shadow-xl">
-                          <button onClick={() => handleDelete(svc.id)} className="px-2 py-1 rounded-md bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors">Confirmar</button>
+                          <button data-testid="confirm-delete-service-btn" onClick={() => handleDelete(svc.id)} className="px-2 py-1 rounded-md bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-colors">Confirmar</button>
                           <button onClick={() => setDeleteConfirm(null)} className="px-2 py-1 rounded-md bg-secondary text-muted-foreground text-xs hover:bg-secondary/80 transition-colors">Cancelar</button>
                         </div>
                       ) : (
-                        <button onClick={() => setDeleteConfirm(svc.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors" title="Eliminar">
+                        <button data-testid="delete-service-btn" onClick={() => setDeleteConfirm(svc.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-colors" title="Eliminar">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}

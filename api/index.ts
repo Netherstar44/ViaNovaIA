@@ -1,17 +1,21 @@
 import express, { type Request, Response, NextFunction } from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "../server/routes/index.js";
-import { createServer } from "http";
+import { ensureUserSchema } from "../server/analytics.js";
+import { assertSecurityConfig, getSessionSecret } from "../server/config.js";
+import { applyHttpSecurity } from "../server/http-security.js";
+import { requestLogger, logServerError } from "../server/observability.js";
+import { csrfProtection } from "../server/security.js";
+
+assertSecurityConfig();
 
 const app = express();
-const httpServer = createServer(app);
 
-app.set("trust proxy", true);
-app.use(cors());
-app.use(cookieParser(process.env.SESSION_SECRET || "via_nova_secret_key_2026"));
+applyHttpSecurity(app);
+app.use(cookieParser(getSessionSecret()));
+app.use(csrfProtection);
+app.use(requestLogger);
 
-// Required for some webhooks or parsing
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -20,22 +24,44 @@ declare module "http" {
 
 app.use(
   express.json({
+    limit: "2mb",
     verify: (req: any, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
+app.use(express.urlencoded({ extended: false, limit: "256kb" }));
 
-app.use(express.urlencoded({ extended: false }));
-
-// Initialize routes synchronously
-registerRoutes(httpServer, app).catch(err => {
-  console.error("Failed to register routes:", err);
+// Columnas añadidas después de la creación de la base de datos. Se ejecuta una
+// sola vez por isolate y evita depender de una migración manual en Vercel.
+app.use("/api", async (_req, _res, next) => {
+  try {
+    await ensureUserSchema();
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+// La espera es necesaria: si una petición llega antes de montar las rutas,
+// Express respondería 404 en el arranque en frío.
+await registerRoutes(app);
+
+// Mismo comportamiento que server/app.ts: nunca devolver el HTML de la SPA
+// como respuesta de una ruta /api inexistente.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ message: "Endpoint no encontrado" });
+});
+
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  if (status >= 500) logServerError(err, (req as any).requestId);
+  if (err?.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ message: "El archivo excede el tamaño máximo permitido" });
+  }
+  const message = process.env.NODE_ENV === "production" && status >= 500
+    ? "Error interno del servidor"
+    : err.message || "Internal Server Error";
   res.status(status).json({ message });
 });
 

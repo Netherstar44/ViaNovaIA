@@ -1,52 +1,72 @@
 import { createRoot } from "react-dom/client";
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import App from "./App";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
+import "./styles/glass.css";
 import "./i18n";
-GoogleAuth.initialize({
-  clientId: '963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com',
-  scopes: ['profile', 'email'],
-  grantOfflineAccess: true,
-});
-// Parche global: Redirigir todas las peticiones /api a Vercel en el APK/Producción
-const originalFetch = window.fetch;
+import { apiBase } from "./lib/queryClient";
+import { getAuthToken } from "./lib/secureStorage";
+
+// Keep web/Cloudflare requests same-origin. Native builds use the configurable
+// API base (VITE_NATIVE_API_BASE) because relative URLs point at app assets.
+const originalFetch = window.fetch.bind(window);
 window.fetch = async (input, init) => {
-  let url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
-  
-  if (typeof url === 'string' && url.startsWith('/api')) {
-    // Si no estamos en entorno local de desarrollo, forzamos el dominio del backend
-    if (!import.meta.env.DEV) {
-      url = 'https://via-nova-ia.vercel.app' + url;
+  let request: RequestInfo | URL = input;
+  let url =
+    typeof input === "string"
+      ? input
+      : input instanceof Request
+        ? input.url
+        : String(input);
+
+  if (apiBase && url.startsWith("/api")) {
+    url = `${apiBase}${url}`;
+    request = url;
+  }
+
+  // El APK no comparte cookies de forma fiable: usa Authorization + almacenamiento
+  // seguro del sistema. El navegador sigue usando solo la cookie HttpOnly.
+  if (apiBase && url.includes("/api")) {
+    const token = await getAuthToken();
+    const headers = request instanceof Request
+      ? new Headers(request.headers)
+      : new Headers(init?.headers);
+    headers.set("X-Client-Platform", "capacitor");
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (request instanceof Request) {
+      request = new Request(request, { headers });
+    } else {
+      init = { ...(init || {}), headers };
     }
   }
 
-  // Inject token if available
-  const token = localStorage.getItem('auth_token');
-  if (token && typeof url === 'string' && url.includes('/api')) {
-    init = init || {};
-    init.headers = {
-      ...init.headers,
-      'Authorization': `Bearer ${token}`
-    };
-  }
-
-  return originalFetch(typeof input === 'string' ? url : input, init);
+  return originalFetch(request, init);
 };
 
 // Parche para Capacitor/APK: Evitar el error "404 Page Not Found" de wouter
 // Capacitor suele cargar la app en http://localhost/index.html en lugar de http://localhost/
-if (window.location.pathname === '/index.html') {
-  window.history.replaceState(null, '', '/');
+if (window.location.pathname === "/index.html") {
+  window.history.replaceState(null, "", "/");
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
+);
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
-      console.log('ServiceWorker registrado:', registration.scope);
-    }).catch(error => {
-      console.log('ServiceWorker error:', error);
-    });
+// The worker only handles push notifications. Registering it in development
+// makes Vite's HMR and error overlay harder to reason about, so keep it to
+// production builds.
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        console.log("ServiceWorker registrado:", registration.scope);
+      })
+      .catch((error) => {
+        console.warn("ServiceWorker error:", error);
+      });
   });
 }

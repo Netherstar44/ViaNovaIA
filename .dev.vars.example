@@ -1,0 +1,24 @@
+NODE_ENV=development
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+JWT_SECRET=replace-with-a-random-secret-at-least-32-chars
+SESSION_SECRET=replace-with-a-random-secret-at-least-32-chars
+
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+GROQ_API_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+
+CLIENT_URL=http://localhost:8787
+PUBLIC_URL=http://localhost:8787
+
+# Opcional: rate limiting distribuido entre isolates de Workers.
+# UPSTASH_REDIS_REST_URL=
+# UPSTASH_REDIS_REST_TOKEN=

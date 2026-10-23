@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, User, Building2, Utensils, TentTree, Car, Shield, Check,
   AlertCircle, Loader2, Plus, ChevronDown, Pencil, Save, X, Trash2,
-  Wallet, Star, Languages,
+  Wallet, Star, Languages, LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -43,7 +43,7 @@ const FIELD_PLACEHOLDERS: Record<string, string> = {
 };
 
 export default function AccountSettings() {
-  const { user, switchActiveRole, addRole, removeRole, fetchRoles } = useAuth();
+  const { user, switchActiveRole, addRole, removeRole, fetchRoles, logout } = useAuth();
   const [_, setLocation] = useLocation();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,10 +87,11 @@ export default function AccountSettings() {
     }
   }, [user?.username, user?.role]);
 
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+  }, [user, setLocation]);
+
+  if (!user) return null;
 
   const currentRoleData = ROLES.find((r) => r.value === user.role);
   const userRoles = user.roles || [user.role];
@@ -398,6 +399,18 @@ export default function AccountSettings() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  id="account-settings-logout-btn"
+                  variant="outline"
+                  onClick={logout}
+                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive flex items-center justify-center gap-2 rounded-xl h-11"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar Sesión
+                </Button>
               </div>
             </div>
 

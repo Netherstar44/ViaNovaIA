@@ -72,6 +72,7 @@ export const withdrawals = pgTable("withdrawals", {
   status: withdrawalStatusEnum("status").notNull().default("pending"),
   bankAccount: text("bank_account"),
   notes: text("notes"),
+  idempotencyKey: text("idempotency_key"),
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
 });
@@ -94,6 +95,17 @@ export const insertRideSchema = createInsertSchema(rides).pick({
   destinationAddress: true,
   fare: true,
   distanceKm: true,
+}).extend({
+  // El servidor siempre reemplaza este valor con req.user.username.
+  travelerUsername: z.string().min(1).max(80).optional(),
+  originLat: z.string().regex(/^-?\d{1,3}(\.\d+)?$/, "Latitud inválida"),
+  originLng: z.string().regex(/^-?\d{1,3}(\.\d+)?$/, "Longitud inválida"),
+  destinationLat: z.string().regex(/^-?\d{1,3}(\.\d+)?$/, "Latitud inválida"),
+  destinationLng: z.string().regex(/^-?\d{1,3}(\.\d+)?$/, "Longitud inválida"),
+  destinationAddress: z.string().min(3).max(300),
+  originAddress: z.string().max(300).optional(),
+  fare: z.number().positive().max(10_000_000),
+  distanceKm: z.number().nonnegative().max(10_000).optional(),
 });
 
 export const insertWithdrawalSchema = createInsertSchema(withdrawals).pick({
@@ -101,6 +113,7 @@ export const insertWithdrawalSchema = createInsertSchema(withdrawals).pick({
   amount: true,
   bankAccount: true,
   notes: true,
+  idempotencyKey: true,
 });
 
 // ── Zod validators (para endpoints sin Drizzle) ───────────────────────────────
@@ -116,10 +129,12 @@ export const taxiStatusSchema = z.object({
 });
 
 export const withdrawSchema = z.object({
-  taxiUsername: z.string().min(1),
-  amount: z.number().positive("El monto debe ser mayor a 0"),
-  bankAccount: z.string().min(5, "Ingresa una cuenta bancaria válida"),
-  notes: z.string().optional(),
+  taxiUsername: z.string().min(1).optional(),
+  amount: z.number().positive("El monto debe ser mayor a 0")
+    .max(10_000_000, "El monto excede el máximo permitido"),
+  bankAccount: z.string().min(5, "Ingresa una cuenta bancaria válida").max(64),
+  notes: z.string().max(500).optional(),
+  idempotencyKey: z.string().min(8).max(100).optional(),
 });
 
 // ── TypeScript Types ──────────────────────────────────────────────────────────

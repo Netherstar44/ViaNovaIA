@@ -23,7 +23,8 @@ export default function Notifications() {
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: [user?.username ? `/api/notifications?username=${encodeURIComponent(user.username)}` : null],
-    enabled: !!user && user.role !== "traveler",
+    enabled: !!user,
+    refetchInterval: 10_000,
   });
 
   const markAsRead = useMutation({
@@ -35,13 +36,12 @@ export default function Notifications() {
     },
   });
 
-  if (!user || user.role === "traveler") {
+  if (!user) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto p-6 text-center mt-20">
-          <h2 className="text-xl font-bold">No tienes acceso a esta página.</h2>
-          <p className="text-muted-foreground mt-2">Solo para proveedores (Hoteles, Restaurantes, etc).</p>
+          <h2 className="text-xl font-bold">Inicia sesión para ver tus notificaciones.</h2>
         </div>
       </div>
     );
@@ -56,9 +56,9 @@ export default function Notifications() {
       <main className="flex-1 container mx-auto px-4 py-8 mt-16 max-w-4xl">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Notificaciones de Reservas</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Notificaciones</h1>
             <p className="text-muted-foreground mt-1">
-              Tienes {unreadCount} solicitud{unreadCount !== 1 ? 'es' : ''} pendiente{unreadCount !== 1 ? 's' : ''}.
+              Tienes {unreadCount} notificación{unreadCount !== 1 ? 'es' : ''} sin leer.
             </p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Notifications() {
             <CardContent className="flex flex-col items-center justify-center h-64 text-center">
               <Search className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
               <p className="text-lg font-medium">No hay notificaciones</p>
-              <p className="text-sm text-muted-foreground mt-1">Cuando un viajero confirme una reserva, aparecerá aquí.</p>
+              <p className="text-sm text-muted-foreground mt-1">Las reservas, likes, comentarios, seguidores y mensajes aparecerán aquí.</p>
             </CardContent>
           </Card>
         ) : (
@@ -108,7 +108,7 @@ export default function Notifications() {
                     </CardHeader>
                     <CardContent>
                       <div className="rounded-lg bg-black/20 p-4 mt-2 text-sm leading-relaxed border border-white/5">
-                        <p><strong className="text-primary/80">Viajero:</strong> {notif.travelerUsername}</p>
+                        <p><strong className="text-primary/80">De:</strong> {notif.travelerUsername || "Sistema"}</p>
                         <p className="mt-2"><strong className="text-primary/80">Detalles:</strong> {notif.details}</p>
                       </div>
                     </CardContent>

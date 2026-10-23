@@ -9,15 +9,14 @@ import { nanoid } from "nanoid";
 const viteLogger = createLogger();
 
 export async function setupVite(server: Server, app: Express) {
-  const ngrokUrl = process.env.NGROK_URL;
+  const publicUrl = process.env.APP_URL || process.env.PUBLIC_URL;
 
-  // When behind ngrok, disable HMR entirely.
-  // HMR injects a WebSocket client that connects to localhost:5000 —
-  // which causes ERR_CONNECTION_REFUSED for any device that isn't the
-  // dev machine. Remote visitors don't need hot reload anyway.
+  // When exposed through a Cloudflare tunnel, disable HMR unless explicitly
+  // enabled: the HMR client may try to reach the local dev server directly
+  // from remote devices. Local development keeps full hot reload.
   const serverOptions = {
     middlewareMode: true,
-    hmr: ngrokUrl ? false : { server, path: "/vite-hmr" },
+    hmr: publicUrl ? false : { server, path: "/vite-hmr" },
     allowedHosts: true as const,
   };
 

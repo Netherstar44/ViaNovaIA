@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import TranslatedText from "./TranslatedText";
 import { apiBase } from "@/lib/queryClient";
+import { authHeaders } from "@/lib/secureStorage";
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,8 @@ export default function Chatbot() {
   const [destinationCity, setDestinationCity] = useState('');
   const [isSendingBookings, setIsSendingBookings] = useState(false);
   const [bookingsSent, setBookingsSent] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   // Voice Mode States
   const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -60,6 +63,33 @@ export default function Chatbot() {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    if (!isOpen || !user?.username || historyLoaded) return;
+    setHistoryLoaded(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/chat/history?username=${encodeURIComponent(user.username)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        const restored: Message[] = data
+          .filter((m: any) => m && (m.role === "user" || m.role === "assistant") && m.content)
+          .slice(-30)
+          .map((m: any, index: number) => ({
+            id: String(m.id || `history-${index}`),
+            role: m.role,
+            content: String(m.content),
+            image: m.image || undefined,
+          }));
+        if (restored.length > 0) setMessages(restored);
+      } catch {
+        // History is optional; keep the local greeting.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, user?.username, historyLoaded]);
 
   useEffect(() => {
     if (scrollRef.current && !isVoiceMode) {
@@ -181,7 +211,8 @@ export default function Chatbot() {
       // Edge TTS – Microsoft Neural Voice
       const res = await fetch(apiBase + '/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ text: cleanText, voice: selectedVoice })
       });
 
@@ -300,11 +331,13 @@ export default function Chatbot() {
     try {
       const res = await fetch(apiBase + '/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({
           username: user?.username || 'anon',
           name: user?.name || user?.username || 'Viajero',
           message: newUserMsg.content,
+          role: user?.role || 'traveler',
           location: sharedLocation,
           destinationCity: destinationCity.trim() || undefined,
           history: messagesRef.current.slice(-14).map(m => ({ role: m.role, content: m.content })),
@@ -313,6 +346,7 @@ export default function Chatbot() {
       });
       const data = await res.json();
       const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
 
       setVoiceTranscript('Generando voz...');
 
@@ -347,27 +381,31 @@ export default function Chatbot() {
     }
   };
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async (overrideText?: string) => {
+    const content = (overrideText ?? inputValue).trim();
+    if (!content) return;
 
     const newUserMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputValue
+      content
     };
 
     setMessages(prev => [...prev, newUserMsg]);
-    setInputValue('');
+    if (!overrideText) setInputValue('');
+    setSuggestions([]);
     setIsLoading(true);
 
     try {
       const res = await fetch(apiBase + '/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({
           username: user?.username || 'anon',
           name: user?.name || user?.username || 'Viajero',
           message: newUserMsg.content,
+          role: user?.role || 'traveler',
           location: sharedLocation,
           destinationCity: destinationCity.trim() || undefined,
           history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
@@ -382,6 +420,7 @@ export default function Chatbot() {
         role: 'assistant',
         content: reply
       }]);
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
     } catch (err) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -424,6 +463,7 @@ export default function Chatbot() {
             username: user?.username || 'anon',
             name: user?.name || user?.username || 'Viajero',
             message: newUserMsg.content,
+            role: user?.role || 'traveler',
             location: loc,
             destinationCity: destinationCity.trim() || undefined,
             history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
@@ -432,6 +472,7 @@ export default function Chatbot() {
         });
         const data = await res.json();
         const reply = data.reply || t('chatbot.location_received');
+        setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
         
         setMessages(prev => [...prev, {
           id: (Date.now() + 1).toString(),
@@ -470,11 +511,13 @@ export default function Chatbot() {
     try {
       const res = await fetch(apiBase + '/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({
           username: user?.username || 'anon',
           name: user?.name || user?.username || 'Viajero',
           message: newUserMsg.content,
+          role: user?.role || 'traveler',
           location: undefined,
           destinationCity: destinationCity.trim() || undefined,
           history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
@@ -482,6 +525,7 @@ export default function Chatbot() {
         })
       });
       const data = await res.json();
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -566,7 +610,7 @@ export default function Chatbot() {
     if (!items.length) return;
     setIsSendingBookings(true);
     try {
-      await fetch(apiBase + '/api/bookings/confirm', {
+      const res = await fetch(apiBase + '/api/bookings/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -575,6 +619,7 @@ export default function Chatbot() {
           bookings: items.map(b => ({ type: b.type, providerUsername: b.providerUsername, details: b.details }))
         })
       });
+      if (!res.ok) throw new Error('No se pudieron enviar las solicitudes');
       setBookingsSent(true);
     } catch (e) { console.error(e); }
     finally { setIsSendingBookings(false); }
@@ -634,6 +679,7 @@ export default function Chatbot() {
             className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/60 transition-shadow"
           >
             <Button
+              id="chatbot-open-btn"
               onClick={() => setIsOpen(true)}
               className="h-16 w-16 rounded-full bg-primary text-primary-foreground border-2 border-primary/20 p-0 overflow-hidden"
             >
@@ -656,10 +702,10 @@ export default function Chatbot() {
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             className="fixed bottom-6 right-6 z-50 w-[90vw] md:w-[400px] h-[600px] max-h-[85vh]"
           >
-            <div className="w-full h-full rounded-[2rem] shadow-2xl flex flex-col overflow-hidden bg-card border border-border/50 ring-1 ring-primary/20">
+            <div className="glass-panel w-full h-full rounded-[2rem] flex flex-col overflow-hidden ring-1 ring-primary/20">
               
               {/* HEADER */}
-              <div className="bg-gradient-to-r from-background to-secondary/30 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
+              <div className="bg-gradient-to-r from-background/60 to-secondary/20 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] -mr-10 -mt-10 rounded-full" />
                 <div className="flex items-center gap-3 relative z-10">
                   <div className="relative">
@@ -672,7 +718,9 @@ export default function Chatbot() {
                   </div>
                   <div>
                     <h3 className="font-heading font-extrabold text-foreground text-lg tracking-tight notranslate">VIANova AI</h3>
-                    <p className="text-xs text-primary/80 font-medium tracking-wide">Impulsado por Llama 3.1</p>
+                    <p className="text-xs text-primary/80 font-medium tracking-wide">
+                      {user ? `Asistente ${user.role === 'traveler' ? 'de viaje' : user.role === 'admin' ? 'SaaS' : 'de negocio'}` : 'Asistente contextual'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 relative z-10">
@@ -697,8 +745,7 @@ export default function Chatbot() {
               </div>
 
               {/* MESSAGES AREA / VOICE OVERLAY */}
-              <div className="flex-1 overflow-hidden bg-black/5 relative">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none mix-blend-overlay" />
+              <div className="flex-1 overflow-hidden bg-foreground/[0.02] relative">
                 
                 <AnimatePresence mode="wait">
                   {isVoiceMode ? (
@@ -865,6 +912,20 @@ export default function Chatbot() {
                             ))}
                           </AnimatePresence>
                           
+                          {!isLoading && suggestions.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pl-11">
+                              {suggestions.map((suggestion, index) => (
+                                <button
+                                  key={`${suggestion}-${index}`}
+                                  onClick={() => handleSend(suggestion)}
+                                  className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-left text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
                           {isLoading && (
                              <motion.div 
                                initial={{ opacity: 0, y: 10 }}
@@ -895,17 +956,20 @@ export default function Chatbot() {
 
               {/* FOOTER / INPUT */}
               {!isVoiceMode && (
-                <div className="p-4 bg-background/95 backdrop-blur-xl border-t border-white/5 relative z-10 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 px-1">
-                    <MapPin className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">{t('chatbot.destination', 'Destino de viaje:')}</span>
+                <div className="p-4 bg-background/60 backdrop-blur-2xl border-t border-white/5 relative z-10 flex flex-col gap-3">
+                  <div className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-secondary/20 px-3 py-2">
+                    <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                    <label htmlFor="chatbot-destination" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {t('chatbot.destination', 'Destino')}
+                    </label>
                     <input
+                      id="chatbot-destination"
                       type="text"
-                      placeholder="Opcional (Ej. Cali)"
+                      placeholder={t('chatbot.destination_placeholder', 'Opcional — Ej. Cali, Medellín...')}
                       value={destinationCity}
                       onChange={(e) => setDestinationCity(e.target.value)}
                       disabled={isLoading}
-                      className="bg-transparent border-b border-white/10 focus:border-primary outline-none text-sm text-foreground placeholder:text-muted-foreground/40 w-32 pb-0.5 transition-colors"
+                      className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
                     />
                   </div>
                   
@@ -921,17 +985,19 @@ export default function Chatbot() {
                     </Button>
                     <div className="flex-1 ml-12 pr-14">
                       <Input
+                        id="chatbot-msg-input"
                         placeholder={t('chatbot.placeholder')}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                         disabled={isLoading}
                         className="w-full h-14 bg-secondary/30 border-white/10 rounded-full focus-visible:ring-primary focus-visible:ring-1 text-sm shadow-inner transition-all hover:bg-secondary/50 placeholder:text-muted-foreground/70"
                       />
                     </div>
                     <Button 
+                      id="chatbot-send-btn"
                       size="icon" 
-                      onClick={handleSend} 
+                      onClick={() => handleSend()} 
                       disabled={!inputValue.trim() || isLoading}
                       className="absolute right-2 h-10 w-10 rounded-full bg-primary text-black shadow-md hover:scale-105 hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:hover:scale-100"
                     >

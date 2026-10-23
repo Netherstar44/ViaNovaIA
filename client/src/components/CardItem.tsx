@@ -1,4 +1,3 @@
-import { apiBase } from "@/lib/queryClient";
 import { LocationItem } from "@/data/mockData";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Star, Box, Eye } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import VRViewer from "./VRViewer";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import TranslatedText from "./TranslatedText";
@@ -14,24 +13,13 @@ import TranslatedText from "./TranslatedText";
 interface CardItemProps {
   item: LocationItem;
   onViewMap?: () => void;
+  ratingOverride?: number;
 }
 
-export default function CardItem({ item, onViewMap }: CardItemProps) {
+export default function CardItem({ item, onViewMap, ratingOverride }: CardItemProps) {
   const { t } = useTranslation();
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
-  const [realRating, setRealRating] = useState<number>(item.rating || 0);
-
-  useEffect(() => {
-    fetch(`${apiBase}/api/comments?locationId=${item.id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.comments && data.comments.length > 0) {
-          const sum = data.comments.reduce((a: number, b: any) => a + (b.rating || 0), 0);
-          setRealRating(Number((sum / data.comments.length).toFixed(1)));
-        }
-      })
-      .catch(() => {});
-  }, [item.id]);
+  const displayRating = ratingOverride ?? item.rating ?? 0;
 
   return (
     <motion.div 
@@ -58,7 +46,7 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
           <h3 className="text-[14px] font-bold text-foreground notranslate truncate pr-2">{item.name}</h3>
           <div className="flex items-center gap-1 text-foreground shrink-0">
             <Star className="h-3 w-3 fill-current" />
-            <span className="text-[14px] font-medium">{realRating}</span>
+            <span className="text-[14px] font-medium">{displayRating}</span>
           </div>
         </div>
         {item.priceRange && (
@@ -88,7 +76,7 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
               <DialogContent 
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >
@@ -109,7 +97,7 @@ export default function CardItem({ item, onViewMap }: CardItemProps) {
               <DialogContent 
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >

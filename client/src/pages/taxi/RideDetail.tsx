@@ -1,4 +1,5 @@
 import { apiBase } from "@/lib/queryClient";
+import "leaflet/dist/leaflet.css";
 // ─────────────────────────────────────────────────────────────────────────────
 // client/src/pages/taxi/RideDetail.tsx
 // Vista de detalle del viaje con mapa Leaflet — /taxi/ride/:id
@@ -195,11 +196,6 @@ export default function RideDetail() {
 
         {/* Mapa */}
         <div className="rounded-2xl overflow-hidden border border-border/50 shadow-lg">
-          {/* Leaflet CSS inline para que funcione sin configuración extra */}
-          <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
-          />
           <div ref={mapRef} style={{ height: "420px", width: "100%", background: "#0a0a12" }} />
         </div>
 

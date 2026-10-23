@@ -285,7 +285,7 @@ export default function TaxiOrderPanel({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="bg-card/95 backdrop-blur-2xl border border-border/50 rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden"
+            className="glass-panel rounded-3xl p-6 space-y-5 relative overflow-hidden"
     >
       {/* Decorative radar circle */}
       <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-primary/5 animate-pulse pointer-events-none" />

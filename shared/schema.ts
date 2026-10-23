@@ -45,6 +45,13 @@ export const users = pgTable("users", {
   failedLoginAttempts: integer("failed_login_attempts").default(0),
   lockUntil: timestamp("lock_until"),
   preferences: jsonb("preferences"), // stores user tastes, travel styles, chatbot memory
+  bio: text("bio"),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  twoFactorEnabled: text("two_factor_enabled").default("false"),
+  twoFactorAttempts: integer("two_factor_attempts").default(0),
+  authProvider: text("auth_provider").default("local"),
+  premiumPlan: text("premium_plan").default("free"),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
@@ -80,6 +87,7 @@ export const serviceCategoryEnum = pgEnum("service_category", [
   "restaurant",
   "recreation",
   "transport",
+  "translator",
 ]);
 
 export const services = pgTable("services", {
@@ -120,6 +128,13 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+/** Denylist de JWT revocados (logout / cambio de contraseña). */
+export const revokedTokens = pgTable("revoked_tokens", {
+  jti: varchar("jti").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").default(sql`now()`),
 });
@@ -221,6 +236,32 @@ export const postComments = pgTable("post_comments", {
   createdAt: timestamp("created_at").default(sql`now()`),
 });
 
+export const socialBlocks = pgTable("social_blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  blockerId: varchar("blocker_id").notNull().references(() => users.id),
+  blockedId: varchar("blocked_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const socialReports = pgTable("social_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id),
+  reportedId: varchar("reported_id").notNull().references(() => users.id),
+  reason: text("reason").notNull(),
+  details: text("details"),
+  status: text("status").default("pending"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
+export const socialMessages = pgTable("social_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderUsername: text("sender_username").notNull(),
+  recipientUsername: text("recipient_username").notNull(),
+  content: text("content").notNull(),
+  isRead: text("is_read").default("false"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -235,6 +276,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   failedLoginAttempts: true,
   lockUntil: true,
   preferences: true,
+  bio: true,
+  termsAcceptedAt: true,
+  authProvider: true,
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({
@@ -339,6 +383,7 @@ export type Media = typeof media.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type RevokedToken = typeof revokedTokens.$inferSelect;
 export type UserRoleRecord = typeof userRoles.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
@@ -348,6 +393,9 @@ export type Booking = typeof bookings.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type PostLike = typeof postLikes.$inferSelect;
 export type PostComment = typeof postComments.$inferSelect;
+export type SocialBlock = typeof socialBlocks.$inferSelect;
+export type SocialReport = typeof socialReports.$inferSelect;
+export type SocialMessage = typeof socialMessages.$inferSelect;
 
 
 export type LocationItem = {

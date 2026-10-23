@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, and, sql as drizzleSql } from "drizzle-orm";
+import { eq, desc, and, or, inArray, sql as drizzleSql } from "drizzle-orm";
 import {
   users,
   messages,
@@ -45,20 +45,23 @@ export interface IStorage {
   addMessage(conversationId: string, role: string, content: string, metadata?: any): Promise<Message>;
   getMessages(conversationId: string, limit?: number): Promise<Message[]>;
   insertService(svc: InsertService): Promise<Service>;
+  getService(id: string): Promise<Service | undefined>;
   updateService(id: string, data: Partial<InsertService>): Promise<Service>;
-  deleteService(id: string, providerUsername: string): Promise<void>;
+  deleteService(id: string, providerUsername?: string): Promise<void>;
   listServicesByCategory(category: string): Promise<Service[]>;
   listProviderServices(providerUsername: string): Promise<Service[]>;
   listServicesByCity(city: string): Promise<Service[]>;
   insertComment(cmt: InsertComment): Promise<Comment>;
   listCommentsByLocation(locationId: string): Promise<Comment[]>;
+  listCommentRatings(locationIds: string[]): Promise<{ locationId: string; average: number; count: number }[]>;
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   deletePasswordResetToken(token: string): Promise<void>;
   
   insertNotification(data: InsertNotification): Promise<DbNotification>;
   getProviderNotifications(providerUsername: string): Promise<DbNotification[]>;
-  markNotificationAsRead(id: string): Promise<void>;
+  getNotificationsForUser(username: string): Promise<DbNotification[]>;
+  markNotificationAsRead(id: string, username: string, isAdmin?: boolean): Promise<boolean>;
 }
 
 export function getDb() {
@@ -75,15 +78,25 @@ export class DbStorage implements IStorage {
     return rows[0];
   }
 
+  async getService(id: string): Promise<Service | undefined> {
+    const db = getDb();
+    const rows = await db.select().from(services).where(eq(services.id, id));
+    return rows[0];
+  }
+
   async updateService(id: string, data: Partial<InsertService>): Promise<Service> {
     const db = getDb();
     const rows = await db.update(services).set(data as any).where(eq(services.id, id)).returning();
     return rows[0];
   }
 
-  async deleteService(id: string, providerUsername: string): Promise<void> {
+  async deleteService(id: string, providerUsername?: string): Promise<void> {
     const db = getDb();
-    await db.delete(services).where(and(eq(services.id, id), eq(services.providerUsername, providerUsername)));
+    if (providerUsername) {
+      await db.delete(services).where(and(eq(services.id, id), eq(services.providerUsername, providerUsername)));
+    } else {
+      await db.delete(services).where(eq(services.id, id));
+    }
   }
 
   async listServicesByCategory(category: string): Promise<Service[]> {
@@ -122,14 +135,57 @@ export class DbStorage implements IStorage {
     return await db.select().from(notifications).where(eq(notifications.providerUsername, providerUsername)).orderBy(desc(notifications.createdAt));
   }
 
-  async markNotificationAsRead(id: string): Promise<void> {
+  async getNotificationsForUser(username: string): Promise<DbNotification[]> {
     const db = getDb();
-    await db.update(notifications).set({ isRead: "true" }).where(eq(notifications.id, id));
+    return await db.select().from(notifications)
+      .where(or(
+        eq(notifications.providerUsername, username),
+        eq(notifications.travelerUsername, username),
+      ))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(id: string, username: string, isAdmin = false): Promise<boolean> {
+    const db = getDb();
+    const conditions = isAdmin
+      ? eq(notifications.id, id)
+      : and(
+          eq(notifications.id, id),
+          or(
+            eq(notifications.providerUsername, username),
+            eq(notifications.travelerUsername, username),
+          ),
+        );
+    const rows = await db.update(notifications)
+      .set({ isRead: "true" })
+      .where(conditions)
+      .returning({ id: notifications.id });
+    return rows.length > 0;
   }
 
   async listCommentsByLocation(locationId: string): Promise<Comment[]> {
     const db = getDb();
     return await db.select().from(comments).where(eq(comments.locationId, locationId)).orderBy(desc(comments.createdAt));
+  }
+
+  async listCommentRatings(locationIds: string[]): Promise<{ locationId: string; average: number; count: number }[]> {
+    if (locationIds.length === 0) return [];
+    const db = getDb();
+    const rows = await db
+      .select({
+        locationId: comments.locationId,
+        average: drizzleSql<number>`coalesce(avg(${comments.rating}), 0)`,
+        count: drizzleSql<number>`count(${comments.rating})`,
+      })
+      .from(comments)
+      .where(inArray(comments.locationId, locationIds))
+      .groupBy(comments.locationId);
+
+    return rows.map((row) => ({
+      locationId: row.locationId,
+      average: Number(row.average),
+      count: Number(row.count),
+    }));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -378,13 +434,13 @@ export class DbStorage implements IStorage {
     name: string | null;
     role: string | null;
     avatarUrl: string | null;
-    roles: UserRoleRecord[];
+    roles: Array<{ role: string; businessName: string | null; createdAt: Date | null }>;
     averageRating: number;
     reviewCount: number;
   } | null> {
     const user = await this.getUserByUsername(username);
     if (!user) return null;
-    const [roles, avgRating, revs] = await Promise.all([
+    const [roleRecords, avgRating, revs] = await Promise.all([
       this.getUserRoles(user.id),
       this.getAverageRating(username),
       this.getReviewsByUsername(username),
@@ -394,7 +450,12 @@ export class DbStorage implements IStorage {
       name: user.name,
       role: user.role,
       avatarUrl: user.avatarUrl,
-      roles,
+      // Minimización: nunca exponer teléfono, placa ni dirección del negocio.
+      roles: roleRecords.map((record) => ({
+        role: String(record.role),
+        businessName: record.businessName ?? null,
+        createdAt: record.createdAt ?? null,
+      })),
       averageRating: avgRating,
       reviewCount: revs.length,
     };

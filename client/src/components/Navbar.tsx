@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { useAuth, UserRole } from "@/lib/auth";
-import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon } from "lucide-react";
+import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon, LayoutDashboard, Shield, Check } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 // Logos sin fondo (para el Navbar)
 import logoPrincipal from "../assets/Logo_principal-removebg-preview.png";
 import logoOcean   from "../assets/Logo_ocean-removebg-preview.png";
@@ -29,9 +30,23 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, switchActiveRole } = useAuth();
   const [location, setLocation] = useLocation();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { toast } = useToast();
+
+  const userRoles: UserRole[] = user?.roles?.length ? user.roles : user ? [user.role] : [];
+
+  const handleRoleSwitch = async (nextRole: UserRole) => {
+    if (!user || nextRole === user.role) return;
+    const result = await switchActiveRole(nextRole);
+    if (result.ok) {
+      toast({ title: "Rol cambiado", description: `Ahora estás usando VIANova como ${getRoleLabel(nextRole)}.` });
+      setLocation("/dashboard");
+    } else {
+      toast({ title: "No se pudo cambiar el rol", description: result.message, variant: "destructive" });
+    }
+  };
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -105,6 +120,7 @@ export default function Navbar() {
       case 'recreation': return <TentTree className="h-4 w-4 text-green-400" />;
       case 'taxi': return <Car className="h-4 w-4 text-yellow-400" />;
       case 'translator': return <Languages className="h-4 w-4 text-teal-400" />;
+      case 'admin': return <Shield className="h-4 w-4 text-red-400" />;
       default: return <User className="h-4 w-4 text-blue-400" />;
     }
   };
@@ -116,18 +132,19 @@ export default function Navbar() {
       case 'recreation': return t('navbar.role_recreation');
       case 'taxi': return t('navbar.role_taxi');
       case 'translator': return t('navbar.role_translator');
+      case 'admin': return t('navbar.role_admin', 'Administrador');
       default: return t('navbar.role_traveler');
     }
   };
 
-  const isProvider = user?.role && user.role !== 'traveler';
+  const isProvider = user?.role && user.role !== 'traveler' && user.role !== 'admin';
 
   return (
     <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl shadow-md"
+      className="glass-nav sticky top-0 z-50 w-full"
     >
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
@@ -169,8 +186,33 @@ export default function Navbar() {
               >
                 <Globe className="h-3.5 w-3.5" /> {t("navbar.social")}
               </button>
+              {user && (
+                <button
+                  onClick={() => setLocation("/dashboard")}
+                  className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border transition-all ${
+                    location === "/dashboard"
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  }`}
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" /> {t("navbar.dashboard", "Mi Panel")}
+                </button>
+              )}
             </div>
             
+            {user && (
+              <button
+                onClick={() => setLocation("/dashboard")}
+                className={`md:hidden flex items-center justify-center p-2 rounded-full border transition-all ${
+                  location === "/dashboard"
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5 bg-secondary/30"
+                }`}
+                title="Mi Panel"
+              >
+                <LayoutDashboard className="h-5 w-5" />
+              </button>
+            )}
             {user && (
               <button
                 onClick={() => setLocation("/social")}
@@ -192,7 +234,7 @@ export default function Navbar() {
                   <span className="sr-only">{t('navbar.change_language')}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>{t('navbar.language')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => changeLanguage('es')} className="cursor-pointer gap-2">
@@ -221,7 +263,7 @@ export default function Navbar() {
                   <span className="sr-only">{t('navbar.change_theme')}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>{t('navbar.appearance')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer gap-2">
@@ -269,11 +311,11 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary">
+                  <Button id="navbar-user-menu-btn" data-testid="navbar-user-menu-btn" variant="ghost" size="icon" className="rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-card border-border w-56">
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
                       <span>{user.name || user.username}</span>
@@ -282,11 +324,44 @@ export default function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
                   
+                  <DropdownMenuItem onClick={() => setLocation("/dashboard")} className="cursor-pointer gap-2">
+                    <LayoutDashboard className="h-4 w-4 text-primary" />
+                    {t('navbar.dashboard', 'Mi Panel')}
+                  </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer gap-2">
                     <Settings className="h-4 w-4" />
                     {t('navbar.settings', 'Configuración de Cuenta')}
                   </DropdownMenuItem>
 
+                  {user.role === 'admin' && (
+                    <DropdownMenuItem onClick={() => setLocation("/admin")} className="cursor-pointer gap-2">
+                      <Shield className="h-4 w-4 text-red-400" />
+                      {t('navbar.admin', 'Administración')}
+                    </DropdownMenuItem>
+                  )}
+
+                  {userRoles.length > 1 && (
+                    <>
+                      <DropdownMenuSeparator className="bg-border" />
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {t('navbar.switch_role', 'Cambiar rol activo')}
+                      </DropdownMenuLabel>
+                      {userRoles.map((roleOption) => (
+                        <DropdownMenuItem
+                          key={roleOption}
+                          onClick={() => handleRoleSwitch(roleOption)}
+                          className={`cursor-pointer gap-2 ${roleOption === user.role ? "bg-primary/10 text-primary" : ""}`}
+                        >
+                          {getRoleIcon(roleOption)}
+                          <span className="flex-1">{getRoleLabel(roleOption)}</span>
+                          {roleOption === user.role && <Check className="h-3.5 w-3.5" />}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+
+                  <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem onClick={() => setLocation("/social")} className="cursor-pointer gap-2">
                     <Globe className="h-4 w-4 text-primary" />
                     ViaSocial
@@ -312,7 +387,7 @@ export default function Navbar() {
                   )}
 
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer gap-2">
+                  <DropdownMenuItem id="navbar-logout-btn" data-testid="navbar-logout-btn" onClick={logout} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer gap-2">
                     <LogOut className="h-4 w-4" />
                     {t('navbar.logout', 'Cerrar Sesión')}
                   </DropdownMenuItem>

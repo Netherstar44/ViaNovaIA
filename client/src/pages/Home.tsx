@@ -9,6 +9,7 @@ import CardItem from "@/components/CardItem";
 import Comments from "@/components/Comments";
 import VRViewer from "@/components/VRViewer";
 import { LocationItem, locations } from "@/data/mockData";
+import { isUsableCoordinatePair, parseCoordinate } from "@/lib/geo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -33,8 +34,30 @@ import {
 
 import Chatbot from "@/components/Chatbot";
 import TranslatedText from "@/components/TranslatedText";
+import { Spinner } from "@/components/ui/spinner";
 import ProviderDashboard from "@/pages/ProviderDashboard";
 import TaxiOrderPanel, { type SimulatedTaxi } from "@/components/TaxiOrderPanel";
+
+function hasValidCoordinates(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180 &&
+    !(lat === 0 && lng === 0)
+  );
+}
+
+/** Convierte el precio numérico del servicio al filtro económico/moderado/lujo. */
+function priceRangeFor(value: unknown): "$" | "$$" | "$$$" | undefined {
+  const price = Number(value);
+  if (!Number.isFinite(price) || price <= 0) return undefined;
+  if (price <= 120_000) return "$";
+  if (price <= 350_000) return "$$";
+  return "$$$";
+}
 
 const HeroSection = ({ children }: { children?: React.ReactNode }) => {
   const heroImages = [
@@ -92,7 +115,7 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
 
 export default function Home() {
   const { t, i18n } = useTranslation();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, loading } = useAuth();
   const [_, setLocation] = useLocation();
 
   // View Mode: 'landing' (initial grid) or 'dashboard' (detail view)
@@ -102,6 +125,7 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState<LocationItem | null>(null);
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
   const [serviceLocations, setServiceLocations] = useState<LocationItem[]>([]);
+  const [commentRatings, setCommentRatings] = useState<Record<string, number>>({});
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
 
   // Taxi panel state
@@ -118,12 +142,16 @@ export default function Home() {
 
   // Hero component is defined below to isolate re-renders
 
-  // Route protection — esperar a que loading termine antes de redirigir
+  // La portada es pública: un visitante anónimo puede explorar servicios y
+  // mapas. Solo las acciones protegidas (reservar, publicar, viajar) piden login.
+
+  // New accounts without a chosen role go through the role picker. Keep this
+  // navigation in an effect so React never performs side effects while rendering.
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      setLocation("/login");
+    if (!loading && user?.roleChangedAt === null && user.role === "traveler") {
+      setLocation("/select-role");
     }
-  }, [isAuthenticated, loading, setLocation]);
+  }, [loading, setLocation, user?.role, user?.roleChangedAt]);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -138,9 +166,8 @@ export default function Home() {
     
     const [destLat, destLng] = selectedItem.coordinates;
     
-    // Check if destination coords are valid (not 0,0)
-    if (!destLat && !destLng) {
-      // Fallback: open Google Maps search by name
+    // A missing/legacy coordinate must never reach Leaflet or OSRM.
+    if (!hasValidCoordinates(destLat, destLng)) {
       const q = encodeURIComponent(selectedItem.name);
       window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
       return;
@@ -217,9 +244,9 @@ export default function Home() {
           const data = await res.json();
           if (res.ok && Array.isArray(data.services)) {
             for (const s of data.services) {
-              const lat = parseFloat(s.locationLat || '0');
-              const lng = parseFloat(s.locationLng || '0');
-              if (!isFinite(lat) || !isFinite(lng)) continue;
+              const lat = parseCoordinate(s.locationLat);
+              const lng = parseCoordinate(s.locationLng);
+              if (lat === null || lng === null || !isUsableCoordinatePair([lat, lng])) continue;
               acc.push({
                 id: s.id,
                 name: s.name,
@@ -228,7 +255,7 @@ export default function Home() {
                 image: s.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
                 coordinates: [lat, lng],
                 rating: s.rating || 0,
-                priceRange: undefined,
+                priceRange: priceRangeFor(s.price),
                 hasVR: false,
                 hasAR: false,
                 contact: undefined,
@@ -270,6 +297,7 @@ export default function Home() {
       }
       // distancia
       if (distanceFilter !== 'any' && userLoc) {
+        if (!hasValidCoordinates(l.coordinates[0], l.coordinates[1])) return false;
         const d = haversineKm(userLoc, l.coordinates);
         if (d > parseInt(distanceFilter)) return false;
       }
@@ -287,21 +315,49 @@ export default function Home() {
     });
   }, [allLocations, userLoc, distanceFilter, priceFilter, popularityFilter, selectedCategory, searchQuery]);
 
-  const mapLocations = filteredAll;
+  const mapLocations = useMemo(
+    () => filteredAll.filter((l) => hasValidCoordinates(l.coordinates[0], l.coordinates[1])),
+    [filteredAll],
+  );
 
-  // Esperar a que la verificación de sesión con el backend termine
-  if (loading) return null;
+  const displayedLocations = useMemo(
+    () => filteredAll.slice(0, displayLimit),
+    [filteredAll, displayLimit],
+  );
 
-  if (!isAuthenticated) return null;
+  useEffect(() => {
+    const ids = displayedLocations.map((location) => location.id).filter(Boolean);
+    if (ids.length === 0) return;
 
-  // Redirigir solo si el servidor confirmó explícitamente roleChangedAt=null
-  // (usuario nuevo sin rol asignado). Usuarios existentes tienen roleChangedAt undefined
-  // porque viene del localStorage cache que no tiene ese campo.
-  // Para evitar loops: solo redirigir si roleChangedAt es exactamente null
-  // y el rol es traveler (nunca ha elegido otro rol).
-  if (user && user.roleChangedAt === null && user.role === 'traveler') {
-    window.location.href = "/select-role";
-    return null;
+    const controller = new AbortController();
+    fetch(`${apiBase}/api/comments/ratings?locationIds=${encodeURIComponent(ids.join(","))}`, {
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.ratings) return;
+        const next: Record<string, number> = {};
+        for (const [id, value] of Object.entries<any>(data.ratings)) {
+          if (typeof value?.average === "number") next[id] = value.average;
+        }
+        setCommentRatings(next);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [displayedLocations]);
+
+  // Solo bloqueamos mientras se verifica la sesión. Sin sesión se muestra la
+  // portada pública en lugar de expulsar al visitante a /login.
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center text-foreground">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
+          <Spinner className="h-7 w-7" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">Verificando sesión…</p>
+      </div>
+    );
   }
 
   const handleItemClick = (item: LocationItem) => {
@@ -348,52 +404,52 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="mt-12 w-full max-w-5xl"
               >
-                <div className="bg-white dark:bg-neutral-900 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-neutral-200 dark:border-neutral-800 flex items-center p-2 max-w-[850px] mx-auto w-full transition-all">
+                <div className="glass-search rounded-full flex items-center p-2 max-w-[850px] mx-auto w-full transition-all">
                   
-                  <div className="flex-[1.5] flex flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-text group relative">
-                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.search_placeholder') || 'Destino'}</span>
+                  <div className="flex-[1.5] flex flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-text group relative">
+                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.search_placeholder') || 'Destino'}</span>
                     <input 
                       type="text" 
                       placeholder="¿A dónde quieres ir?" 
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 p-0 w-full truncate focus:ring-0"
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground placeholder:text-muted-foreground/70 p-0 w-full truncate focus:ring-0"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
 
-                  <div className="w-[1px] h-10 bg-neutral-200 dark:bg-neutral-700 hidden md:block"></div>
+                  <div className="w-[1px] h-10 bg-border/70 hidden md:block"></div>
 
-                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer relative">
-                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.distance') || 'Distancia'}</span>
+                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-pointer relative">
+                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.distance') || 'Distancia'}</span>
                     <select 
                       value={distanceFilter}
                       onChange={(e) => setDistanceFilter(e.target.value)}
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground p-0 w-full cursor-pointer appearance-none focus:ring-0"
                     >
-                      <option value="any" className="text-black">Cualquiera</option>
-                      <option value="1" className="text-black">A menos de 1 km</option>
-                      <option value="5" className="text-black">A menos de 5 km</option>
-                      <option value="10" className="text-black">A menos de 10 km</option>
+                      <option value="any" className="bg-popover text-popover-foreground">Cualquiera</option>
+                      <option value="1" className="bg-popover text-popover-foreground">A menos de 1 km</option>
+                      <option value="5" className="bg-popover text-popover-foreground">A menos de 5 km</option>
+                      <option value="10" className="bg-popover text-popover-foreground">A menos de 10 km</option>
                     </select>
                   </div>
 
-                  <div className="w-[1px] h-10 bg-neutral-200 dark:bg-neutral-700 hidden md:block"></div>
+                  <div className="w-[1px] h-10 bg-border/70 hidden md:block"></div>
 
-                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer relative">
-                    <span className="text-[12px] font-extrabold text-neutral-800 dark:text-neutral-200 tracking-wide uppercase">{t('home.price') || 'Precio'}</span>
+                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-pointer relative">
+                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.price') || 'Precio'}</span>
                     <select 
                       value={priceFilter}
                       onChange={(e) => setPriceFilter(e.target.value)}
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-neutral-900 dark:text-white p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground p-0 w-full cursor-pointer appearance-none focus:ring-0"
                     >
-                      <option value="any" className="text-black">Cualquier precio</option>
-                      <option value="$" className="text-black">Económico ($)</option>
-                      <option value="$$" className="text-black">Moderado ($$)</option>
-                      <option value="$$$" className="text-black">Lujo ($$$)</option>
+                      <option value="any" className="bg-popover text-popover-foreground">Cualquier precio</option>
+                      <option value="$" className="bg-popover text-popover-foreground">Económico ($)</option>
+                      <option value="$$" className="bg-popover text-popover-foreground">Moderado ($$)</option>
+                      <option value="$$$" className="bg-popover text-popover-foreground">Lujo ($$$)</option>
                     </select>
                   </div>
 
-                  <button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shrink-0 ml-2 shadow-lg transition-transform hover:scale-105 active:scale-95">
+                  <button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shrink-0 ml-2 shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95">
                     <Search className="w-6 h-6 stroke-[2.5px]" />
                   </button>
                 </div>
@@ -441,7 +497,7 @@ export default function Home() {
                       className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                     >
                       <AnimatePresence>
-                        {filteredAll.slice(0, displayLimit).map((item, index) => (
+                        {displayedLocations.map((item, index) => (
                           <motion.div
                             layout
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -452,7 +508,11 @@ export default function Home() {
                             onClick={() => handleItemClick(item)}
                             className="cursor-pointer"
                           >
-                            <CardItem item={item} onViewMap={() => handleViewOnMap(item)} />
+                            <CardItem
+                              item={item}
+                              ratingOverride={commentRatings[item.id]}
+                              onViewMap={() => handleViewOnMap(item)}
+                            />
                           </motion.div>
                         ))}
                       </AnimatePresence>
@@ -506,7 +566,7 @@ export default function Home() {
               <img src={selectedItem?.image} alt={selectedItem?.name} className="w-full h-full object-cover" />
 
               <div className="absolute top-6 left-6 z-20">
-                <Button variant="secondary" onClick={handleBackToLanding} className="gap-2 bg-background/60 backdrop-blur hover:bg-background rounded-full pl-3 pr-6 transition-all hover:scale-105">
+                <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-6 transition-all hover:scale-105">
                   <ArrowLeft className="h-4 w-4" /> {t('home.back')}
                 </Button>
               </div>
@@ -516,7 +576,7 @@ export default function Home() {
 
               {/* Detail Panel */}
               <div className="w-full md:w-[60%] flex flex-col gap-6">
-                <div className="bg-card/80 backdrop-blur-2xl border border-border/50 rounded-3xl p-8 shadow-2xl">
+                <div className="glass-panel rounded-3xl p-8">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <Badge className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest text-xs mb-3">
@@ -639,7 +699,7 @@ export default function Home() {
                           <DialogContent
                             onClick={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className="sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                            className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
@@ -656,7 +716,7 @@ export default function Home() {
                           <DialogContent
                             onClick={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className="sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                            className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
@@ -713,7 +773,7 @@ export default function Home() {
                 </AnimatePresence>
 
                 {/* "Relacionados" Panel with glass effect */}
-                <div className="rounded-3xl bg-secondary/30 backdrop-blur-xl border border-border/30 p-6 shadow-xl">
+                <div className="glass-panel rounded-3xl p-6">
                   <h3 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
                     <Star className="text-primary w-5 h-5 fill-primary" />
                     Sugerencias Similares

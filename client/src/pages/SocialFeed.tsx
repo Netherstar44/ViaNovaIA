@@ -1,8 +1,9 @@
 import { apiBase } from "@/lib/queryClient";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, createElement } from "react";
+import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
-import { Heart, MessageCircle, Share2, Plus, X, Send, Image as ImageIcon, Video, Loader2, Trash2, MapPin } from "lucide-react";
+import { Heart, MessageCircle, Share2, Plus, X, Send, Image as ImageIcon, Video, Loader2, Trash2, MapPin, RotateCcw, Box } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,6 @@ interface Post {
   created_at: string;
   avatar_url: string | null;
 }
-
 interface Comment {
   id: string;
   username: string;
@@ -89,9 +89,13 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
     setLikes(l => wasLiked ? l - 1 : l + 1);
     try {
       const method = wasLiked ? "DELETE" : "POST";
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       await fetch(`${apiBase}/api/social/posts/${post.id}/like`, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({ username: currentUser }),
       });
     } catch {
@@ -120,9 +124,13 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
     if (!currentUser || !newComment.trim()) return;
     setPostingComment(true);
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const r = await fetch(`${apiBase}/api/social/posts/${post.id}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({ username: currentUser, content: newComment.trim() }),
       });
       if (r.ok) {
@@ -145,9 +153,13 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
 
   const handleDelete = async () => {
     if (!currentUser || currentUser !== post.username) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     await fetch(`${apiBase}/api/social/posts/${post.id}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers,
+      credentials: "include",
       body: JSON.stringify({ username: currentUser }),
     });
     onDelete(post.id);
@@ -164,7 +176,9 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
       <div className="flex items-center gap-3 px-5 py-4">
         <Avatar username={post.username} src={post.avatar_url} size={42} />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-foreground leading-tight">@{post.username}</p>
+          <Link href={`/u/${encodeURIComponent(post.username)}`} className="font-bold text-sm text-foreground leading-tight hover:text-primary transition-colors">
+            @{post.username}
+          </Link>
           <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
         </div>
         {currentUser === post.username && (
@@ -185,7 +199,16 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
       {/* Media */}
       {post.media_url && (
         <div className="relative mx-3 sm:mx-5 overflow-hidden rounded-[16px] shadow-lg">
-          {post.media_type.includes("video") ? (
+          {post.media_type === "3d_model" ? (
+            <div className="w-full h-[360px] bg-black">
+              {createElement("model-viewer" as any, {
+                src: post.media_url,
+                "camera-controls": true,
+                "auto-rotate": true,
+                style: { width: "100%", height: "100%" },
+              })}
+            </div>
+          ) : post.media_type.includes("video") ? (
             <video
               src={post.media_url}
               className="w-full max-h-[600px] object-cover"
@@ -200,6 +223,11 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
               className="w-full max-h-[600px] object-cover"
               loading="lazy"
             />
+          )}
+          {post.media_type === "360_image" && (
+            <span className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+              <RotateCcw className="h-3 w-3" /> 360°
+            </span>
           )}
         </div>
       )}
@@ -291,15 +319,18 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
   const [caption, setCaption] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [mediaType, setMediaType] = useState<"image" | "video" | "360_image" | "3d_model">("image");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const pickFile = (type: "image" | "video") => {
+  const pickFile = (type: "image" | "video" | "360_image" | "3d_model") => {
     setMediaType(type);
     if (fileRef.current) {
-      fileRef.current.accept = type === "video" ? "video/*" : "image/*";
+      fileRef.current.accept =
+        type === "video" ? "video/mp4,video/webm"
+        : type === "3d_model" ? ".glb,.gltf,model/gltf-binary"
+        : "image/jpeg,image/png,image/webp";
       fileRef.current.click();
     }
   };
@@ -307,6 +338,11 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    const max = mediaType === "video" ? 50 : mediaType === "3d_model" ? 25 : 10;
+    if (f.size > max * 1024 * 1024) {
+      toast({ title: "Archivo demasiado grande", description: `Máximo ${max} MB para este formato.`, variant: "destructive" });
+      return;
+    }
     setMediaFile(f);
     const url = URL.createObjectURL(f);
     setMediaPreview(url);
@@ -322,7 +358,10 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
         uploadForm.append("file", mediaFile);
         uploadForm.append("category", "social");
         uploadForm.append("userId", username);
-        const uploadRes = await fetch(apiBase + "/api/upload", { method: "POST", body: uploadForm });
+        const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+        const uploadHeaders: Record<string, string> = {};
+        if (token) uploadHeaders["Authorization"] = `Bearer ${token}`;
+        const uploadRes = await fetch(apiBase + "/api/upload", { method: "POST", body: uploadForm, headers: uploadHeaders, credentials: "include" });
         const uploadData = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(uploadData.message || "Failed to upload file");
         uploadedUrl = uploadData.url;
@@ -334,9 +373,14 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
         mediaType: mediaType
       };
 
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const r = await fetch(apiBase + "/api/social/posts", { 
         method: "POST", 
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify(postBody) 
       });
       const d = await r.json();
@@ -400,6 +444,15 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
             <div className="relative rounded-xl overflow-hidden">
               {mediaType === "video" ? (
                 <video src={mediaPreview} className="w-full max-h-64 object-cover" controls />
+              ) : mediaType === "3d_model" ? (
+                <div className="w-full h-64 bg-black">
+                  {createElement("model-viewer" as any, {
+                    src: mediaPreview,
+                    "camera-controls": true,
+                    "auto-rotate": true,
+                    style: { width: "100%", height: "100%" },
+                  })}
+                </div>
               ) : (
                 <img src={mediaPreview} alt="preview" className="w-full max-h-64 object-cover" />
               )}
@@ -412,7 +465,7 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => pickFile("image")}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
@@ -425,6 +478,18 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
             >
               <Video className="h-4 w-4" /> Video
             </button>
+            <button
+              onClick={() => pickFile("360_image")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" /> 360°
+            </button>
+            <button
+              onClick={() => pickFile("3d_model")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-sm text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+            >
+              <Box className="h-4 w-4" /> 3D
+            </button>
             <input ref={fileRef} type="file" className="hidden" onChange={onFileChange} />
           </div>
         </div>
@@ -432,6 +497,7 @@ function CreatePostModal({ onClose, onCreated, username }: { onClose: () => void
         {/* Footer */}
         <div className="px-6 pb-6">
           <Button
+            id="submit-post-btn"
             onClick={submit}
             disabled={loading || (!caption.trim() && !mediaFile)}
             className="w-full bg-primary text-black font-bold rounded-xl hover:bg-primary/80"
@@ -451,22 +517,32 @@ export default function SocialFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [cursor, setCursor] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false); // Ref para evitar doble fetch sin romper useCallback
+  const loadingRef = useRef(false);
+  const cursorRef = useRef<string | null>(null);
+  const hasMoreRef = useRef(true);
+  const userRef = useRef<string | undefined>(user?.username);
+
+  useEffect(() => { userRef.current = user?.username; }, [user?.username]);
 
   const fetchFeed = useCallback(async (reset = false) => {
     if (loadingRef.current) return;
+    if (!reset && !hasMoreRef.current) return;
     loadingRef.current = true;
     setLoading(true);
     try {
-      const r = await fetch(`${apiBase}/api/social/posts`, { credentials: 'include' });
+      const params = new URLSearchParams({ limit: "20" });
+      if (userRef.current) params.set("username", userRef.current);
+      if (!reset && cursorRef.current) params.set("before", cursorRef.current);
+
+      const r = await fetch(`${apiBase}/api/social/posts?${params.toString()}`, { credentials: 'include' });
       const data = await r.json();
 
       if (!Array.isArray(data)) {
         console.warn("[SocialFeed] Backend devolvió no-array:", data);
         if (reset) setPosts([]);
+        hasMoreRef.current = false;
         setHasMore(false);
         return;
       }
@@ -484,8 +560,13 @@ export default function SocialFeed() {
         avatar_url: p.authorAvatar ?? p.avatar_url ?? null,
       }));
 
+      if (mappedPosts.length > 0) {
+        cursorRef.current = mappedPosts[mappedPosts.length - 1].created_at;
+      }
+      const more = mappedPosts.length === 20;
+      hasMoreRef.current = more;
+      setHasMore(more);
       setPosts(prev => reset ? mappedPosts : [...prev, ...mappedPosts]);
-      setHasMore(false);
     } catch (err) {
       console.error("[SocialFeed] Error al cargar posts:", err);
       if (reset) setPosts([]);
@@ -493,10 +574,16 @@ export default function SocialFeed() {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, []); // Sin dependencias — usa ref para la guard
+  }, []);
 
-  // Initial load
-  useEffect(() => { fetchFeed(true); }, []);
+  // Initial load (and refresh when the session changes)
+  useEffect(() => {
+    cursorRef.current = null;
+    hasMoreRef.current = true;
+    setHasMore(true);
+    setPosts([]);
+    fetchFeed(true);
+  }, [user?.username, fetchFeed]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -574,6 +661,7 @@ export default function SocialFeed() {
       {/* FAB — Create post */}
       {user && (
         <motion.button
+          id="create-post-fab"
           onClick={() => setShowCreate(true)}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}

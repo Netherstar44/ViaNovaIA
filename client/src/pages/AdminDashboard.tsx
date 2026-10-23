@@ -1,21 +1,25 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
-import { Users, ShieldAlert, Activity, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Users, ShieldAlert, Activity, AlertTriangle, ArrowLeft, BarChart3 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [_, setLocation] = useLocation();
 
-  if (!user || user.role !== "admin") {
-    setLocation("/");
-    return null;
-  }
-
+  const isAdmin = !!user && user.role === "admin";
   const { data: stats, isLoading } = useQuery<any>({
     queryKey: ["/api/admin/stats"],
+    enabled: isAdmin,
   });
+
+  useEffect(() => {
+    if (!isAdmin) setLocation("/");
+  }, [isAdmin, setLocation]);
+
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -25,8 +29,18 @@ export default function AdminDashboard() {
           <ArrowLeft className="h-4 w-4" /> Volver al inicio
         </button>
 
-        <h1 className="text-3xl font-bold mb-2">Panel de Administración</h1>
-        <p className="text-muted-foreground mb-10">Monitorea la actividad del sistema, usuarios y alertas de seguridad.</p>
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Panel de Administración</h1>
+            <p className="text-muted-foreground">Monitorea la actividad del sistema, usuarios y alertas de seguridad.</p>
+          </div>
+          <button
+            onClick={() => setLocation("/dashboard")}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-primary/90"
+          >
+            <BarChart3 className="h-4 w-4" /> Analíticas SaaS completas
+          </button>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center p-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>

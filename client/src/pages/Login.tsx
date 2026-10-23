@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from '@capacitor/core';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { apiBase } from "@/lib/queryClient";
 import logoPrincipal from "@/assets/Logo_principal-removebg-preview.png";
 
 // forgot flow steps: email → token → newPassword
@@ -28,6 +28,12 @@ export default function Login() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [showRegPass, setShowRegPass] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+
+  // Two-factor state
+  const [twoFAUser, setTwoFAUser] = useState<string | null>(null);
+  const [twoFACode, setTwoFACode] = useState("");
+  const [verifying2FA, setVerifying2FA] = useState(false);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
@@ -42,30 +48,44 @@ export default function Login() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, loginDirect, register, isAuthenticated, forgotPassword, verifyResetToken, resetPassword, loading } = useAuth();
+  const { login, loginDirect, register, isAuthenticated, forgotPassword, verifyResetToken, resetPassword, verify2FA, loading } = useAuth();
   const [_, setLocation] = useLocation();
 
-  // Parse google_user or reset_token from URL
+  // Los tokens viajan en el fragmento (#), nunca en la query string. Se borran
+  // del historial inmediatamente después de leerlos.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const g = params.get("google_user");
-    const t = params.get("token");
-    if (g) {
-      try {
-        if (t) localStorage.setItem('auth_token', t);
-        const { username: u, name, email, role, roleChangedAt } = JSON.parse(decodeURIComponent(g));
-        loginDirect(u, role || "traveler", name, email, roleChangedAt);
-        setLocation("/");
-      } catch (err) {
-        console.error("failed to parse google_user", err);
-      }
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const googleLogin = hash.get("google") === "1";
+    const reset = hash.get("reset_token");
+    if (googleLogin || reset) {
+      window.history.replaceState(null, "", window.location.pathname);
     }
-    const rt = params.get("reset_token");
-    if (rt) {
-      setResetToken(rt);
+
+    if (googleLogin) {
+      fetch(`${apiBase}/api/auth/me`, { credentials: "include" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data?.user) throw new Error("Sesión de Google no disponible");
+          loginDirect(
+            data.user.username,
+            data.user.role || "traveler",
+            data.user.name,
+            data.user.email,
+            data.user.roleChangedAt,
+            data.token,
+          );
+          setLocation("/");
+        })
+        .catch((err) => {
+          console.error("No se pudo completar el login con Google", err);
+          setMessage({ type: "error", text: "No se pudo completar el login con Google. Intenta de nuevo." });
+        });
+    }
+
+    if (reset) {
+      setResetToken(reset);
       setViewMode("forgot");
-      // Auto-verify the token from the email link
-      verifyResetToken(rt).then((result) => {
+      verifyResetToken(reset).then((result) => {
         if (result.ok) {
           setForgotStep("newPassword");
           setMessage({ type: "success", text: "Código verificado. Crea tu nueva contraseña." });
@@ -75,15 +95,17 @@ export default function Login() {
         }
       });
     }
-  }, [loginDirect, setLocation]);
+  }, [loginDirect, setLocation, verifyResetToken]);
+
+  // Redirect from an effect, never during render.
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, loading, setLocation]);
 
   // No redirigir mientras se verifica la sesión con el backend (evita race condition)
   if (loading) return null;
-
-  if (isAuthenticated) {
-    setLocation("/");
-    return null;
-  }
 
 
   const clearMessage = () => setMessage(null);
@@ -96,64 +118,68 @@ export default function Login() {
     
     if (isApp) {
       try {
-        let result: any = null;
-        try {
-          // Intentar inicio de sesión
-          result = await GoogleAuth.signIn();
-        } catch (initialErr) {
-          console.warn("First Google Auth attempt failed, retrying in 500ms...", initialErr);
-          // Retry automatically once for cold boot issues
-          await new Promise(r => setTimeout(r, 500));
-          result = await GoogleAuth.signIn();
+        // Plugin mantenido para Capacitor 8. El token de Google se valida en el
+        // servidor contra JWKS; nunca confiamos en email/name enviados por el cliente.
+        const { SocialLogin } = await import('@capgo/capacitor-social-login');
+        const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID
+          || "963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com";
+        const googleConfig: Record<string, unknown> = { webClientId };
+        const iosClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID;
+        if (iosClientId) {
+          googleConfig.iOSClientId = iosClientId;
+          googleConfig.iOSServerClientId = webClientId;
+          googleConfig.mode = "online";
         }
-        
-        // Find idToken: some versions put it in result.authentication.idToken, others in result.idToken, others in result.serverAuthCode
-        const idToken = result?.authentication?.idToken || result?.idToken || result?.serverAuthCode;
-        
-        if (result && result.email) {
-          const baseUrl = "https://via-nova-ia.vercel.app";
-          
-          // Helper function for fetch with retry
-          const fetchWithRetry = async (url: string, options: any, retries = 1) => {
-            for (let i = 0; i <= retries; i++) {
-              try {
-                const res = await fetch(url, options);
-                if (res.ok || i === retries) return res;
-              } catch (e) {
-                if (i === retries) throw e;
-                await new Promise(r => setTimeout(r, 1000)); // wait 1s before retrying
-              }
-            }
-            throw new Error("Fetch failed");
-          };
+        await (SocialLogin as any).initialize({ google: googleConfig });
 
-          const res = await fetchWithRetry(`${baseUrl}/api/auth/google/mobile`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              idToken: idToken,
-              email: result.email, 
-              name: result.name || result.givenName || result.email.split('@')[0]
-            })
+        let login: any = null;
+        try {
+          login = await (SocialLogin as any).login({
+            provider: "google",
+            options: { scopes: ["email", "profile"] },
           });
-          
-          if (res.ok) {
-            const data = await res.json();
-            loginDirect(data.user.username, data.user.role, data.user.name, data.user.email, data.user.roleChangedAt);
-            setLocation("/");
-          } else {
-            const data = await res.json();
-            setMessage({ type: "error", text: data.message || "Error al iniciar sesión con Google." });
-          }
-        } else {
-          setMessage({ type: "error", text: "Google Auth no retornó un email." });
+        } catch (initialErr) {
+          console.warn("Google login falló, reintentando una vez…", initialErr);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          login = await (SocialLogin as any).login({
+            provider: "google",
+            options: { scopes: ["email", "profile"] },
+          });
         }
+
+        const idToken = login?.result?.idToken;
+        if (!idToken) {
+          setMessage({ type: "error", text: "Google no devolvió un token de identidad." });
+          return;
+        }
+
+        const res = await fetch(`${apiBase}/api/auth/google/mobile`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage({ type: "error", text: data.message || "Error al iniciar sesión con Google." });
+          return;
+        }
+        loginDirect(
+          data.user.username,
+          data.user.role,
+          data.user.name,
+          data.user.email,
+          data.user.roleChangedAt,
+          data.token,
+        );
+        setLocation("/");
       } catch (err: any) {
         console.error("Google Auth Error:", err);
-        setMessage({ type: "error", text: "Error en Google Auth: " + (err.message || JSON.stringify(err)) });
+        setMessage({ type: "error", text: err.message || "Error en Google Auth" });
       }
     } else {
-      window.location.href = import.meta.env.DEV ? "/api/auth/google" : "https://via-nova-ia.vercel.app/api/auth/google";
+      // Web OAuth is same-origin on localhost and Cloudflare Workers.
+      window.location.href = `${apiBase}/api/auth/google`;
     }
   };
 
@@ -166,8 +192,25 @@ export default function Login() {
     setIsSubmitting(false);
     if (result.ok) {
       setLocation("/");
+    } else if (result.requires2FA && result.username) {
+      setTwoFAUser(result.username);
+      setMessage({ type: "success", text: result.message || "Ingresa el código enviado a tu correo." });
     } else {
       setMessage({ type: "error", text: result.message || "Error al iniciar sesión" });
+    }
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFAUser) return;
+    clearMessage();
+    setVerifying2FA(true);
+    const result = await verify2FA(twoFAUser, twoFACode.trim());
+    setVerifying2FA(false);
+    if (result.ok) {
+      setLocation("/");
+    } else {
+      setMessage({ type: "error", text: result.message || "Código inválido" });
     }
   };
 
@@ -187,12 +230,17 @@ export default function Login() {
       setMessage({ type: "error", text: "Ingresa un correo electrónico válido" });
       return;
     }
+    if (!acceptTerms) {
+      setMessage({ type: "error", text: "Debes aceptar los términos y la política de privacidad" });
+      return;
+    }
     setIsSubmitting(true);
     const result = await register({
       username: regUsername,
       password: regPassword,
       name: regName,
       email: regEmail,
+      acceptTerms,
     });
     setIsSubmitting(false);
     if (result.ok) {
@@ -288,8 +336,8 @@ export default function Login() {
       </div>
 
       {/* RIGHT SIDE — FORMS */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative z-10 bg-background/95 backdrop-blur-3xl shadow-[-20px_0_40px_rgba(0,0,0,0.5)]">
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 relative z-10 bg-background/60 backdrop-blur-2xl shadow-[-20px_0_40px_rgba(0,0,0,0.35)]">
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8">
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden flex flex-col items-center">
             <img src={logoPrincipal} alt="VIANova" className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl mb-2" />
@@ -337,6 +385,29 @@ export default function Login() {
 
                   {/* ─── LOGIN TAB ─── */}
                   <TabsContent value="login" className="space-y-6 mt-0">
+                    {twoFAUser ? (
+                      <form onSubmit={handleVerify2FA} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="login-2fa" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Código de verificación</Label>
+                          <Input
+                            id="login-2fa"
+                            inputMode="numeric"
+                            placeholder="123456"
+                            value={twoFACode}
+                            onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            required
+                            className="bg-secondary/20 h-12 px-4 rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all text-center tracking-[0.5em] font-mono"
+                          />
+                          <p className="text-xs text-muted-foreground/60">Enviamos un código a tu correo. Expira en 10 minutos.</p>
+                        </div>
+                        <Button className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl" type="submit" disabled={verifying2FA || twoFACode.length < 6}>
+                          {verifying2FA ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verificando...</> : "Verificar código"}
+                        </Button>
+                        <button type="button" onClick={() => { setTwoFAUser(null); setTwoFACode(""); clearMessage(); }} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          Volver a iniciar sesión
+                        </button>
+                      </form>
+                    ) : (
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="login-username" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Usuario o Correo</Label>
@@ -360,6 +431,7 @@ export default function Login() {
                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verificando...</> : <>Acceder a mi cuenta <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" /></>}
                       </Button>
                     </form>
+                    )}
                   </TabsContent>
 
                   {/* ─── REGISTER TAB (no role selection) ─── */}
@@ -397,6 +469,17 @@ export default function Login() {
                           <Input id="reg-confirm" type="password" placeholder="Repetir" value={regConfirmPassword} onChange={(e) => setRegConfirmPassword(e.target.value)} required className="bg-secondary/20 h-12 px-4 rounded-xl border-border/50 focus-visible:ring-primary transition-all" />
                         </div>
                       </div>
+                      <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={acceptTerms}
+                          onChange={(e) => setAcceptTerms(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                        />
+                        <span>
+                          Acepto los <a href="/privacy" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">términos y la política de privacidad</a>.
+                        </span>
+                      </label>
                       <p className="text-xs text-muted-foreground/60 text-center">Tu cuenta se creará como <strong className="text-primary">Viajero</strong>. Después podrás cambiar tu rol desde la configuración de tu perfil.</p>
                       <Button className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-xl mt-2 text-md group" type="submit" disabled={isSubmitting || loading}>
                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando cuenta...</> : <>Crear mi cuenta <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" /></>}

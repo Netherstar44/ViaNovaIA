@@ -1,5 +1,5 @@
 import { apiBase } from "@/lib/queryClient";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
@@ -82,7 +82,12 @@ export default function TaxiEarnings() {
   });
 
   // Redirect AFTER all hooks
-  if (!user) { setLocation("/login"); return null; }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+    else if (user.role !== "taxi") setLocation("/dashboard");
+  }, [user, setLocation]);
+
+  if (!user || user.role !== "taxi") return null;
 
   const handleSubmit = () => {
     setFormError("");

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth, UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -20,21 +20,17 @@ export default function RoleSelection() {
   const [selected, setSelected] = useState<UserRole>("traveler");
   const [submitting, setSubmitting] = useState(false);
 
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+  }, [user, setLocation]);
+
+  if (!user) return null;
 
   const handleConfirm = async () => {
     setSubmitting(true);
-    if (selected === "traveler") {
-      // Just mark role as "chosen" by calling changeRole even with same value
-      await changeRole("traveler");
-    } else {
-      await changeRole(selected);
-    }
+    await changeRole(selected);
     setSubmitting(false);
-    setLocation("/");
+    setLocation("/dashboard");
   };
 
   return (
@@ -100,7 +96,7 @@ export default function RoleSelection() {
         </Button>
 
         <p className="text-center text-xs text-muted-foreground/50 mt-4">
-          Puedes cambiar tu rol cada 15 días desde la configuración de tu perfil.
+          Podrás añadir más roles y cambiar el rol activo cuando quieras desde tu cuenta.
         </p>
       </motion.div>
     </div>

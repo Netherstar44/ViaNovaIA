@@ -1,7 +1,13 @@
 import { apiBase } from "@/lib/queryClient";
 import { create } from 'zustand';
+import { authHeaders, clearAuthToken, setAuthToken } from './secureStorage';
 
 export type UserRole = 'hotel' | 'restaurant' | 'recreation' | 'taxi' | 'traveler' | 'translator' | 'admin';
+
+async function refreshRoleQueries() {
+  const { queryClient } = await import('./queryClient');
+  await queryClient.invalidateQueries();
+}
 
 export interface User {
   username: string;
@@ -16,15 +22,17 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (username: string, password: string) => Promise<{ ok: boolean; message?: string }>;
-  loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null) => void;
+  login: (username: string, password: string) => Promise<{ ok: boolean; message?: string; requires2FA?: boolean; username?: string }>;
+  verify2FA: (username: string, code: string) => Promise<{ ok: boolean; message?: string }>;
+  loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null, token?: string | null) => void;
   register: (data: {
     username: string;
     password: string;
     name: string;
     email: string;
+    acceptTerms: boolean;
   }) => Promise<{ ok: boolean; message?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<{ ok: boolean; message?: string }>;
   verifyResetToken: (token: string) => Promise<{ ok: boolean; message?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ ok: boolean; message?: string }>;
@@ -36,35 +44,70 @@ interface AuthState {
   refreshUser: () => void;
 }
 
+/**
+ * Lee el usuario cacheado sin romper el arranque de la app si localStorage
+ * contiene JSON corrupto o de una versión anterior. Un JSON inválido aquí
+ * hacía fallar el store de zustand antes de montar React y dejaba el body vacío.
+ */
+function readStoredUser(): User | null {
+  try {
+    const raw = localStorage.getItem('user');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.username !== 'string') {
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      return null;
+    }
+    return parsed as User;
+  } catch {
+    localStorage.removeItem('user');
+    localStorage.removeItem('auth_token');
+    return null;
+  }
+}
+
 export const useAuth = create<AuthState>((set, get) => {
-  // Verify session with backend on init — sets loading=false when done
+  // Verify session with backend on init — sets loading=false when done.
+  // Timeout: a backend/DB stall must never leave the UI in a permanent blank
+  // state; fall back to the cached session and stop the loading flag.
   setTimeout(async () => {
-    const existingUser = localStorage.getItem('user');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(apiBase + '/api/auth/me', { credentials: 'include' });
+      const res = await fetch(apiBase + '/api/auth/me', {
+        credentials: 'include',
+        signal: controller.signal,
+      });
       if (res.ok) {
         const data = await res.json();
-        set({ user: data.user, isAuthenticated: true, loading: false });
-        localStorage.setItem('user', JSON.stringify(data.user));
-        get().fetchRoles();
-      } else {
-        // Solo limpiar sesión si el usuario NO estaba autenticado ya por localStorage
-        if (!existingUser) {
-          set({ user: null, isAuthenticated: false, loading: false });
+        if (data.user) {
+          set({ user: data.user, isAuthenticated: true, loading: false });
+          localStorage.setItem('user', JSON.stringify(data.user));
+          get().fetchRoles();
         } else {
-          // Hay sesión en localStorage pero la cookie no está — trust localStorage
-          set({ loading: false });
+          localStorage.removeItem('user');
+          await clearAuthToken();
+          set({ user: null, isAuthenticated: false, loading: false });
         }
+      } else {
+        localStorage.removeItem('user');
+        await clearAuthToken();
+        set({ user: null, isAuthenticated: false, loading: false });
       }
     } catch {
-      // Error de red: no limpiar sesión, confiar en localStorage
+      // Error de red/timeout: mantener caché local para no cerrar la sesión por una caída temporal
       set({ loading: false });
+    } finally {
+      clearTimeout(timeout);
     }
   }, 0);
 
+  const storedUser = readStoredUser();
+
   return {
-    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-    isAuthenticated: !!localStorage.getItem('user'),
+    user: storedUser,
+    isAuthenticated: Boolean(storedUser),
     loading: true,
 
     login: async (username: string, password: string) => {
@@ -73,13 +116,17 @@ export const useAuth = create<AuthState>((set, get) => {
         const res = await fetch(apiBase + '/api/auth/login', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
         if (!res.ok) {
           set({ loading: false });
           return { ok: false, message: data.message || 'Error al iniciar sesión' };
+        }
+        if (data.requires2FA) {
+          set({ loading: false });
+          return { ok: false, requires2FA: true, username: data.username, message: data.message };
         }
         const user: User = {
           username: data.user.username,
@@ -88,9 +135,11 @@ export const useAuth = create<AuthState>((set, get) => {
           email: data.user.email,
           roleChangedAt: data.user.roleChangedAt,
         };
-        if (data.token) localStorage.setItem('auth_token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
+        await setAuthToken(data.token || null);
         set({ user, isAuthenticated: true, loading: false });
+        const { queryClient } = await import('./queryClient');
+        queryClient.clear();
         get().fetchRoles();
         return { ok: true };
       } catch (err: any) {
@@ -99,7 +148,41 @@ export const useAuth = create<AuthState>((set, get) => {
       }
     },
 
-    loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null) => {
+    verify2FA: async (username: string, code: string) => {
+      set({ loading: true });
+      try {
+        const res = await fetch(apiBase + '/api/auth/verify-2fa', {
+          method: 'POST',
+          credentials: 'include',
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ username, code }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          set({ loading: false });
+          return { ok: false, message: data.message || 'Código inválido' };
+        }
+        const user: User = {
+          username: data.user.username,
+          role: data.user.role || 'traveler',
+          name: data.user.name,
+          email: data.user.email,
+          roleChangedAt: data.user.roleChangedAt,
+        };
+        localStorage.setItem('user', JSON.stringify(user));
+        await setAuthToken(data.token || null);
+        set({ user, isAuthenticated: true, loading: false });
+        const { queryClient } = await import('./queryClient');
+        queryClient.clear();
+        get().fetchRoles();
+        return { ok: true };
+      } catch (err: any) {
+        set({ loading: false });
+        return { ok: false, message: err.message || 'Error de conexión' };
+      }
+    },
+
+    loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null, token?: string | null) => {
       const user: User = {
         username,
         role,
@@ -108,6 +191,7 @@ export const useAuth = create<AuthState>((set, get) => {
         roleChangedAt: roleChangedAt !== undefined ? roleChangedAt : undefined,
       };
       localStorage.setItem('user', JSON.stringify(user));
+      void setAuthToken(token || null);
       set({ user, isAuthenticated: true, loading: false });
       get().fetchRoles();
     },
@@ -118,7 +202,7 @@ export const useAuth = create<AuthState>((set, get) => {
         const res = await fetch(apiBase + '/api/auth/register', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(data),
         });
         const result = await res.json();
@@ -133,8 +217,8 @@ export const useAuth = create<AuthState>((set, get) => {
           email: result.user.email,
           roles: ['traveler'],
         };
-        if (result.token) localStorage.setItem('auth_token', result.token);
         localStorage.setItem('user', JSON.stringify(user));
+        await setAuthToken(result.token || null);
         set({ user, isAuthenticated: true, loading: false });
         return { ok: true };
       } catch (err: any) {
@@ -145,12 +229,16 @@ export const useAuth = create<AuthState>((set, get) => {
 
     logout: async () => {
       try {
-        await fetch(apiBase + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+        await fetch(apiBase + '/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: await authHeaders(),
+        });
       } catch {
         // ignore
       }
       localStorage.removeItem('user');
-      localStorage.removeItem('auth_token');
+      await clearAuthToken();
       set({ user: null, isAuthenticated: false });
       const { queryClient } = await import('./queryClient');
       queryClient.clear();
@@ -209,9 +297,15 @@ export const useAuth = create<AuthState>((set, get) => {
         });
         const data = await res.json();
         if (!res.ok) return { ok: false, message: data.message };
-        const updated: User = { ...user, role: data.user.role, roleChangedAt: data.user.roleChangedAt };
+        const updated: User = {
+          ...user,
+          role: data.user.role,
+          roleChangedAt: data.user.roleChangedAt,
+          roles: Array.from(new Set([...(user.roles || []), data.user.role as UserRole])),
+        };
         localStorage.setItem('user', JSON.stringify(updated));
         set({ user: updated });
+        await refreshRoleQueries();
         return { ok: true, message: 'Rol actualizado exitosamente' };
       } catch (err: any) {
         return { ok: false, message: err.message || 'Error de conexión' };
@@ -232,6 +326,7 @@ export const useAuth = create<AuthState>((set, get) => {
         const updated: User = { ...user, role: data.user.role };
         localStorage.setItem('user', JSON.stringify(updated));
         set({ user: updated });
+        await refreshRoleQueries();
         return { ok: true };
       } catch (err: any) {
         return { ok: false, message: err.message || 'Error de conexión' };
@@ -256,6 +351,7 @@ export const useAuth = create<AuthState>((set, get) => {
         };
         localStorage.setItem('user', JSON.stringify(updated));
         set({ user: updated });
+        await refreshRoleQueries();
         return { ok: true };
       } catch (err: any) {
         return { ok: false, message: err.message || 'Error de conexión' };
@@ -278,6 +374,7 @@ export const useAuth = create<AuthState>((set, get) => {
         };
         localStorage.setItem('user', JSON.stringify(updated));
         set({ user: updated });
+        await refreshRoleQueries();
         return { ok: true };
       } catch (err: any) {
         return { ok: false, message: err.message || 'Error de conexión' };

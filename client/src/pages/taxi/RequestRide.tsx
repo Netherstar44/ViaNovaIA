@@ -1,4 +1,5 @@
 import { apiBase } from "@/lib/queryClient";
+import "leaflet/dist/leaflet.css";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -335,7 +336,11 @@ export default function RequestRide() {
   };
 
   // Redirect guard AFTER all hooks
-  if (!user) { setLocation("/login"); return null; }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+  }, [user, setLocation]);
+
+  if (!user) return null;
 
   const isTracking = !!createdRideId && activeRide;
   const rideFinished = createdRideId && activeRide && (activeRide.status === "completed" || activeRide.status === "cancelled");
@@ -345,7 +350,6 @@ export default function RequestRide() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 
       <div className="w-full max-w-[1200px] mx-auto py-4 px-4 sm:px-6 lg:px-8 space-y-5">
 

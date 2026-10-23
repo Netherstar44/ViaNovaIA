@@ -18,7 +18,7 @@ import {
 
 // ── RIDES ─────────────────────────────────────────────────────────────────────
 
-export async function createRide(data: InsertRide): Promise<Ride> {
+export async function createRide(data: InsertRide & { travelerUsername: string }): Promise<Ride> {
   const db = getDb();
   const rows = await db.insert(rides).values(data).returning();
   return rows[0];
@@ -130,8 +130,16 @@ export async function createEarning(
   const rows = await db
     .insert(earnings)
     .values({ taxiUsername, rideId, amount })
+    .onConflictDoNothing()
     .returning();
-  return rows[0];
+  // Si la ganancia ya existía, devolver la fila existente (idempotencia).
+  if (rows[0]) return rows[0];
+  const existing = await db
+    .select()
+    .from(earnings)
+    .where(eq(earnings.rideId, rideId))
+    .limit(1);
+  return existing[0];
 }
 
 export async function getEarningsByTaxi(taxiUsername: string): Promise<Earning[]> {
@@ -173,6 +181,72 @@ export async function getTotalWithdrawn(taxiUsername: string): Promise<number> {
 export async function createWithdrawal(data: InsertWithdrawal): Promise<Withdrawal> {
   const db = getDb();
   const rows = await db.insert(withdrawals).values(data).returning();
+  return rows[0];
+}
+
+/**
+ * Reserva un retiro comprobando el saldo y escribiendo la fila en una sola
+ * sentencia. El advisory lock por taxista serializa dos solicitudes
+ * concurrentes y evita que ambas lean el mismo saldo y sobregiren la cuenta.
+ *
+ * Devuelve null cuando el saldo es insuficiente. La clave de idempotencia se
+ * protege además con el índice único parcial creado por ensureTaxiSchema.
+ */
+export async function createWithdrawalAtomic(input: {
+  taxiUsername: string;
+  amount: number;
+  bankAccount: string | null;
+  notes: string | null;
+  idempotencyKey: string | null;
+}): Promise<Withdrawal | null> {
+  const db = getDb();
+  const { taxiUsername, amount, bankAccount, notes, idempotencyKey } = input;
+  const result = await db.execute(sql`
+    WITH lock AS (
+      SELECT pg_advisory_xact_lock(hashtextextended(${taxiUsername}, 0))
+    ), balance AS (
+      SELECT
+        COALESCE((SELECT SUM(amount) FROM earnings WHERE taxi_username = ${taxiUsername}), 0)
+        - COALESCE((
+            SELECT SUM(amount) FROM withdrawals
+            WHERE taxi_username = ${taxiUsername}
+              AND status IN ('pending', 'completed')
+          ), 0) AS available
+      FROM lock
+    )
+    INSERT INTO withdrawals (taxi_username, amount, bank_account, notes, idempotency_key)
+    SELECT ${taxiUsername}, ${amount}, ${bankAccount}, ${notes}, ${idempotencyKey}
+    FROM balance
+    WHERE ${amount} <= balance.available
+    RETURNING id,
+              taxi_username AS "taxiUsername",
+              amount,
+              status,
+              bank_account AS "bankAccount",
+              notes,
+              idempotency_key AS "idempotencyKey",
+              created_at AS "createdAt",
+              updated_at AS "updatedAt"
+  `);
+  const rows = (result as any).rows ?? (result as any);
+  return Array.isArray(rows) && rows[0] ? (rows[0] as Withdrawal) : null;
+}
+
+export async function getWithdrawalByIdempotencyKey(
+  taxiUsername: string,
+  idempotencyKey: string
+): Promise<Withdrawal | undefined> {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(withdrawals)
+    .where(
+      and(
+        eq(withdrawals.taxiUsername, taxiUsername),
+        eq(withdrawals.idempotencyKey, idempotencyKey)
+      )
+    )
+    .limit(1);
   return rows[0];
 }
 

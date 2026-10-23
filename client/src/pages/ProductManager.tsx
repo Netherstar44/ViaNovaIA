@@ -1,5 +1,6 @@
 import { apiBase } from "@/lib/queryClient";
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +13,7 @@ interface Product {
   name: string;
   description: string | null;
   price: string;
+  cost?: string | number | null;
   currency: string;
   stock: number;
   is_active: boolean;
@@ -64,6 +66,7 @@ function ProductForm({
   const [name, setName] = useState(existing?.name || "");
   const [description, setDescription] = useState(existing?.description || "");
   const [price, setPrice] = useState(existing?.price || "");
+  const [cost, setCost] = useState(existing?.cost != null ? String(existing.cost) : "");
   const [stock, setStock] = useState(existing?.stock !== undefined ? String(existing.stock) : "-1");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(existing?.cover_image || null);
@@ -75,6 +78,10 @@ function ProductForm({
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const mediaRef = useRef<HTMLInputElement>(null);
+
+  const unitPrice = Number(price) || 0;
+  const unitCost = Number(cost) || 0;
+  const marginPct = unitPrice > 0 ? ((unitPrice - unitCost) / unitPrice) * 100 : null;
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -90,7 +97,10 @@ function ProductForm({
       const form = new FormData();
       form.append("mediaType", mediaType);
       form.append("file", mediaFile);
-      const res = await fetch(`${apiBase}/api/products/${existing.id}/media`, { method: "POST", body: form });
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${apiBase}/api/products/${existing.id}/media`, { method: "POST", body: form, headers, credentials: "include" });
       const d = await res.json();
       if (!res.ok) throw new Error(d.message);
       
@@ -107,7 +117,10 @@ function ProductForm({
   const handleDeleteMedia = async (assetId: string) => {
     if (!existing?.id) return;
     try {
-      await fetch(`${apiBase}/api/products/${existing.id}/media/${assetId}`, { method: "DELETE" });
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      await fetch(`${apiBase}/api/products/${existing.id}/media/${assetId}`, { method: "DELETE", headers, credentials: "include" });
       onSave({ ...existing, media: (existing.media || []).filter(m => m.id !== assetId) });
       toast({ title: "Medio eliminado" });
     } catch (e: any) {
@@ -124,13 +137,17 @@ function ProductForm({
       form.append("name", name);
       form.append("description", description);
       form.append("price", price);
+      form.append("cost", cost || "0");
       form.append("stock", stock);
       form.append("roleCategory", roleCategory);
       if (coverFile) form.append("coverImage", coverFile);
 
-      const url = existing ? `/api/products/${existing.id}` : "/api/products";
+      const url = existing ? `${apiBase}/api/products/${existing.id}` : `${apiBase}/api/products`;
       const method = existing ? "PATCH" : "POST";
-      const r = await fetch(url, { method, body: form });
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const r = await fetch(url, { method, body: form, headers, credentials: "include" });
       const d = await r.json();
       if (!r.ok) throw new Error(d.message);
       onSave(d.product);
@@ -181,29 +198,41 @@ function ProductForm({
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Nombre *</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Habitación Doble con Vista"
+            <input id="product-name-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Habitación Doble con Vista"
               className="w-full bg-secondary/20 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary/50" />
           </div>
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground uppercase tracking-wider">Descripción</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+            <textarea id="product-desc-input" value={description} onChange={e => setDescription(e.target.value)} rows={3}
               placeholder="Describe tu producto o servicio..."
               className="w-full bg-secondary/20 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary/50 resize-none" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Precio (COP) *</label>
-              <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0"
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Precio *</label>
+              <input id="product-price-input" type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0"
                 className="w-full bg-secondary/20 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary/50" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Stock (-1 = ilimitado)</label>
-              <input type="number" value={stock} onChange={e => setStock(e.target.value)}
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Costo</label>
+              <input id="product-cost-input" type="number" value={cost} onChange={e => setCost(e.target.value)} placeholder="0"
+                className="w-full bg-secondary/20 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary/50" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Stock</label>
+              <input id="product-stock-input" type="number" value={stock} onChange={e => setStock(e.target.value)} placeholder="-1"
                 className="w-full bg-secondary/20 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary/50" />
             </div>
           </div>
+          <div className="flex items-center justify-between rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs">
+            <span className="text-muted-foreground">Margen bruto por unidad</span>
+            <span className={`font-bold ${marginPct !== null && marginPct < 0 ? "text-red-400" : "text-primary"}`}>
+              {marginPct === null ? "—" : `${marginPct.toFixed(1)}% · ${formatCOP(unitPrice - unitCost)}`}
+            </span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Stock -1 = ilimitado. El costo alimenta tus gastos y ganancia en el panel.</p>
 
           {existing && (
             <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
@@ -244,7 +273,7 @@ function ProductForm({
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   {existing.media.map(m => (
                     <div key={m.id} className="relative group rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/40 flex items-center justify-center">
-                      {m.type === 'image' || m.type === '360_image' ? (
+                      {m.type === 'image' || m.type === 'image_360' ? (
                         <img src={m.url} className="w-full h-full object-cover opacity-60" />
                       ) : (
                         <span className="text-xs font-bold text-muted-foreground uppercase">{m.type.replace('_', ' ')}</span>
@@ -253,7 +282,7 @@ function ProductForm({
                         <Trash2 className="h-3.5 w-3.5 text-red-400" />
                       </div>
                       <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[10px] uppercase font-bold text-primary">
-                        {m.type === '360_image' ? '360°' : m.type === '3d_model' ? '3D' : m.type}
+                        {m.type === 'image_360' ? '360°' : m.type === 'model_3d' ? '3D' : m.type === 'vr_tour' ? 'VR' : m.type}
                       </div>
                     </div>
                   ))}
@@ -265,7 +294,7 @@ function ProductForm({
 
         <div className="px-6 pb-6 flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancelar</Button>
-          <Button onClick={submit} disabled={saving || !name || !price} className="flex-1 bg-primary text-black font-bold rounded-xl hover:bg-primary/80">
+          <Button id="product-submit-btn" onClick={submit} disabled={saving || !name || !price} className="flex-1 bg-primary text-black font-bold rounded-xl hover:bg-primary/80">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             {existing ? "Guardar" : "Crear"}
           </Button>
@@ -302,6 +331,14 @@ function ProductCard({ product, username, onEdit, onDelete, onToggle }: {
           <span className="text-primary font-bold text-sm whitespace-nowrap">{formatCOP(product.price)}</span>
         </div>
         {product.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{product.description}</p>}
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+          <span className={`rounded-full border px-2 py-0.5 ${product.stock === 0 ? "border-red-500/30 bg-red-500/10 text-red-400" : "border-border/50 bg-secondary/30"}`}>
+            {product.stock === -1 ? "Stock ilimitado" : `${product.stock} en stock`}
+          </span>
+          {product.cost != null && Number(product.price) > 0 && (
+            <span>Margen {(((Number(product.price) - Number(product.cost)) / Number(product.price)) * 100).toFixed(0)}%</span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5 mt-auto">
           <button onClick={() => onEdit(product)} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-secondary/40 hover:bg-secondary/70 text-xs transition-colors">
             <Pencil className="h-3 w-3" /> Editar
@@ -322,6 +359,7 @@ function ProductCard({ product, username, onEdit, onDelete, onToggle }: {
 export default function ProductManager() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [tab, setTab] = useState<"products" | "orders">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -332,14 +370,18 @@ export default function ProductManager() {
   useEffect(() => {
     if (!user?.username) return;
     setLoading(true);
+    const scopedRole = user.role === "admin" || user.role === "traveler" ? "" : `?role=${encodeURIComponent(user.role)}`;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     Promise.all([
-      fetch(`${apiBase}/api/products/provider/${user.username}`).then(r => r.json()),
-      fetch(`${apiBase}/api/orders/provider/${user.username}`).then(r => r.json()),
+      fetch(`${apiBase}/api/products/provider/${encodeURIComponent(user.username)}${scopedRole}`, { headers, credentials: "include" }).then(r => r.json()),
+      fetch(`${apiBase}/api/orders/provider/${encodeURIComponent(user.username)}`, { headers, credentials: "include" }).then(r => r.json()),
     ]).then(([pd, od]) => {
       setProducts(pd.products || []);
       setOrders(od.orders || []);
     }).finally(() => setLoading(false));
-  }, [user?.username]);
+  }, [user?.username, user?.role]);
 
   const handleSave = (p: Product) => {
     setProducts(prev => {
@@ -352,8 +394,12 @@ export default function ProductManager() {
 
   const handleDelete = async (id: string) => {
     if (!user?.username) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     await fetch(`${apiBase}/api/products/${id}`, {
-      method: "DELETE", headers: { "Content-Type": "application/json" },
+      method: "DELETE", headers,
+      credentials: "include",
       body: JSON.stringify({ username: user.username }),
     });
     setProducts(p => p.filter(x => x.id !== id));
@@ -362,23 +408,41 @@ export default function ProductManager() {
 
   const handleToggle = async (product: Product) => {
     if (!user?.username) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     const form = new FormData();
     form.append("username", user.username);
     form.append("isActive", String(!product.is_active));
-    await fetch(`${apiBase}/api/products/${product.id}`, { method: "PATCH", body: form });
+    await fetch(`${apiBase}/api/products/${product.id}`, { method: "PATCH", body: form, headers, credentials: "include" });
     setProducts(p => p.map(x => x.id === product.id ? { ...x, is_active: !x.is_active } : x));
   };
 
   const handleOrderStatus = async (id: string, status: string) => {
-    await fetch(`${apiBase}/api/orders/${id}/status`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+    if (!user?.username) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${apiBase}/api/orders/${id}/status`, {
+      method: "PATCH", headers,
+      credentials: "include",
+      body: JSON.stringify({ status, username: user.username }),
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast({ title: "No se pudo actualizar", description: data.message, variant: "destructive" });
+      return;
+    }
     setOrders(o => o.map(x => x.id === id ? { ...x, status } : x));
-    toast({ title: "Estado actualizado" });
+    toast({ title: "Estado actualizado", description: data.restocked ? "El stock fue devuelto al inventario." : undefined });
   };
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!user) setLocation("/login");
+    else if (user.role === "traveler" || user.role === "admin") setLocation("/dashboard");
+  }, [user, setLocation]);
+
+  if (!user || user.role === "traveler" || user.role === "admin") return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -394,7 +458,7 @@ export default function ProductManager() {
                 Gestiona tu catálogo, precios y órdenes recibidas.
               </p>
             </div>
-            <Button onClick={() => { setEditing(null); setShowForm(true); }}
+            <Button id="new-product-btn" onClick={() => { setEditing(null); setShowForm(true); }}
               className="bg-primary text-black font-bold rounded-xl gap-2 hover:bg-primary/80">
               <Plus className="h-4 w-4" /> Nuevo Producto
             </Button>

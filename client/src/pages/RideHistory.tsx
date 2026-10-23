@@ -163,10 +163,11 @@ export default function RideHistory() {
     });
   }, [items, user?.username]);
 
-  if (!user) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+  }, [user, setLocation]);
+
+  if (!user) return null;
 
   const filteredItems = items.filter(r => {
     if (filter !== "all" && r.status !== filter) return false;

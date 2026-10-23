@@ -10,6 +10,7 @@ import MyProducts from "@/pages/MyProducts";
 import RoleSelection from "@/pages/RoleSelection";
 import Notifications from "@/pages/Notifications";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Dashboard from "@/pages/Dashboard";
 
 // ── TAXI ──────────────────────────────────────────────────────────────────────
 import TaxiDashboard from "@/pages/taxi/TaxiDashboard";
@@ -18,9 +19,11 @@ import TaxiEarnings from "@/pages/taxi/TaxiEarnings";
 import RequestRide from "@/pages/taxi/RequestRide";
 import RideHistory from "@/pages/RideHistory";
 import SocialFeed from "@/pages/SocialFeed";
+import UserProfile from "@/pages/UserProfile";
+import Messages from "@/pages/Messages";
+import Privacy from "@/pages/Privacy";
 import ProductManager from "@/pages/ProductManager";
 import ProductStore from "@/pages/ProductStore";
-import NukePage from "@/pages/Nuke";
 
 function Router() {
   return (
@@ -34,6 +37,7 @@ function Router() {
       <Route path="/settings" component={AccountSettings} />
       <Route path="/my-products" component={MyProducts} />
       <Route path="/notifications" component={Notifications} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin" component={AdminDashboard} />
 
       {/* ── Taxi ── */}
@@ -43,9 +47,11 @@ function Router() {
       <Route path="/request-ride" component={RequestRide} />
       <Route path="/ride-history" component={RideHistory} />
       <Route path="/social" component={SocialFeed} />
+      <Route path="/messages" component={Messages} />
+      <Route path="/u/:username" component={UserProfile} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/products" component={ProductManager} />
       <Route path="/explore" component={ProductStore} />
-      <Route path="/nuke" component={NukePage} />
 
       <Route component={NotFound} />
     </Switch>
@@ -56,7 +62,13 @@ import { ThemeProvider } from "next-themes";
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "sunset", "ocean", "forest"]}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange
+      themes={["light", "dark", "sunset", "ocean", "forest"]}
+    >
       <QueryClientProvider client={queryClient}>
         <Toaster />
         <Router />

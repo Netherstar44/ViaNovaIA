@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Capacitor } from '@capacitor/core';
+import { authHeaders } from './secureStorage';
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -8,11 +9,19 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Web deployments (including Cloudflare Workers) are always same-origin. Only
+// native/Capacitor builds need an absolute backend URL, and that URL can be
+// supplied at build time with VITE_NATIVE_API_BASE.
+const FALLBACK_NATIVE_API_BASE = "https://via-nova-ia.vercel.app";
+const configuredNativeApiBase = String(import.meta.env.VITE_NATIVE_API_BASE || "")
+  .trim()
+  .replace(/\/+$/, "");
+
 export const getBaseUrl = () => {
-  const isApp = (typeof window !== 'undefined' && Capacitor.isNativePlatform()) || 
+  const isApp = (typeof window !== 'undefined' && Capacitor.isNativePlatform()) ||
                 (typeof navigator !== 'undefined' && navigator.userAgent.includes('wv'));
   if (isApp) {
-    return "https://via-nova-ia.vercel.app";
+    return configuredNativeApiBase || FALLBACK_NATIVE_API_BASE;
   }
   return "";
 };
@@ -27,7 +36,7 @@ export async function apiRequest(
   const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
   const res = await fetch(finalUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: await authHeaders(data ? { "Content-Type": "application/json" } : {}),
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -46,6 +55,7 @@ export const getQueryFn: <T>(options: {
     const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
     const res = await fetch(finalUrl, {
       credentials: "include",
+      headers: await authHeaders(),
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -61,8 +71,10 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+      // Los datos de servidor no son infinitamente frescos: 30s evita mostrar
+      // reservas, stock o notificaciones obsoletos tras volver a la pestaña.
+      staleTime: 30_000,
       retry: false,
     },
     mutations: {

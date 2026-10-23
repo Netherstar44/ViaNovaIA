@@ -1,6 +1,29 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type SendMailOptions } from "nodemailer";
 import path from "path";
 import fs from "fs";
+import { getAppBaseUrl } from "./config.js";
+
+/** Escapa datos controlados por el usuario antes de insertarlos en HTML. */
+function escapeHtml(value: unknown): string {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case "&": return "&amp;";
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case '"': return "&quot;";
+      case "'": return "&#39;";
+      default: return char;
+    }
+  });
+}
+
+/**
+ * El token va en el fragmento (#), no en la query string: el fragmento no se
+ * envía al servidor, no aparece en logs de acceso ni en cabeceras Referer.
+ */
+export function buildPasswordResetUrl(resetToken: string): string {
+  return `${getAppBaseUrl()}/login#reset_token=${encodeURIComponent(resetToken)}`;
+}
 
 function getTransporter() {
   return nodemailer.createTransport({
@@ -13,7 +36,6 @@ function getTransporter() {
 
 const FROM = () => process.env.SMTP_FROM || `VIANova <${process.env.SMTP_USER}>`;
 const F = `'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif`;
-const APP = () => process.env.NGROK_URL || process.env.CLIENT_URL || "http://localhost:5000";
 
 // Read the logo and cache it as base64 for CID attachment
 const LOGO_PATH = path.resolve(process.cwd(), "client", "public", "logo.jpeg");
@@ -62,7 +84,7 @@ ${body}
 }
 
 // Logo attachment for CID embedding — always shows in Gmail
-function logoAttachment(): nodemailer.SendMailOptions["attachments"] {
+function logoAttachment(): SendMailOptions["attachments"] {
   if (!logoBuffer) return [];
   return [{
     filename: "logo.jpeg",
@@ -77,7 +99,7 @@ function logoAttachment(): nodemailer.SendMailOptions["attachments"] {
 // 1. WELCOME — Sent to both Google and local accounts
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendWelcomeEmail(to: string, userName: string): Promise<void> {
-  const name = userName || "Viajero";
+  const name = escapeHtml(userName || "Viajero");
   const body = `
   <h1 class="text-main" style="margin:0 0 8px;font-family:${F};font-size:24px;font-weight:700;color:#ffffff;line-height:1.3;">Bienvenido, ${name}.</h1>
   <p class="text-sub" style="margin:0 0 28px;font-family:${F};font-size:14px;color:rgba(255,255,255,0.40);line-height:1.8;">
@@ -99,7 +121,7 @@ export async function sendWelcomeEmail(to: string, userName: string): Promise<vo
   </table>
 
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:28px;"><tr><td align="center" width="100%">
-    <a href="${APP()}" target="_blank" style="display:inline-block;background:#c9a227;color:#000;font-family:${F};font-size:14px;font-weight:700;padding:13px 36px;border-radius:8px;text-decoration:none;">
+    <a href="${escapeHtml(getAppBaseUrl())}" target="_blank" style="display:inline-block;background:#c9a227;color:#000;font-family:${F};font-size:14px;font-weight:700;padding:13px 36px;border-radius:8px;text-decoration:none;">
       Ir a VIANova
     </a>
   </td></tr></table>
@@ -120,8 +142,9 @@ export async function sendWelcomeEmail(to: string, userName: string): Promise<vo
 // 2. PASSWORD RESET — Only local accounts (blocked for Google in routes.ts)
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendPasswordResetEmail(to: string, userName: string, resetToken: string): Promise<void> {
-  const resetUrl = `${APP()}/login?reset_token=${resetToken}`;
-  const name = userName || "usuario";
+  const resetUrl = escapeHtml(buildPasswordResetUrl(resetToken));
+  const safeToken = escapeHtml(resetToken);
+  const name = escapeHtml(userName || "usuario");
 
   const body = `
   <p class="text-sub" style="margin:0 0 4px;font-family:${F};font-size:11px;font-weight:600;color:rgba(201,162,39,0.7);text-transform:uppercase;letter-spacing:2px;">Recuperacion de cuenta</p>
@@ -133,7 +156,7 @@ export async function sendPasswordResetEmail(to: string, userName: string, reset
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
     <tr><td align="center" class="code-bg" style="padding:24px 0;background:rgba(201,162,39,0.04);border:1px solid rgba(201,162,39,0.08);border-radius:10px;">
       <p class="text-muted" style="margin:0 0 4px;font-family:${F};font-size:10px;font-weight:600;color:rgba(255,255,255,0.20);text-transform:uppercase;letter-spacing:3px;">Codigo</p>
-      <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:40px;font-weight:900;color:#c9a227;letter-spacing:10px;">${resetToken}</p>
+      <p style="margin:0;font-family:'Courier New',Courier,monospace;font-size:40px;font-weight:900;color:#c9a227;letter-spacing:10px;">${safeToken}</p>
     </td></tr>
   </table>
 
@@ -146,7 +169,7 @@ export async function sendPasswordResetEmail(to: string, userName: string, reset
   </td></tr></table>
 
   <p class="text-muted" style="margin:0;font-family:${F};font-size:11px;color:rgba(255,255,255,0.16);line-height:1.7;">
-    Este codigo expira en 24 horas. Si no lo solicitaste, ignora este correo.
+    Este codigo expira en 15 minutos. Si no lo solicitaste, ignora este correo.
   </p>`;
 
   await getTransporter().sendMail({
@@ -161,7 +184,8 @@ export async function sendPasswordResetEmail(to: string, userName: string, reset
 // 3. PASSWORD CHANGED — Only local accounts (notification + emergency reset)
 // ═══════════════════════════════════════════════════════════════════════════════
 export async function sendPasswordChangedEmail(to: string, userName: string, emergencyResetUrl: string): Promise<void> {
-  const name = userName || "usuario";
+  const name = escapeHtml(userName || "usuario");
+  const safeEmergencyUrl = escapeHtml(emergencyResetUrl);
 
   const body = `
   <p class="text-sub" style="margin:0 0 4px;font-family:${F};font-size:11px;font-weight:600;color:rgba(34,197,94,0.7);text-transform:uppercase;letter-spacing:2px;">Notificacion de seguridad</p>
@@ -174,13 +198,13 @@ export async function sendPasswordChangedEmail(to: string, userName: string, eme
 
   <p style="margin:0 0 14px;font-family:${F};font-size:13px;font-weight:600;color:rgba(239,68,68,0.75);">Si no realizaste este cambio:</p>
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr><td align="center" width="100%">
-    <a href="${emergencyResetUrl}" target="_blank" style="display:inline-block;background:#dc2626;color:#fff;font-family:${F};font-size:13px;font-weight:700;padding:12px 32px;border-radius:8px;text-decoration:none;">
+    <a href="${safeEmergencyUrl}" target="_blank" style="display:inline-block;background:#dc2626;color:#fff;font-family:${F};font-size:13px;font-weight:700;padding:12px 32px;border-radius:8px;text-decoration:none;">
       Asegurar mi cuenta
     </a>
   </td></tr></table>
 
   <p class="text-muted" style="margin:0;font-family:${F};font-size:11px;color:rgba(255,255,255,0.16);line-height:1.7;">
-    Si fuiste tu, ignora este correo. El enlace de seguridad expira en 24 horas.
+    Si fuiste tu, ignora este correo. El enlace de seguridad expira en 15 minutos.
   </p>`;
 
   await getTransporter().sendMail({

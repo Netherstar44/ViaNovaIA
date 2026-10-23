@@ -1,4 +1,5 @@
 import { apiBase } from "@/lib/queryClient";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Car, DollarSign, WifiOff, MapPin, RefreshCw, ChevronRight } from "lucide-react";
@@ -44,8 +45,12 @@ export default function TaxiDashboard() {
     ?.reduce((acc: number, e: any) => acc + e.amount, 0) ?? 0;
 
   // Redirects AFTER all hooks
-  if (!user) { setLocation("/login"); return null; }
-  if (user.role !== "taxi") { setLocation("/"); return null; }
+  useEffect(() => {
+    if (!user) setLocation("/login");
+    else if (user.role !== "taxi") setLocation("/dashboard");
+  }, [user, setLocation]);
+
+  if (!user || user.role !== "taxi") return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">

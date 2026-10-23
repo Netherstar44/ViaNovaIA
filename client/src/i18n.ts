@@ -9,7 +9,8 @@ const resources = {
         explore: "Explorar", messages: "Mensajes", social: "Social", admin: "Admin", business: "Mi Negocio", taxi: "Modo Taxi", theme: "Tema", profile: "Perfil", logout: "Cerrar Sesión",
         settings: "Configuración de Cuenta", history: "Historial de Viajes", products: "Mis Productos", taxi_panel: "Panel de Taxista", login: "Iniciar Sesión",
         appearance: "Apariencia", light: "Claro", dark: "Oscuro", language: "Idioma", change_language: "Cambiar idioma", change_theme: "Cambiar tema",
-        role_hotel: "Hotel", role_restaurant: "Restaurante", role_recreation: "Recreación", role_taxi: "Taxista", role_translator: "Traductor", role_traveler: "Viajero"
+        role_hotel: "Hotel", role_restaurant: "Restaurante", role_recreation: "Recreación", role_taxi: "Taxista", role_translator: "Traductor", role_traveler: "Viajero",
+        role_admin: "Administrador", dashboard: "Mi Panel", switch_role: "Cambiar rol activo"
       },
       home: {
         hero_title: "Descubre el mundo con", hero_subtitle: "Explora los destinos más exclusivos, sabores inolvidables y experiencias inmersivas impulsadas por inteligencia artificial.",
@@ -28,7 +29,7 @@ const resources = {
         voice_on: "Activar voz", voice_off: "Desactivar voz",
         listening: "Escuchando...", speaking: "VIANova está hablando...", tap_mic: "Toca el micrófono para hablar",
         note: "Nota", gps_warning: "El GPS automático en computadoras puede ser impreciso.", auto_gps: "Usar GPS Automático",
-        or_manual: "O ingresa manualmente", destination: "Destino de viaje:",
+        or_manual: "O ingresa manualmente", destination: "Destino", destination_placeholder: "Opcional — Ej. Cali, Medellín...",
         error_processing: "Hubo un error al procesar tu mensaje. Intenta nuevamente.",
         location_shared: "📍 He compartido mi ubicación actual.",
         location_received: "Ubicación recibida.",
@@ -55,7 +56,8 @@ const resources = {
         explore: "Explore", messages: "Messages", social: "Social", admin: "Admin", business: "My Business", taxi: "Taxi Mode", theme: "Theme", profile: "Profile", logout: "Sign Out",
         settings: "Account Settings", history: "Trip History", products: "My Products", taxi_panel: "Taxi Panel", login: "Sign In",
         appearance: "Appearance", light: "Light", dark: "Dark", language: "Language", change_language: "Change language", change_theme: "Change theme",
-        role_hotel: "Hotel", role_restaurant: "Restaurant", role_recreation: "Recreation", role_taxi: "Taxi Driver", role_translator: "Translator", role_traveler: "Traveler"
+        role_hotel: "Hotel", role_restaurant: "Restaurant", role_recreation: "Recreation", role_taxi: "Taxi Driver", role_translator: "Translator", role_traveler: "Traveler",
+        role_admin: "Administrator", dashboard: "My Dashboard", switch_role: "Switch active role"
       },
       home: {
         hero_title: "Discover the world with", hero_subtitle: "Explore the most exclusive destinations, unforgettable flavors, and immersive AI-powered experiences.",
@@ -74,7 +76,7 @@ const resources = {
         voice_on: "Voice On", voice_off: "Voice Off",
         listening: "Listening...", speaking: "VIANova is speaking...", tap_mic: "Tap the microphone to speak",
         note: "Note", gps_warning: "Automatic GPS on computers may be inaccurate.", auto_gps: "Use Automatic GPS",
-        or_manual: "Or enter manually", destination: "Travel destination:",
+        or_manual: "Or enter manually", destination: "Destination", destination_placeholder: "Optional — e.g. Cali, Medellín...",
         error_processing: "There was an error processing your message. Please try again.",
         location_shared: "📍 I have shared my current location.",
         location_received: "Location received.",
@@ -101,7 +103,8 @@ const resources = {
         explore: "Explorer", messages: "Messages", social: "Social", admin: "Admin", business: "Mon Entreprise", taxi: "Mode Taxi", theme: "Thème", profile: "Profil", logout: "Déconnexion",
         settings: "Paramètres du Compte", history: "Historique de Voyages", products: "Mes Produits", taxi_panel: "Panneau Taxi", login: "Connexion",
         appearance: "Apparence", light: "Clair", dark: "Sombre", language: "Langue", change_language: "Changer de langue", change_theme: "Changer de thème",
-        role_hotel: "Hôtel", role_restaurant: "Restaurant", role_recreation: "Loisirs", role_taxi: "Chauffeur", role_translator: "Traducteur", role_traveler: "Voyageur"
+        role_hotel: "Hôtel", role_restaurant: "Restaurant", role_recreation: "Loisirs", role_taxi: "Chauffeur", role_translator: "Traducteur", role_traveler: "Voyageur",
+        role_admin: "Administrateur", dashboard: "Mon Tableau de Bord", switch_role: "Changer de rôle actif"
       },
       home: {
         hero_title: "Découvrez le monde avec", hero_subtitle: "Explorez les destinations les plus exclusives, des saveurs inoubliables et des expériences immersives.",
@@ -120,7 +123,7 @@ const resources = {
         voice_on: "Voix Activée", voice_off: "Voix Désactivée",
         listening: "Écoute en cours...", speaking: "VIANova parle...", tap_mic: "Appuyez sur le micro pour parler",
         note: "Note", gps_warning: "Le GPS automatique sur ordinateur peut être imprécis.", auto_gps: "Utiliser le GPS automatique",
-        or_manual: "Ou saisir manuellement", destination: "Destination de voyage :",
+        or_manual: "Ou saisir manuellement", destination: "Destination", destination_placeholder: "Facultatif — ex. Cali, Medellín...",
         error_processing: "Une erreur s'est produite. Veuillez réessayer.",
         location_shared: "📍 J'ai partagé ma position actuelle.",
         location_received: "Position reçue.",
@@ -147,7 +150,8 @@ const resources = {
         explore: "Explorar", messages: "Mensagens", social: "Social", admin: "Admin", business: "Meu Negócio", taxi: "Modo Táxi", theme: "Tema", profile: "Perfil", logout: "Sair",
         settings: "Configurações da Conta", history: "Histórico de Viagens", products: "Meus Produtos", taxi_panel: "Painel do Táxi", login: "Entrar",
         appearance: "Aparência", light: "Claro", dark: "Escuro", language: "Idioma", change_language: "Mudar idioma", change_theme: "Mudar tema",
-        role_hotel: "Hotel", role_restaurant: "Restaurante", role_recreation: "Lazer", role_taxi: "Taxista", role_translator: "Tradutor", role_traveler: "Viajante"
+        role_hotel: "Hotel", role_restaurant: "Restaurante", role_recreation: "Lazer", role_taxi: "Taxista", role_translator: "Tradutor", role_traveler: "Viajante",
+        role_admin: "Administrador", dashboard: "Meu Painel", switch_role: "Mudar papel ativo"
       },
       home: {
         hero_title: "Descubra o mundo com", hero_subtitle: "Explore os destinos mais exclusivos, sabores inesquecíveis e experiências imersivas.",
@@ -166,7 +170,7 @@ const resources = {
         voice_on: "Voz Ativada", voice_off: "Voz Desativada",
         listening: "Ouvindo...", speaking: "VIANova está falando...", tap_mic: "Toque no microfone para falar",
         note: "Nota", gps_warning: "O GPS automático em computadores pode ser impreciso.", auto_gps: "Usar GPS Automático",
-        or_manual: "Ou insira manualmente", destination: "Destino de viagem:",
+        or_manual: "Ou insira manualmente", destination: "Destino", destination_placeholder: "Opcional — ex. Cali, Medellín...",
         error_processing: "Houve um erro ao processar sua mensagem. Tente novamente.",
         location_shared: "📍 Compartilhei minha localização atual.",
         location_received: "Localização recebida.",
@@ -193,7 +197,8 @@ const resources = {
         explore: "探索", messages: "消息", social: "社交", admin: "管理", business: "我的企业", taxi: "出租车", theme: "主题", profile: "个人资料", logout: "注销",
         settings: "账户设置", history: "旅行记录", products: "我的产品", taxi_panel: "出租车面板", login: "登录",
         appearance: "外观", light: "浅色", dark: "深色", language: "语言", change_language: "切换语言", change_theme: "切换主题",
-        role_hotel: "酒店", role_restaurant: "餐厅", role_recreation: "娱乐", role_taxi: "司机", role_translator: "翻译", role_traveler: "旅行者"
+        role_hotel: "酒店", role_restaurant: "餐厅", role_recreation: "娱乐", role_taxi: "司机", role_translator: "翻译", role_traveler: "旅行者",
+        role_admin: "管理员", dashboard: "我的面板", switch_role: "切换活动角色"
       },
       home: {
         hero_title: "与探索世界", hero_subtitle: "探索最独特的目的地、难忘的风味和沉浸式体验。",
@@ -212,7 +217,7 @@ const resources = {
         voice_on: "语音开启", voice_off: "语音关闭",
         listening: "正在聆听...", speaking: "VIANova正在说话...", tap_mic: "点击麦克风开始说话",
         note: "提示", gps_warning: "电脑上的自动GPS可能不准确。", auto_gps: "使用自动GPS",
-        or_manual: "或手动输入", destination: "旅行目的地：",
+        or_manual: "或手动输入", destination: "目的地", destination_placeholder: "可选 — 例如 Cali、Medellín...",
         error_processing: "处理您的消息时出错。请重试。",
         location_shared: "📍 我已分享当前位置。",
         location_received: "已收到位置信息。",

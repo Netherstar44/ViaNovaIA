@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "vianova",
+  "main": "server/worker.ts",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NODE_ENV": "production"
+    // Después del primer deploy, agrega la URL real del Worker o tu dominio:
+    // "PUBLIC_URL": "https://vianova.<subdominio>.workers.dev",
+    // "CLIENT_URL": "https://vianova.<subdominio>.workers.dev"
+  }
+}
