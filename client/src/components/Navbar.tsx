@@ -1,8 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth, UserRole } from "@/lib/auth";
-import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon, LayoutDashboard, Shield, Check } from "lucide-react";
+import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Clock, Languages, Globe, Compass, Sun, Moon, LayoutDashboard, Shield, Check, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 // Logos sin fondo (para el Navbar)
@@ -10,12 +9,6 @@ import logoPrincipal from "../assets/Logo_principal-removebg-preview.png";
 import logoOcean   from "../assets/Logo_ocean-removebg-preview.png";
 import logoForest  from "../assets/Logo_forest-removebg-preview.png";
 import logoSunset  from "../assets/Logo_sunset-Photoroom.png";
-
-// Logos con fondo (para el favicon de la pestaña)
-import iconDefault from "../assets/Logo_principal.jpeg";
-import iconOcean   from "../assets/Logo_ocean.jpeg";
-import iconForest  from "../assets/Logo_forest.jpeg";
-import iconSunset  from "../assets/Logo_sunset.jpeg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,47 +58,6 @@ export default function Navbar() {
     }
   })();
 
-  // Logo con fondo (Favicon)
-  const iconSrc = (() => {
-    switch (themeKey) {
-      case 'ocean':   return iconOcean;
-      case 'forest':  return iconForest;
-      case 'sunset':  return iconSunset;
-      default:        return iconDefault; // light, dark, system
-    }
-  })();
-
-  // Actualizar favicon dinámicamente cuando cambie el tema (usando imagen con fondo y ampliándola)
-  useEffect(() => {
-    const link = document.querySelector<HTMLLinkElement>("link[rel='icon']") ||
-      Object.assign(document.createElement('link'), { rel: 'icon', type: 'image/jpeg' });
-    
-    // Usamos un canvas para "hacer zoom" en la imagen y quitarle los bordes blancos
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 64;
-      canvas.height = 64;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        // Factor de zoom (mayor número = más grande se ve el logo)
-        const zoom = 1.9; 
-        const w = img.width;
-        const h = img.height;
-        // Calcular el área a recortar del centro
-        const cropW = w / zoom;
-        const cropH = h / zoom;
-        const cropX = (w - cropW) / 2;
-        const cropY = (h - cropH) / 2;
-        
-        ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, 64, 64);
-        link.href = canvas.toDataURL('image/jpeg');
-        document.head.appendChild(link);
-      }
-    };
-    img.src = iconSrc;
-  }, [iconSrc]);
-
   const { data: notifications = [] } = useQuery({
     queryKey: [user?.username ? `/api/notifications?username=${encodeURIComponent(user.username)}` : null],
     enabled: !!user && user.role !== "traveler",
@@ -146,42 +98,46 @@ export default function Navbar() {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
       className="glass-nav sticky top-0 z-50 w-full"
     >
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setLocation("/")} className="flex items-center gap-2 font-heading text-xl font-bold text-foreground group focus:outline-none">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            onClick={() => setLocation("/")}
+            className="group flex min-w-0 items-center gap-2 font-heading text-lg font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:text-xl"
+            aria-label="VIANova, ir al inicio"
+          >
             <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileHover={{ scale: 1.08, rotate: 4 }}
               transition={{ duration: 0.25 }}
-              className="flex items-center justify-center -ml-2"
+              className="flex shrink-0 items-center justify-center"
             >
               <img
                 src={logoSrc}
-                alt="VIANova"
-                className="w-14 h-14 object-contain drop-shadow-md scale-125"
+                alt=""
+                className="h-11 w-11 object-contain drop-shadow-md sm:h-12 sm:w-12"
               />
             </motion.div>
-            <span className="text-foreground notranslate"><span className="text-primary">VIA</span>Nova</span>
+            <span className="truncate text-foreground notranslate max-[379px]:hidden"><span className="text-primary-ink">VIA</span>Nova</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+            <div className="hidden items-center gap-1 md:flex">
               <button
                 onClick={() => setLocation("/explore")}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border transition-all ${
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${
                   location === "/explore"
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    ? "border-primary/40 bg-primary/10 text-primary-ink"
+                    : "border-transparent text-muted-foreground hover:bg-primary/5 hover:text-primary-ink"
                 }`}
               >
                 <Compass className="h-3.5 w-3.5" /> {t("navbar.explore")}
               </button>
               <button
                 onClick={() => setLocation("/social")}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border transition-all ${
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${
                   location === "/social"
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    ? "border-primary/40 bg-primary/10 text-primary-ink"
+                    : "border-transparent text-muted-foreground hover:bg-primary/5 hover:text-primary-ink"
                 }`}
               >
                 <Globe className="h-3.5 w-3.5" /> {t("navbar.social")}
@@ -189,47 +145,20 @@ export default function Navbar() {
               {user && (
                 <button
                   onClick={() => setLocation("/dashboard")}
-                  className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border transition-all ${
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${
                     location === "/dashboard"
-                      ? "bg-primary/10 border-primary/30 text-primary"
-                      : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5"
+                      ? "border-primary/40 bg-primary/10 text-primary-ink"
+                      : "border-transparent text-muted-foreground hover:bg-primary/5 hover:text-primary-ink"
                   }`}
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" /> {t("navbar.dashboard", "Mi Panel")}
                 </button>
               )}
             </div>
-            
-            {user && (
-              <button
-                onClick={() => setLocation("/dashboard")}
-                className={`md:hidden flex items-center justify-center p-2 rounded-full border transition-all ${
-                  location === "/dashboard"
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5 bg-secondary/30"
-                }`}
-                title="Mi Panel"
-              >
-                <LayoutDashboard className="h-5 w-5" />
-              </button>
-            )}
-            {user && (
-              <button
-                onClick={() => setLocation("/social")}
-                className={`md:hidden flex items-center justify-center p-2 rounded-full border transition-all ${
-                  location === "/social"
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "border-transparent text-muted-foreground hover:text-primary hover:bg-primary/5 bg-secondary/30"
-                }`}
-                title="ViaSocial"
-              >
-                <Globe className="h-5 w-5" />
-              </button>
-            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full sm:h-10 sm:w-10" aria-label={t('navbar.change_language')}>
                   <Languages className="h-5 w-5" />
                   <span className="sr-only">{t('navbar.change_language')}</span>
                 </Button>
@@ -237,27 +166,28 @@ export default function Navbar() {
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>{t('navbar.language')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => changeLanguage('es')} className="cursor-pointer gap-2">
-                  Español {i18n.language === 'es' && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('en')} className="cursor-pointer gap-2">
-                  English {i18n.language === 'en' && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('fr')} className="cursor-pointer gap-2">
-                  Français {i18n.language === 'fr' && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('pt')} className="cursor-pointer gap-2">
-                  Português {i18n.language === 'pt' && "✓"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('zh')} className="cursor-pointer gap-2">
-                  中文 {i18n.language === 'zh' && "✓"}
-                </DropdownMenuItem>
+                {[
+                  { id: 'es', label: 'Español' },
+                  { id: 'en', label: 'English' },
+                  { id: 'fr', label: 'Français' },
+                  { id: 'pt', label: 'Português' },
+                  { id: 'zh', label: '中文' },
+                ].map((language) => (
+                  <DropdownMenuItem
+                    key={language.id}
+                    onClick={() => changeLanguage(language.id)}
+                    className="cursor-pointer gap-2"
+                  >
+                    <span className="flex-1">{language.label}</span>
+                    {i18n.language === language.id && <Check className="h-4 w-4 text-primary-ink" />}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full sm:h-10 sm:w-10" aria-label={t('navbar.change_theme')}>
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                   <span className="sr-only">{t('navbar.change_theme')}</span>
@@ -266,40 +196,43 @@ export default function Navbar() {
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel>{t('navbar.appearance')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer gap-2">
-                  <Sun className="h-4 w-4" /> {t('navbar.light')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer gap-2">
-                  <Moon className="h-4 w-4" /> {t('navbar.dark')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('sunset')} className="cursor-pointer gap-2">
-                  <span className="w-4 h-4 rounded-full bg-orange-400" /> Sunset
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('ocean')} className="cursor-pointer gap-2">
-                  <span className="w-4 h-4 rounded-full bg-blue-400" /> Ocean
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme('forest')} className="cursor-pointer gap-2">
-                  <span className="w-4 h-4 rounded-full bg-green-400" /> Forest
-                </DropdownMenuItem>
+                {[
+                  { id: 'light', label: t('navbar.light'), icon: <Sun className="h-4 w-4" /> },
+                  { id: 'dark', label: t('navbar.dark'), icon: <Moon className="h-4 w-4" /> },
+                  { id: 'sunset', label: 'Sunset', icon: <span className="h-4 w-4 rounded-full bg-orange-400" /> },
+                  { id: 'ocean', label: 'Ocean', icon: <span className="h-4 w-4 rounded-full bg-sky-400" /> },
+                  { id: 'forest', label: 'Forest', icon: <span className="h-4 w-4 rounded-full bg-emerald-400" /> },
+                ].map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    onClick={() => setTheme(option.id)}
+                    className="cursor-pointer gap-2"
+                  >
+                    {option.icon}
+                    <span className="flex-1">{option.label}</span>
+                    {theme === option.id && <Check className="h-4 w-4 text-primary-ink" />}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 sm:gap-3">
               {isProvider && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full relative"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-9 w-9 rounded-full sm:h-10 sm:w-10"
                   onClick={() => setLocation("/notifications")}
+                  aria-label={t('navbar.notifications', 'Notificaciones')}
                 >
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                   )}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bell"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                  <Bell className="h-5 w-5" />
                 </Button>
               )}
-              <div className="hidden md:flex flex-col items-end">
+              <div className="hidden flex-col items-end md:flex">
                 <span className="text-sm font-medium text-foreground">
                   {user.name || user.username}
                 </span>
@@ -311,8 +244,9 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button id="navbar-user-menu-btn" data-testid="navbar-user-menu-btn" variant="ghost" size="icon" className="rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary">
+                  <Button id="navbar-user-menu-btn" data-testid="navbar-user-menu-btn" variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary-ink sm:h-10 sm:w-10">
                     <User className="h-5 w-5" />
+                    <span className="sr-only">{t('navbar.account', 'Cuenta')}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -325,7 +259,7 @@ export default function Navbar() {
                   <DropdownMenuSeparator className="bg-border" />
                   
                   <DropdownMenuItem onClick={() => setLocation("/dashboard")} className="cursor-pointer gap-2">
-                    <LayoutDashboard className="h-4 w-4 text-primary" />
+                    <LayoutDashboard className="h-4 w-4 text-primary-ink" />
                     {t('navbar.dashboard', 'Mi Panel')}
                   </DropdownMenuItem>
 
@@ -351,7 +285,7 @@ export default function Navbar() {
                         <DropdownMenuItem
                           key={roleOption}
                           onClick={() => handleRoleSwitch(roleOption)}
-                          className={`cursor-pointer gap-2 ${roleOption === user.role ? "bg-primary/10 text-primary" : ""}`}
+                          className={`cursor-pointer gap-2 ${roleOption === user.role ? "bg-primary/10 text-primary-ink" : ""}`}
                         >
                           {getRoleIcon(roleOption)}
                           <span className="flex-1">{getRoleLabel(roleOption)}</span>
@@ -362,19 +296,24 @@ export default function Navbar() {
                   )}
 
                   <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem onClick={() => setLocation("/explore")} className="cursor-pointer gap-2">
+                    <Compass className="h-4 w-4 text-primary-ink" />
+                    {t('navbar.explore')}
+                  </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={() => setLocation("/social")} className="cursor-pointer gap-2">
-                    <Globe className="h-4 w-4 text-primary" />
+                    <Globe className="h-4 w-4 text-primary-ink" />
                     ViaSocial
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onClick={() => setLocation("/ride-history")} className="cursor-pointer gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
+                    <Clock className="h-4 w-4 text-primary-ink" />
                     {t('navbar.history', 'Historial de Viajes')}
                   </DropdownMenuItem>
                   
                   {isProvider && (
                     <DropdownMenuItem onClick={() => setLocation("/products")} className="cursor-pointer gap-2">
-                      <Package className="h-4 w-4 text-primary" />
+                      <Package className="h-4 w-4 text-primary-ink" />
                       {t('navbar.products', 'Mis Productos')}
                     </DropdownMenuItem>
                   )}
@@ -396,7 +335,9 @@ export default function Navbar() {
             </div>
           ) : (
             <Link href="/login">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">{t('navbar.login', 'Iniciar Sesión')}</Button>
+              <Button className="h-9 rounded-full bg-primary px-3 text-xs text-primary-foreground hover:bg-primary/90 sm:h-10 sm:px-4 sm:text-sm">
+                {t('navbar.login', 'Iniciar Sesión')}
+              </Button>
             </Link>
           )}
         </div>

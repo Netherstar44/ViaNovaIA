@@ -4,6 +4,17 @@ import { registerTaxiRoutes } from "./taxi.routes.js";
 import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
+import { tripsRouter } from "./trips.routes.js";
+import { buildCatalogContext, buildCatalogFallbackReply, type CatalogItem } from "../catalog.js";
+import {
+  detectRouteConfirmation,
+  detectTripPlanRequest,
+  establishTripRoute,
+  formatTripForChat,
+  generateTripPlan,
+  getLatestTrip,
+  type TripPlan,
+} from "../trips.js";
 import { ensureAnalyticsSchema, getDashboardAnalytics, VALID_ROLES } from "../analytics.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
@@ -27,6 +38,7 @@ import {
   validateAvatarUrl,
   encryptSensitive,
   sanitizePaymentMethod,
+  sanitizeProduct,
   hashResetToken,
   generateResetToken,
   escapeHtml,
@@ -288,6 +300,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
   app.use("/api/bookings", bookingsRouter);
   app.use("/api/social", socialRouter);
+  app.use("/api/trips", tripsRouter);
 
   // Health
   app.get("/api/health", (_req, res) => {
@@ -318,9 +331,18 @@ export async function registerRoutes(app: Express): Promise<Express> {
   app.post("/api/auth/register", registerLimiter, async (req, res, next) => {
     try {
       const body = req.body || {};
+      // Rechazar arrays/objetos: nunca se convierten implícitamente a texto.
+      if (
+        typeof body.username !== "string" ||
+        typeof body.email !== "string" ||
+        typeof body.password !== "string" ||
+        (body.name !== undefined && typeof body.name !== "string")
+      ) {
+        return res.status(400).json({ message: "Datos de registro no válidos" });
+      }
       const username = sanitizeSingleLine(body.username, 40);
       const email = normalizeEmail(body.email);
-      const password = String(body.password ?? "");
+      const password = body.password;
       const name = sanitizeSingleLine(body.name, 120) || username;
 
       if (!username || !email || !password) {
@@ -415,8 +437,11 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // ─── AUTH: Login ─────────────────────────────────────────────────────────────
   app.post("/api/auth/login", authLimiter, async (req, res, next) => {
     try {
-      const rawIdentifier = sanitizeSingleLine(req.body?.username, 254);
-      const password = String(req.body?.password ?? "");
+      if (typeof req.body?.username !== "string" || typeof req.body?.password !== "string") {
+        return res.status(400).json({ message: "username y password son obligatorios" });
+      }
+      const rawIdentifier = sanitizeSingleLine(req.body.username, 254);
+      const password = req.body.password;
       if (!rawIdentifier || !password) {
         return res.status(400).json({ message: "username y password son obligatorios" });
       }
@@ -1199,7 +1224,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       // Save message to DB for persistence (long-term log)
       await storage.addMessage(conversation.id, "user", message, { location, role: activeRole });
 
-      // ── RAG: Detectar ciudad, intención y construir contexto de BD real ──────
+      // ── Catálogo restringido: el asistente no consulta tablas públicas ──
       const COLOMBIAN_CITIES = ["cali","neiva","medellín","medellin","cartagena","santa marta","bogotá","bogota","bucaramanga","barranquilla","manizales","pereira","armenia","ibagué","ibague","villavicencio","pasto","montería","monteria","leticia","tunja","popayán","popayan","florencia","riohacha","sincelejo","valledupar","quibdó","quibdo"];
       const allText = [message, ...((Array.isArray(history) ? history : []).map((m: any) => m.content || ""))].join(" ").toLowerCase();
 
@@ -1213,86 +1238,55 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const hasSearchIntent = SEARCH_KEYWORDS.some(kw => allText.includes(kw));
 
       let servicesContext = "";
+      let catalogItems: CatalogItem[] = [];
+      let catalogCity: string | null = null;
+      let trip: TripPlan | null = null;
+      let routeMessages: Array<{ stopId: string; content: string; messageId: string | null }> = [];
 
       try {
-        const db = getDb();
-
-        // ─── 1. Servicios reales de la tabla services (perfil proveedor) ─────
-        let cityServices: any[] = [];
-        if (detectedCity) {
-          cityServices = await storage.listServicesByCity(detectedCity);
-        } else if (hasSearchIntent) {
-          // Si busca algo pero no dijo ciudad, traemos los mejores 15 globales
-          const rows = await db.execute(drizzleSql`
-            SELECT * FROM services ORDER BY rating DESC NULLS LAST LIMIT 15
-          `);
-          cityServices = (rows as any).rows ?? (rows as any) ?? [];
-        }
-
-        // ─── 2. Productos del Marketplace (tabla products) ────────────────────
-        let marketProducts: any[] = [];
-        if (detectedCity) {
-          const rows = await db.execute(drizzleSql`
-            SELECT p.*, u.name as provider_name
-            FROM products p
-            JOIN users u ON u.id = p.provider_id
-            WHERE p.is_active = true
-            LIMIT 20
-          `);
-          marketProducts = (rows as any).rows ?? (rows as any) ?? [];
-        } else if (hasSearchIntent) {
-          const rows = await db.execute(drizzleSql`
-            SELECT p.*, u.name as provider_name
-            FROM products p
-            JOIN users u ON u.id = p.provider_id
-            WHERE p.is_active = true
-            ORDER BY p.created_at DESC
-            LIMIT 12
-          `);
-          marketProducts = (rows as any).rows ?? (rows as any) ?? [];
-        }
-
-        // ─── 3. Construir el bloque de contexto ───────────────────────────────
-        const cityLabel = detectedCity ? detectedCity.toUpperCase() : "NUESTRA PLATAFORMA";
-
-        const fmtService = (category: string, emoji: string) =>
-          cityServices
-            .filter((s: any) => s.category === category)
-            .map((s: any) => `  ${emoji} **${s.name}** (@${s.provider_username ?? s.providerUsername}) — $${Number(s.price ?? 0).toLocaleString("es-CO")} COP ⭐${s.rating ?? "N/A"} — ${(s.description ?? "").substring(0, 100)}`)
-            .join("\n");
-
-        const fmtProduct = (roleCategory: string, emoji: string) =>
-          marketProducts
-            .filter((p: any) => p.role_category === roleCategory)
-            .map((p: any) => `  ${emoji} **${p.name}** (por ${p.provider_name ?? p.provider_username}) — $${Number(p.price ?? 0).toLocaleString("es-CO")} ${p.currency ?? "COP"} — ${(p.description ?? "").substring(0, 100)}`)
-            .join("\n");
-
-        const serviceLines = [
-          fmtService("hotel", "🏨"),
-          fmtService("restaurant", "🍽️"),
-          fmtService("recreation", "🎭"),
-          fmtService("transport", "🚕"),
-        ].filter(l => l.trim()).join("\n");
-
-        const productLines = [
-          fmtProduct("hotel", "🏨"),
-          fmtProduct("restaurant", "🍽️"),
-          fmtProduct("recreation", "🎭"),
-          fmtProduct("taxi", "🚕"),
-          fmtProduct("translator", "🗣️"),
-        ].filter(l => l.trim()).join("\n");
-
-        if (serviceLines || productLines) {
-          servicesContext = `\n\n---\n**CATÁLOGO REAL DE VIANOBA EN ${cityLabel} — USA SOLO ESTOS DATOS:**\n`;
-          if (serviceLines) servicesContext += `\n### Servicios de Proveedores:\n${serviceLines}`;
-          if (productLines) servicesContext += `\n\n### Productos en el Marketplace:\n${productLines}`;
-          servicesContext += `\n\n> ⚠️ INSTRUCCIÓN CRÍTICA: Solo puedes recomendar los servicios y productos listados arriba. Nunca inventes hoteles, restaurantes o precios que no estén en esta lista. Si no hay datos, indica amablemente que aún no hay proveedores registrados para ese destino en VIANova.`;
-        }
-
-      } catch (ragErr) {
-        // RAG es no-bloqueante: si falla, el bot responde sin contexto
-        console.error("[RAG] Error al consultar BD:", ragErr);
+        const catalogContext = await buildCatalogContext({
+          city: detectedCity || null,
+          query: detectedCity ? null : (hasSearchIntent ? message : null),
+          limit: 40,
+        });
+        servicesContext = catalogContext.context;
+        catalogItems = catalogContext.items;
+        catalogCity = catalogContext.city;
+      } catch (catalogError: any) {
+        console.error("[catalog] no se pudo construir el contexto:", catalogError?.message || catalogError);
+        servicesContext = "\n\n---\n**CATÁLOGO VIANOVA**\nEl catálogo no está disponible en este momento. No inventes servicios ni precios; pide al usuario intentar de nuevo.";
       }
+
+      // Planificador de viajes: sólo usa la vista restringida del catálogo.
+      try {
+        const wantsRoute = detectRouteConfirmation(message);
+        const tripRequest = detectTripPlanRequest(message);
+        const tripCity = detectedCity || destinationCity || "";
+        if (wantsRoute) {
+          const latest = await getLatestTrip(req.user.username);
+          if (latest) {
+            const established = await establishTripRoute(latest.id, req.user.username, uid);
+            trip = established.trip;
+            routeMessages = established.messages;
+          }
+        } else if (tripRequest.intent && tripCity) {
+          trip = await generateTripPlan({
+            userId: uid,
+            username: req.user.username,
+            destinationCity: tripCity,
+            days: tripRequest.days,
+            travelers: tripRequest.travelers,
+            budget: tripRequest.budget,
+            conversationId: conversation.id,
+          });
+        }
+      } catch (tripError: any) {
+        console.warn("[trips] no se pudo generar/establecer el viaje:", tripError?.message || tripError);
+      }
+
+      const tripContext = trip
+        ? `\n\n---\n**VIAJE GENERADO DESDE EL CATÁLOGO VIANOVA**\n${formatTripForChat(trip)}\n> Describe este plan y recuerda al usuario que puede pulsar "Establecer ruta" para recibir un mensaje por cada parada.`
+        : "";
 
       // ── Analytics reales para el copiloto de negocio / consumidor / admin ──
       let analyticsSnapshot: any = null;
@@ -1324,8 +1318,8 @@ export async function registerRoutes(app: Express): Promise<Express> {
 2. **LEE SIEMPRE el historial.** Si el usuario indicó su ciudad de origen, destino, presupuesto o preferencias — **BAJO NINGUNA CIRCUNSTANCIA VUELVAS A PREGUNTARLOS**. Asúmelos como válidos y avanza.
 3. **DESTINO Y UBICACIÓN:** Si el usuario menciona una ciudad (ej. "voy a cartagena", "estoy en bogotá"), ESE ES SU DESTINO. NO lo preguntes de nuevo. Pasa directo a recomendar servicios.
 4. **Responde de forma concisa.** Máximo 3-4 párrafos.
-5. **USA SOLO los servicios y productos del catálogo real** listado al final de este prompt. NUNCA inventes establecimientos, precios o nombres.
-6. **Si no hay datos** en el catálogo para ese destino, dilo honestamente: "Aún no tenemos proveedores registrados en VIANova para [ciudad], pero puedo ayudarte con recomendaciones generales."
+5. **USA SOLO el catálogo restringido de VIANova** listado al final de este prompt. NUNCA inventes establecimientos, precios o nombres, y NUNCA recomiendes sitios de internet o de tu conocimiento general.
+6. **Si no hay datos** en el catálogo para ese destino, dilo honestamente: "Aún no tenemos proveedores registrados en VIANova para [ciudad], pero puedo mostrarte otras ciudades o categorías del catálogo."
 
 **PROCESO DE PLANIFICACIÓN DE VIAJES:**
 1. **Recolección:** Identifica presupuesto, destino, duración. Si el usuario ya mencionó el destino, NUNCA lo vuelvas a preguntar.
@@ -1338,7 +1332,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
 - [RESTAURANTE]: [Tipo de comida] para [Nombre] el [Fecha] a las [Hora] en [Restaurante] — $[precio] COP — @[username]
 - [TAXI]: Recorrido de [Origen] a [Destino] para [Nombre] el [Fecha] a las [Hora] con [Servicio] — $[precio] COP — @[username]
 - [RECREACION]: [Actividad] para [Nombre] el [Fecha] — $[precio] COP — @[username]
-- [TRADUCTOR]: (Solo si el destino requiere otro idioma) Guía/traductor en [Idioma] para [Nombre].${servicesContext}`;
+- [TRADUCTOR]: (Solo si el destino requiere otro idioma) Guía/traductor en [Idioma] para [Nombre].`;
 
       const businessSysPrompt = `Eres VIANova Business Copilot, el analista de negocio y asesor estratégico de emprendedores dentro de la plataforma VIANova.
 El usuario tiene activo el rol de **${activeRole}** (hotel, restaurante, recreación, taxi o traductor).
@@ -1358,11 +1352,11 @@ Usa exclusivamente los datos reales entregados abajo, detecta riesgos y oportuni
 No inventes cifras. Sé breve y ejecutivo. No saludes en cada mensaje.
 ${analyticsContext}`;
 
-      const sysPrompt = chatScope === "admin"
+      const sysPrompt = (chatScope === "admin"
         ? adminSysPrompt
         : chatScope === "business"
           ? businessSysPrompt
-          : `${travelerSysPrompt}${analyticsContext}`;
+          : `${travelerSysPrompt}${analyticsContext}`) + `${servicesContext}${tripContext}`;
 
       // ── Historial: frontend si existe; si no, memoria persistente de la BD ──
       // Groq requiere que el primer mensaje no-system sea 'user'.
@@ -1376,13 +1370,32 @@ ${analyticsContext}`;
 
       const suggestions = buildChatSuggestions(chatScope, activeRole, detectedCity || destinationCity || "", language || "es");
 
+      const buildFallbackContent = () => {
+        if (trip) {
+          return routeMessages.length > 0
+            ? `Ruta establecida. Envié un mensaje por cada una de las ${routeMessages.length} paradas del viaje a ${trip.destinationCity}.`
+            : formatTripForChat(trip);
+        }
+        const asksAnalytics = /\b(ventas?|ingresos?|ganancias?|margen|stock|inventario|órdenes|ordenes|clientes?|reservas?|revenue|sales|profit|customers?|orders?)\b/i.test(message);
+        if (!asksAnalytics && catalogItems.length > 0) {
+          return buildCatalogFallbackReply(catalogItems, catalogCity, language || "es");
+        }
+        if (analyticsSnapshot) {
+          return buildLocalAnalyticsReply(chatScope, activeRole, analyticsSnapshot.metrics || {}, analyticsSnapshot.topProducts || [], analyticsSnapshot.lowStock || [], language || "es");
+        }
+        if (catalogItems.length > 0) {
+          return buildCatalogFallbackReply(catalogItems, catalogCity, language || "es");
+        }
+        return language === "en"
+          ? "The AI assistant is not connected right now, but you can keep using the VIANova catalog and your dashboard with real data."
+          : "El asistente IA no está conectado en este momento, pero puedes seguir usando el catálogo de VIANova y tu dashboard con datos reales.";
+      };
+
       const groqKey = process.env.GROQ_API_KEY;
       if (!groqKey) {
-        const fallbackContent = analyticsSnapshot
-          ? buildLocalAnalyticsReply(chatScope, activeRole, analyticsSnapshot.metrics || {}, analyticsSnapshot.topProducts || [], analyticsSnapshot.lowStock || [], language || "es")
-          : "El asistente IA no está configurado todavía. Puedes seguir usando el catálogo y tu dashboard con datos reales.";
+        const fallbackContent = buildFallbackContent();
         await storage.addMessage(conversation.id, "assistant", fallbackContent, { fallback: true, role: activeRole });
-        return res.json({ reply: fallbackContent, suggestions, conversationId: conversation.id, scope: chatScope, role: activeRole, mode: "local" });
+        return res.json({ reply: fallbackContent, suggestions, conversationId: conversation.id, scope: chatScope, role: activeRole, mode: "local", trip, routeMessages });
       }
 
       let content = "";
@@ -1394,7 +1407,7 @@ ${analyticsContext}`;
             Authorization: `Bearer ${groqKey}`,
           },
           body: JSON.stringify({
-            model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+            model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
             messages: [
               { role: "system", content: sysPrompt },
               { role: "system", content: `Rol activo del usuario: ${activeRole}. Roles disponibles en su cuenta: ${roleNames.join(", ") || activeRole}.` },
@@ -1434,9 +1447,13 @@ ${analyticsContext}`;
       }
 
       if (!content) {
-        content = analyticsSnapshot
-          ? buildLocalAnalyticsReply(chatScope, activeRole, analyticsSnapshot.metrics || {}, analyticsSnapshot.topProducts || [], analyticsSnapshot.lowStock || [], language || "es")
-          : "No pude conectar con el asistente en este momento. Intenta de nuevo en unos segundos.";
+        content = buildFallbackContent();
+      }
+
+      if (trip) {
+        content += routeMessages.length > 0
+          ? `\n\n---\n✅ Ruta establecida: envié ${routeMessages.length} mensajes, uno por cada parada del itinerario.`
+          : `\n\n---\n${formatTripForChat(trip)}`;
       }
 
       const assistantMsg = await storage.addMessage(conversation.id, "assistant", content, { role: activeRole });
@@ -1446,6 +1463,8 @@ ${analyticsContext}`;
         conversationId: conversation.id,
         scope: chatScope,
         role: activeRole,
+        trip,
+        routeMessages,
       });
     } catch (err) {
       next(err);
@@ -2115,7 +2134,10 @@ ${analyticsContext}`;
                (SELECT json_agg(json_build_object(
                          'id', m.id,
                          'url', m.file_url,
-                         'type', lower(m.asset_type::text),
+                         'type', CASE lower(m.asset_type::text)
+                                   WHEN 'model_3d' THEN '3d_model'
+                                   ELSE lower(m.asset_type::text)
+                                 END,
                          'caption', m.title,
                          'sort_order', 0
                        ) ORDER BY m.created_at ASC)
@@ -2129,12 +2151,7 @@ ${analyticsContext}`;
       const canSeePrivate = Boolean(
         req.user && (req.user.username === req.params.username || req.user.role === "admin"),
       );
-      const products = canSeePrivate
-        ? raw
-        : raw.map((product: any) => {
-            const { cost, provider_id, ...publicFields } = product;
-            return publicFields;
-          });
+      const products = raw.map((product: any) => sanitizeProduct(product, canSeePrivate));
       res.json({ products });
     } catch (err) { next(err); }
   });

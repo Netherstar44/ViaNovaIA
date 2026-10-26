@@ -35,6 +35,10 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // El code splitting se deja a los imports dinámicos de React/Vite.
+    // Manual chunks para three/model-viewer/recharts provocaban un ciclo de
+    // inicialización (TDZ: "Cannot access 'Dt' before initialization") y
+    // precargaban todos los chunks pesados en la portada.
   },
   server: {
     host: "0.0.0.0",

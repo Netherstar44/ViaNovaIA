@@ -282,7 +282,7 @@ function ProductForm({
                         <Trash2 className="h-3.5 w-3.5 text-red-400" />
                       </div>
                       <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[10px] uppercase font-bold text-primary">
-                        {m.type === 'image_360' ? '360°' : m.type === 'model_3d' ? '3D' : m.type === 'vr_tour' ? 'VR' : m.type}
+                        {m.type === 'image_360' ? '360°' : (m.type === 'model_3d' || m.type === '3d_model') ? '3D' : m.type === 'vr_tour' ? 'VR' : m.type}
                       </div>
                     </div>
                   ))}

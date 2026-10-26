@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star, Box, Eye } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import VRViewer from "./VRViewer";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import TranslatedText from "./TranslatedText";
+
+const VRViewer = lazy(() => import("./VRViewer"));
 
 interface CardItemProps {
   item: LocationItem;
@@ -80,7 +81,9 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >
-                 <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                 <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
+                   <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                 </Suspense>
               </DialogContent>
             </Dialog>
 
@@ -101,7 +104,9 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >
-                 <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                 <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
+                   <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                 </Suspense>
               </DialogContent>
             </Dialog>
           </div>

@@ -1,13 +1,11 @@
 import { apiBase } from "@/lib/queryClient";
-import { useState, useEffect, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
-import MapView from "@/components/MapView";
 import CardItem from "@/components/CardItem";
 import Comments from "@/components/Comments";
-import VRViewer from "@/components/VRViewer";
 import { LocationItem, locations } from "@/data/mockData";
 import { isUsableCoordinatePair, parseCoordinate } from "@/lib/geo";
 import { Badge } from "@/components/ui/badge";
@@ -29,14 +27,34 @@ import {
   ArrowLeft,
   Search,
   Filter,
-  Navigation2
+  Navigation2,
+  ChevronDown
 } from "lucide-react";
 
-import Chatbot from "@/components/Chatbot";
 import TranslatedText from "@/components/TranslatedText";
 import { Spinner } from "@/components/ui/spinner";
-import ProviderDashboard from "@/pages/ProviderDashboard";
-import TaxiOrderPanel, { type SimulatedTaxi } from "@/components/TaxiOrderPanel";
+import type { SimulatedTaxi } from "@/components/TaxiOrderPanel";
+
+// Los visores pesados (MapLibre, Three.js) y los paneles que solo aparecen tras
+// una acción se cargan bajo demanda para no bloquear el primer render.
+const MapView = lazy(() => import("@/components/MapView"));
+const VRViewer = lazy(() => import("@/components/VRViewer"));
+const Chatbot = lazy(() => import("@/components/Chatbot"));
+const TaxiOrderPanel = lazy(() => import("@/components/TaxiOrderPanel"));
+
+function MapSkeleton() {
+  return (
+    <div className="h-full w-full min-h-[280px] animate-pulse rounded-3xl bg-muted/70" aria-label="Cargando mapa" />
+  );
+}
+
+function InlineLoader() {
+  return (
+    <div className="flex items-center justify-center p-6" role="status" aria-label="Cargando">
+      <Spinner className="h-7 w-7" />
+    </div>
+  );
+}
 
 function hasValidCoordinates(lat: number, lng: number): boolean {
   return (
@@ -59,54 +77,69 @@ function priceRangeFor(value: unknown): "$" | "$$" | "$$$" | undefined {
   return "$$$";
 }
 
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+];
+
 const HeroSection = ({ children }: { children?: React.ReactNode }) => {
-  const heroImages = [
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-  ];
   const [heroIndex, setHeroIndex] = useState(0);
 
   useEffect(() => {
-    const int = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % heroImages.length);
+    const interval = window.setInterval(() => {
+      setHeroIndex((previous) => (previous + 1) % HERO_IMAGES.length);
     }, 6000);
-    return () => clearInterval(int);
+    return () => window.clearInterval(interval);
   }, []);
 
   const { t } = useTranslation();
+
   return (
-    <section className="relative w-full h-[600px] overflow-hidden bg-black/90">
-      {heroImages.map((src, idx) => (
+    <section className="relative h-[clamp(540px,78vh,680px)] w-full overflow-hidden bg-black">
+      {HERO_IMAGES.map((src, index) => (
         <motion.div
           key={src}
-          initial={{ opacity: 0 }}
-          animate={{ 
-            opacity: heroIndex === idx ? 1 : 0,
-            scale: heroIndex === idx ? 1 : 1.1
+          initial={false}
+          animate={{
+            opacity: heroIndex === index ? 1 : 0,
+            scale: heroIndex === index ? 1 : 1.08,
           }}
-          transition={{ duration: 2, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full"
+          transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 h-full w-full"
+          aria-hidden={heroIndex !== index}
         >
-          <div className="absolute inset-0 bg-black/50 z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
-          <img src={src} alt="Hero" className="w-full h-full object-cover" />
+          <img
+            src={src}
+            alt=""
+            className="h-full w-full object-cover"
+            loading={index === 0 ? "eager" : "lazy"}
+            decoding="async"
+          />
         </motion.div>
       ))}
-      <div className="relative z-20 container mx-auto px-4 h-full flex flex-col items-center justify-center text-center">
+
+      {/* Cinematic scrim: dark in light and dark themes, so the banner never
+          turns into a washed-out white haze at the bottom. */}
+      <div className="hero-scrim pointer-events-none absolute inset-0 z-10" />
+
+      <div className="relative z-20 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-center px-4 pb-8 pt-6 text-center sm:px-6 sm:pb-10 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-4xl"
         >
-          <h1 className="text-5xl md:text-7xl font-heading font-extrabold text-white tracking-tight mb-6">
-            {t('home.hero_title')} <br className="hidden md:block" /> <span className="text-primary drop-shadow-[0_0_20px_rgba(255,215,0,0.5)] notranslate">VIANova</span>
+          <h1 className="mb-4 font-heading text-[clamp(2.25rem,7vw,4.75rem)] font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.55)] sm:mb-6">
+            {t('home.hero_title')}
+            <br className="hidden sm:block" />{" "}
+            <span className="notranslate text-primary drop-shadow-[0_0_24px_rgba(255,191,0,0.45)]">VIANova</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-light">
+          <p className="mx-auto max-w-2xl text-balance text-base font-light leading-relaxed text-white/85 drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-lg md:text-xl">
             {t('home.hero_subtitle')}
           </p>
         </motion.div>
-        
+
         {children}
       </div>
     </section>
@@ -383,7 +416,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-20 flex flex-col font-sans text-foreground">
       <Navbar />
-      <Chatbot />
+      <Suspense fallback={null}>
+        <Chatbot />
+      </Suspense>
 
       <AnimatePresence mode="wait">
         {viewMode === 'landing' ? (
@@ -399,70 +434,84 @@ export default function Home() {
             <HeroSection>
               {/* Premium Search / Filter Bar */}
               <motion.div
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 32 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="mt-12 w-full max-w-5xl"
+                transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-8 w-full max-w-5xl sm:mt-10 md:mt-12"
               >
-                <div className="glass-search rounded-full flex items-center p-2 max-w-[850px] mx-auto w-full transition-all">
-                  
-                  <div className="flex-[1.5] flex flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-text group relative">
-                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.search_placeholder') || 'Destino'}</span>
-                    <input 
-                      type="text" 
-                      placeholder="¿A dónde quieres ir?" 
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground placeholder:text-muted-foreground/70 p-0 w-full truncate focus:ring-0"
+                <div className="glass-search hero-search mx-auto flex w-full max-w-[850px] items-center rounded-full p-1.5 shadow-2xl sm:p-2">
+                  <div className="hero-field group relative flex min-w-0 flex-[1.5] cursor-text flex-col justify-center rounded-full px-4 py-2 transition-colors sm:px-6">
+                    <span className="hero-field-label truncate text-[10px] font-extrabold uppercase tracking-[0.12em] sm:text-[11px]">
+                      {t('home.search_placeholder') || 'Destino'}
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="¿A dónde quieres ir?"
+                      aria-label={t('home.search_placeholder') || 'Buscar destino'}
+                      className="w-full truncate border-none bg-transparent p-0 text-sm font-medium outline-none focus:ring-0 sm:text-[15px]"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
 
-                  <div className="w-[1px] h-10 bg-border/70 hidden md:block"></div>
+                  <div className="hidden h-9 w-px bg-white/20 sm:block" />
 
-                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-pointer relative">
-                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.distance') || 'Distancia'}</span>
-                    <select 
+                  <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
+                    <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
+                      {t('home.distance') || 'Distancia'}
+                    </span>
+                    <select
                       value={distanceFilter}
                       onChange={(e) => setDistanceFilter(e.target.value)}
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                      aria-label={t('home.distance') || 'Distancia'}
+                      className="w-full cursor-pointer appearance-none border-none bg-transparent p-0 pr-5 text-sm font-medium outline-none focus:ring-0 sm:text-[15px]"
                     >
-                      <option value="any" className="bg-popover text-popover-foreground">Cualquiera</option>
-                      <option value="1" className="bg-popover text-popover-foreground">A menos de 1 km</option>
-                      <option value="5" className="bg-popover text-popover-foreground">A menos de 5 km</option>
-                      <option value="10" className="bg-popover text-popover-foreground">A menos de 10 km</option>
+                      <option value="any">Cualquiera</option>
+                      <option value="1">A menos de 1 km</option>
+                      <option value="5">A menos de 5 km</option>
+                      <option value="10">A menos de 10 km</option>
                     </select>
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-white/55 sm:right-6" />
                   </div>
 
-                  <div className="w-[1px] h-10 bg-border/70 hidden md:block"></div>
+                  <div className="hidden h-9 w-px bg-white/20 sm:block" />
 
-                  <div className="hidden md:flex flex-1 flex-col justify-center px-6 py-2 rounded-full hover:bg-foreground/[0.04] transition cursor-pointer relative">
-                    <span className="text-[12px] font-extrabold text-foreground/80 tracking-wide uppercase">{t('home.price') || 'Precio'}</span>
-                    <select 
+                  <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
+                    <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
+                      {t('home.price') || 'Precio'}
+                    </span>
+                    <select
                       value={priceFilter}
                       onChange={(e) => setPriceFilter(e.target.value)}
-                      className="bg-transparent border-none outline-none text-[15px] font-medium text-foreground p-0 w-full cursor-pointer appearance-none focus:ring-0"
+                      aria-label={t('home.price') || 'Precio'}
+                      className="w-full cursor-pointer appearance-none border-none bg-transparent p-0 pr-5 text-sm font-medium outline-none focus:ring-0 sm:text-[15px]"
                     >
-                      <option value="any" className="bg-popover text-popover-foreground">Cualquier precio</option>
-                      <option value="$" className="bg-popover text-popover-foreground">Económico ($)</option>
-                      <option value="$$" className="bg-popover text-popover-foreground">Moderado ($$)</option>
-                      <option value="$$$" className="bg-popover text-popover-foreground">Lujo ($$$)</option>
+                      <option value="any">Cualquier precio</option>
+                      <option value="$">Económico ($)</option>
+                      <option value="$$">Moderado ($$)</option>
+                      <option value="$$$">Lujo ($$$)</option>
                     </select>
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-white/55 sm:right-6" />
                   </div>
 
-                  <button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-14 h-14 flex items-center justify-center shrink-0 ml-2 shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95">
-                    <Search className="w-6 h-6 stroke-[2.5px]" />
+                  <button
+                    type="button"
+                    aria-label={t('home.search', 'Buscar')}
+                    className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95 sm:ml-2 sm:h-14 sm:w-14"
+                  >
+                    <Search className="h-5 w-5 stroke-[2.5px] sm:h-6 sm:w-6" />
                   </button>
                 </div>
               </motion.div>
             </HeroSection>
 
             {/* CATEGORIES & MAP / MAIN CONTENT */}
-            <main className="container mx-auto px-4 py-16">
+            <main className="container mx-auto px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
 
-              <div className="flex flex-col md:flex-row gap-6 mb-12">
+              <div className="mb-10 flex flex-col gap-6 sm:mb-12 md:flex-row">
                 <div className="w-full md:w-[65%]">
                   {/* Category Pills */}
-                  <div className="flex flex-wrap gap-2 mb-8">
+                  <div className="mb-6 flex flex-wrap gap-2 sm:mb-8">
                     {[
                       { id: 'all', label: t('categories.all'), icon: null },
                       { id: 'hotel', label: t('categories.hotel'), icon: <Bed className="w-4 h-4" /> },
@@ -473,9 +522,10 @@ export default function Home() {
                       <button
                         key={cat.id}
                         onClick={() => setSelectedCategory(cat.id)}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat.id
-                            ? 'bg-primary/10 text-primary border-primary/50'
-                            : 'bg-transparent text-muted-foreground hover:text-foreground border-transparent hover:border-border/50'
+                        aria-pressed={selectedCategory === cat.id}
+                        className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-300 sm:px-5 ${selectedCategory === cat.id
+                            ? 'border-primary/50 bg-primary/15 text-primary-ink shadow-sm'
+                            : 'border-transparent bg-transparent text-muted-foreground hover:border-border/60 hover:bg-secondary/50 hover:text-foreground'
                           }`}
                       >
                         {cat.icon}
@@ -486,15 +536,15 @@ export default function Home() {
 
                   {/* Layout Grid For Cards */}
                   {filteredAll.length === 0 ? (
-                    <div className="w-full py-20 text-center flex flex-col items-center justify-center opacity-60">
-                      <Search className="h-16 w-16 mb-4 text-muted-foreground" />
-                      <h3 className="text-xl font-medium">{t('home.no_results')}</h3>
-                      <p>Intenta ajustar tus filtros de búsqueda</p>
+                    <div className="flex w-full flex-col items-center justify-center py-20 text-center opacity-70">
+                      <Search className="mb-4 h-14 w-14 text-muted-foreground/60" />
+                      <h3 className="text-xl font-semibold">{t('home.no_results')}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Intenta ajustar tus filtros de búsqueda</p>
                     </div>
                   ) : (
                     <motion.div
                       layout
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+                      className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6"
                     >
                       <AnimatePresence>
                         {displayedLocations.map((item, index) => (
@@ -524,7 +574,7 @@ export default function Home() {
                           <Button 
                             variant="outline" 
                             onClick={() => setDisplayLimit(prev => prev + 40)}
-                            className="rounded-full border-primary/50 text-primary hover:bg-primary/10"
+                            className="rounded-full border-primary/50 text-primary-ink hover:bg-primary/10"
                           >
                             {t('home.load_more', 'Ver más resultados')}
                           </Button>
@@ -535,15 +585,17 @@ export default function Home() {
                 </div>
 
                 {/* Map Sidebar Column */}
-                <div className="w-full md:w-[35%] h-[600px] md:h-[calc(100vh-150px)] sticky top-24 rounded-3xl overflow-hidden border border-border/50 shadow-2xl z-10 group">
-                  <MapView
-                    locations={mapLocations}
-                    selectedCategory={selectedCategory}
-                    onMarkerClick={handleItemClick}
-                  />
+                <div className="group z-10 h-[420px] w-full overflow-hidden rounded-3xl border border-border/50 shadow-xl sm:h-[520px] md:sticky md:top-24 md:h-[calc(100vh-150px)] md:w-[35%]">
+                  <Suspense fallback={<MapSkeleton />}>
+                    <MapView
+                      locations={mapLocations}
+                      selectedCategory={selectedCategory}
+                      onMarkerClick={handleItemClick}
+                    />
+                  </Suspense>
 
                   {/* Overlay shadow to integrate it beautifully */}
-                  <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl pointer-events-none" />
+                  <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
                 </div>
               </div>
 
@@ -560,34 +612,33 @@ export default function Home() {
             className="flex-1 w-full bg-background"
           >
             {/* Hero specific to the item */}
-            <div className="relative w-full h-[40vh] min-h-[300px]">
-              <div className="absolute inset-0 bg-black/30 z-10" />
-              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
-              <img src={selectedItem?.image} alt={selectedItem?.name} className="w-full h-full object-cover" />
+            <div className="relative h-[38vh] min-h-[280px] w-full sm:h-[42vh] sm:min-h-[320px]">
+              <div className="hero-scrim pointer-events-none absolute inset-0 z-10" />
+              <img src={selectedItem?.image} alt={selectedItem?.name} className="h-full w-full object-cover" />
 
-              <div className="absolute top-6 left-6 z-20">
-                <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-6 transition-all hover:scale-105">
+              <div className="absolute left-4 top-5 z-20 sm:left-6 sm:top-6">
+                <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-5 shadow-lg transition-all hover:scale-105 sm:pr-6">
                   <ArrowLeft className="h-4 w-4" /> {t('home.back')}
                 </Button>
               </div>
             </div>
 
-            <div className="container mx-auto px-4 -mt-24 relative z-20 pb-16 flex flex-col md:flex-row gap-8">
+            <div className="container relative z-20 mx-auto -mt-20 flex flex-col gap-6 px-4 pb-16 sm:-mt-24 sm:px-6 md:flex-row md:gap-8 lg:px-8">
 
               {/* Detail Panel */}
-              <div className="w-full md:w-[60%] flex flex-col gap-6">
-                <div className="glass-panel rounded-3xl p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <Badge className="bg-primary hover:bg-primary/90 text-black font-bold uppercase tracking-widest text-xs mb-3">
+              <div className="flex w-full flex-col gap-6 md:w-[60%]">
+                <div className="glass-panel rounded-3xl p-5 sm:p-8">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Badge className="mb-3 bg-primary text-black font-bold uppercase tracking-widest text-xs hover:bg-primary/90">
                         {selectedItem ? t(`categories.${selectedItem.category}`) : ''}
                       </Badge>
-                      <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-foreground">{selectedItem?.name}</h1>
+                      <h1 className="text-balance text-3xl font-heading font-extrabold text-foreground sm:text-4xl md:text-5xl">{selectedItem?.name}</h1>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-1 bg-secondary/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/50">
-                        <Star className="h-5 w-5 fill-primary text-primary" />
-                        <span className="font-bold text-xl">{selectedItem?.rating}</span>
+                    <div className="flex shrink-0 flex-col items-end">
+                      <div className="flex items-center gap-1 rounded-2xl border border-border/50 bg-secondary/80 px-3 py-2 backdrop-blur-md sm:px-4">
+                        <Star className="h-4 w-4 fill-primary text-primary sm:h-5 sm:w-5" />
+                        <span className="text-lg font-bold sm:text-xl">{selectedItem?.rating}</span>
                       </div>
                     </div>
                   </div>
@@ -605,12 +656,12 @@ export default function Home() {
                         onClick={() => handleItemClick(hotel)}
                         className="mb-6 w-full text-left flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition-all group"
                       >
-                        <Bed className="h-5 w-5 text-primary shrink-0" />
+                        <Bed className="h-5 w-5 text-primary-ink shrink-0" />
                         <div className="flex-1">
                           <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Este restaurante está dentro del hotel</div>
-                          <div className="text-base font-bold text-foreground group-hover:text-primary transition-colors">{hotel.name}</div>
+                          <div className="text-base font-bold text-foreground group-hover:text-primary-ink transition-colors">{hotel.name}</div>
                         </div>
-                        <span className="text-xs text-primary font-bold">Ver hotel →</span>
+                        <span className="text-xs text-primary-ink font-bold">Ver hotel →</span>
                       </button>
                     );
                   })()}
@@ -622,8 +673,8 @@ export default function Home() {
                     return (
                       <div className="mb-6 p-4 rounded-2xl bg-primary/5 border border-primary/20">
                         <div className="flex items-center gap-2 mb-3">
-                          <Utensils className="h-4 w-4 text-primary" />
-                          <span className="text-xs uppercase tracking-wider text-primary font-bold">Restaurantes dentro de este hotel ({inside.length})</span>
+                          <Utensils className="h-4 w-4 text-primary-ink" />
+                          <span className="text-xs uppercase tracking-wider text-primary-ink font-bold">Restaurantes dentro de este hotel ({inside.length})</span>
                         </div>
                         <div className="space-y-2">
                           {inside.map(r => (
@@ -639,7 +690,7 @@ export default function Home() {
                                 <div className="text-sm font-bold text-foreground truncate">{r.name}</div>
                                 <div className="text-xs text-muted-foreground truncate">{r.description}</div>
                               </div>
-                              <span className="text-xs text-primary font-bold">Ver →</span>
+                              <span className="text-xs text-primary-ink font-bold">Ver →</span>
                             </button>
                           ))}
                         </div>
@@ -650,18 +701,18 @@ export default function Home() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-y border-border/40">
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Ubicación</span>
-                      <div className="flex items-center gap-2 text-foreground font-medium"><MapPin className="h-4 w-4 text-primary" /> Ver Mapa</div>
+                      <div className="flex items-center gap-2 text-foreground font-medium"><MapPin className="h-4 w-4 text-primary-ink" /> Ver Mapa</div>
                     </div>
                     {selectedItem?.priceRange && (
                       <div className="flex flex-col gap-1">
                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Rango de Precio</span>
-                        <div className="flex items-center gap-1 text-foreground font-medium"><span className="text-primary">$</span> {selectedItem.priceRange}</div>
+                        <div className="flex items-center gap-1 text-foreground font-medium"><span className="text-primary-ink">$</span> {selectedItem.priceRange}</div>
                       </div>
                     )}
                     {selectedItem?.contact && (
                       <div className="flex flex-col gap-1 col-span-2">
                         <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Contacto</span>
-                        <div className="flex items-center gap-2 text-foreground font-medium"><Phone className="h-4 w-4 text-primary" /> {selectedItem.contact}</div>
+                        <div className="flex items-center gap-2 text-foreground font-medium"><Phone className="h-4 w-4 text-primary-ink" /> {selectedItem.contact}</div>
                       </div>
                     )}
                   </div>
@@ -691,7 +742,7 @@ export default function Home() {
                     {selectedItem?.hasVR ? (
                       <>
                         <Button onClick={(e) => { e.stopPropagation(); setVrMode('product') }} variant="outline" className="h-12 px-6 rounded-xl border-primary/50 text-foreground hover:bg-primary/10 hover:text-primary transition-all">
-                          <Box className="mr-2 h-5 w-5 text-primary" />
+                          <Box className="mr-2 h-5 w-5 text-primary-ink" />
                           {t('home.3d_model')}
                         </Button>
 
@@ -703,7 +754,9 @@ export default function Home() {
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
-                            <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                            <Suspense fallback={<InlineLoader />}>
+                              <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                            </Suspense>
                           </DialogContent>
                         </Dialog>
 
@@ -720,7 +773,9 @@ export default function Home() {
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
-                            <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                            <Suspense fallback={<InlineLoader />}>
+                              <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                            </Suspense>
                           </DialogContent>
                         </Dialog>
                       </>
@@ -742,33 +797,37 @@ export default function Home() {
               </div>
 
               {/* Map View & Mini Explorer Panel */}
-              <div className="w-full md:w-[40%] flex flex-col gap-6">
-                <div className="h-[400px] shrink-0 rounded-3xl overflow-hidden border border-border/50 shadow-2xl relative bg-card">
-                  <MapView
-                    locations={mapLocations}
-                    selectedCategory="all"
-                    onMarkerClick={handleItemClick}
-                    selectedId={selectedItem?.id}
-                    routeCoords={routeCoords.length > 0 ? routeCoords : undefined}
-                    nearbyTaxis={showTaxiPanel ? nearbyTaxis : undefined}
-                    routeInfo={routeInfo ? routeInfo : undefined}
-                  />
+              <div className="flex w-full flex-col gap-6 md:w-[40%]">
+                <div className="relative h-[320px] shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-card shadow-xl sm:h-[400px]">
+                  <Suspense fallback={<MapSkeleton />}>
+                    <MapView
+                      locations={mapLocations}
+                      selectedCategory="all"
+                      onMarkerClick={handleItemClick}
+                      selectedId={selectedItem?.id}
+                      routeCoords={routeCoords.length > 0 ? routeCoords : undefined}
+                      nearbyTaxis={showTaxiPanel ? nearbyTaxis : undefined}
+                      routeInfo={routeInfo ? routeInfo : undefined}
+                    />
+                  </Suspense>
                   <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl pointer-events-none" />
                 </div>
 
                 {/* Taxi Order Panel */}
                 <AnimatePresence>
                   {showTaxiPanel && selectedItem && (
-                    <TaxiOrderPanel
-                      destination={selectedItem}
-                      userLocation={userLoc}
-                      onClose={() => setShowTaxiPanel(false)}
-                      onTaxiRadarUpdate={setNearbyTaxis}
-                      onRouteReady={(coords, km, min) => {
-                        setRouteCoords(coords);
-                        setRouteInfo({ distanceKm: Math.round(km * 10) / 10, durationMin: min });
-                      }}
-                    />
+                    <Suspense fallback={<InlineLoader />}>
+                      <TaxiOrderPanel
+                        destination={selectedItem}
+                        userLocation={userLoc}
+                        onClose={() => setShowTaxiPanel(false)}
+                        onTaxiRadarUpdate={setNearbyTaxis}
+                        onRouteReady={(coords, km, min) => {
+                          setRouteCoords(coords);
+                          setRouteInfo({ distanceKm: Math.round(km * 10) / 10, durationMin: min });
+                        }}
+                      />
+                    </Suspense>
                   )}
                 </AnimatePresence>
 
@@ -789,14 +848,14 @@ export default function Home() {
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                          <h5 className="font-semibold text-foreground truncate group-hover:text-primary-ink transition-colors">
                             {item.name}
                           </h5>
                           <p className="text-xs text-muted-foreground/80 truncate">
                             {item.description}
                           </p>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary-ink group-hover:translate-x-1 transition-all" />
                       </div>
                     ))}
                   </div>

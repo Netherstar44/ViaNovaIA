@@ -6,6 +6,7 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.*
+!.env.example
 .dev.vars
 .wrangler
 .wrangler-dry
@@ -15,8 +16,24 @@ vianova.env.txt
 build_output.txt
 tsc-out.txt
 *.png
+# Iconos de marca/PWA: necesarios para manifest.json, sw.js y ThemeFavicon.
+!client/public/brand-icon-192.png
+!client/public/brand-icon-512.png
+!client/public/brand-icon-maskable-512.png
+!client/public/brand-apple-touch-icon.png
+!client/src/assets/favicons/*.png
+!docs/seed-neiva-chat.png
+!docs/seed-neiva-3d.png
 audit.json
 qa-report*.json
 scripts/e2e-ui-report.json
+scripts/.neiva-assets-cache.json
 scripts/tmp-*
+*.log
+scripts/diag-*
 scripts/diagnose-*
+scripts/test-cloudinary*.mjs
+__pycache__/
+*.pyc
+
+.vercel

@@ -3,7 +3,8 @@ import TranslatedText from "./TranslatedText";
 import { apiBase } from "@/lib/queryClient";
 import { authHeaders } from "@/lib/secureStorage";
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines } from 'lucide-react';
+import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines, Route } from 'lucide-react';
+import TripPlannerPanel, { type TripDto, type TripRouteMessage } from './TripPlannerPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,6 +44,8 @@ export default function Chatbot() {
   const [bookingsSent, setBookingsSent] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [trip, setTrip] = useState<TripDto | null>(null);
+  const [tripLoaded, setTripLoaded] = useState(false);
 
   // Voice Mode States
   const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -90,6 +93,26 @@ export default function Chatbot() {
     })();
     return () => { cancelled = true; };
   }, [isOpen, user?.username, historyLoaded]);
+
+  useEffect(() => {
+    if (!isOpen || !user?.username || tripLoaded) return;
+    setTripLoaded(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/trips/latest`, {
+          headers: await authHeaders(),
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data?.trip) setTrip(data.trip);
+      } catch {
+        // El panel de viaje es opcional.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, user?.username, tripLoaded]);
 
   useEffect(() => {
     if (scrollRef.current && !isVoiceMode) {
@@ -414,12 +437,26 @@ export default function Chatbot() {
       });
       const data = await res.json();
       const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
+      const incomingRouteMessages: TripRouteMessage[] = Array.isArray(data.routeMessages)
+        ? data.routeMessages
+        : [];
 
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: reply
-      }]);
+      if (data.trip) setTrip(data.trip);
+
+      setMessages(prev => {
+        const next: Message[] = [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: reply
+        }];
+        for (const routeMessage of incomingRouteMessages) {
+          const id = `route-${routeMessage.messageId || routeMessage.stopId}`;
+          if (!next.some(message => message.id === id)) {
+            next.push({ id, role: 'assistant', content: routeMessage.content });
+          }
+        }
+        return next;
+      });
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
     } catch (err) {
       setMessages(prev => [...prev, {
@@ -430,6 +467,34 @@ export default function Chatbot() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePlanTrip = () => {
+    if (isLoading) return;
+    const city = destinationCity.trim() || 'Neiva';
+    if (!destinationCity.trim()) setDestinationCity(city);
+    handleSend(`Planifica un viaje de 3 días a ${city} para 2 personas`);
+  };
+
+  const handleRouteEstablished = (updatedTrip: TripDto, messages: TripRouteMessage[]) => {
+    setTrip(updatedTrip);
+    setMessages(prev => {
+      const ids = new Set(prev.map(message => message.id));
+      const extra: Message[] = [];
+      for (const routeMessage of messages) {
+        const id = `route-${routeMessage.messageId || routeMessage.stopId}`;
+        if (!ids.has(id)) {
+          ids.add(id);
+          extra.push({ id, role: 'assistant', content: routeMessage.content });
+        }
+      }
+      if (extra.length === 0) return prev;
+      return [...prev, {
+        id: `route-established-${updatedTrip.id}-${Date.now()}`,
+        role: 'assistant',
+        content: `✅ Ruta establecida para tu viaje a ${updatedTrip.destinationCity}. Cada parada tiene ahora su mensaje con horario, proveedor y precio.`,
+      }, ...extra];
+    });
   };
 
   const handleShareLocation = async () => {
@@ -702,10 +767,10 @@ export default function Chatbot() {
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             className="fixed bottom-6 right-6 z-50 w-[90vw] md:w-[400px] h-[600px] max-h-[85vh]"
           >
-            <div className="glass-panel w-full h-full rounded-[2rem] flex flex-col overflow-hidden ring-1 ring-primary/20">
+            <div className="glass-panel chat-glass w-full h-full rounded-[2rem] flex flex-col overflow-hidden ring-1 ring-primary/20">
               
               {/* HEADER */}
-              <div className="bg-gradient-to-r from-background/60 to-secondary/20 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
+              <div className="bg-gradient-to-r from-background/90 via-background/80 to-secondary/40 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] -mr-10 -mt-10 rounded-full" />
                 <div className="flex items-center gap-3 relative z-10">
                   <div className="relative">
@@ -745,7 +810,7 @@ export default function Chatbot() {
               </div>
 
               {/* MESSAGES AREA / VOICE OVERLAY */}
-              <div className="flex-1 overflow-hidden bg-foreground/[0.02] relative">
+              <div className="flex-1 overflow-hidden bg-background/40 relative">
                 
                 <AnimatePresence mode="wait">
                   {isVoiceMode ? (
@@ -846,7 +911,7 @@ export default function Chatbot() {
                                   className={`rounded-2xl p-4 text-sm max-w-[85%] shadow-sm leading-relaxed ${
                                     msg.role === 'user'
                                       ? 'bg-primary text-black font-medium rounded-br-sm'
-                                      : 'bg-secondary/40 backdrop-blur-md text-foreground border border-white/5 rounded-bl-sm'
+                                      : 'bg-card/85 backdrop-blur-xl text-foreground border border-border/60 rounded-bl-sm'
                                   }`}
                                 >
                                   <div className="whitespace-pre-wrap tracking-wide">
@@ -866,7 +931,7 @@ export default function Chatbot() {
                                     />
                                   )}
                                   {msg.role === 'assistant' && msg.content.toLowerCase().includes('ubicación') && !sharedLocation && idx === messages.length - 1 && (
-                                    <div className="mt-4 p-3 bg-background/50 rounded-xl border border-primary/20 shadow-sm">
+                                    <div className="mt-4 p-3 bg-background/85 rounded-xl border border-primary/20 shadow-sm">
                                       <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
                                         <strong className="text-primary font-bold">💡 {t('chatbot.note', 'Nota')}:</strong> {t('chatbot.gps_warning', 'El GPS automático en computadoras puede ser impreciso.')}
                                       </p>
@@ -937,7 +1002,7 @@ export default function Chatbot() {
                                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                                   </div>
                                </Avatar>
-                               <div className="bg-secondary/40 backdrop-blur-md border border-white/5 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2 shadow-sm">
+                               <div className="bg-card/85 backdrop-blur-xl border border-border/60 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2 shadow-sm">
                                  <div className="flex gap-1 items-center justify-center">
                                     <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
                                     <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -945,6 +1010,12 @@ export default function Chatbot() {
                                  </div>
                                </div>
                              </motion.div>
+                          )}
+                          {trip && (
+                            <TripPlannerPanel
+                              trip={trip}
+                              onRouteEstablished={handleRouteEstablished}
+                            />
                           )}
                           <div ref={scrollRef} className="h-1" />
                         </div>
@@ -956,8 +1027,8 @@ export default function Chatbot() {
 
               {/* FOOTER / INPUT */}
               {!isVoiceMode && (
-                <div className="p-4 bg-background/60 backdrop-blur-2xl border-t border-white/5 relative z-10 flex flex-col gap-3">
-                  <div className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-secondary/20 px-3 py-2">
+                <div className="p-4 bg-background/90 backdrop-blur-3xl border-t border-white/5 relative z-10 flex flex-col gap-3">
+                  <div className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-secondary/40 px-3 py-2">
                     <MapPin className="h-4 w-4 shrink-0 text-primary" />
                     <label htmlFor="chatbot-destination" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       {t('chatbot.destination', 'Destino')}
@@ -971,6 +1042,17 @@ export default function Chatbot() {
                       disabled={isLoading}
                       className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
                     />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={handlePlanTrip}
+                      disabled={isLoading}
+                      className="h-8 shrink-0 gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 text-[10px] font-bold text-primary hover:bg-primary/20"
+                    >
+                      <Route className="h-3.5 w-3.5" />
+                      Planear
+                    </Button>
                   </div>
                   
                   <div className="relative flex items-center">
@@ -991,7 +1073,7 @@ export default function Chatbot() {
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSend(); } }}
                         disabled={isLoading}
-                        className="w-full h-14 bg-secondary/30 border-white/10 rounded-full focus-visible:ring-primary focus-visible:ring-1 text-sm shadow-inner transition-all hover:bg-secondary/50 placeholder:text-muted-foreground/70"
+                        className="w-full h-14 bg-secondary/50 border-white/10 rounded-full focus-visible:ring-primary focus-visible:ring-1 text-sm shadow-inner transition-all hover:bg-secondary/70 placeholder:text-muted-foreground/70"
                       />
                     </div>
                     <Button 

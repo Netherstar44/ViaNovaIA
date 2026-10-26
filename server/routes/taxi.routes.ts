@@ -254,7 +254,7 @@ export function registerTaxiRoutes(app: Express): void {
       res.status(201).json({ ride });
     } catch (err) {
       if (err instanceof z.ZodError)
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: err.issues[0].message });
       next(err);
     }
   });
@@ -429,7 +429,7 @@ export function registerTaxiRoutes(app: Express): void {
       res.json({ ride: rideResponse });
     } catch (err) {
       if (err instanceof z.ZodError)
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: err.issues[0].message });
       next(err);
     }
   });
@@ -515,7 +515,7 @@ export function registerTaxiRoutes(app: Express): void {
       res.json({ ok: true, isAvailable });
     } catch (err) {
       if (err instanceof z.ZodError)
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: err.issues[0].message });
       next(err);
     }
   });
@@ -710,7 +710,7 @@ export function registerTaxiRoutes(app: Express): void {
       res.status(201).json({ withdrawal: maskWithdrawal(withdrawal) });
     } catch (err: any) {
       if (err instanceof z.ZodError)
-        return res.status(400).json({ message: err.errors[0].message });
+        return res.status(400).json({ message: err.issues[0].message });
       const retryKey = sanitizeSingleLine(
         req.get("idempotency-key") || req.body?.idempotencyKey,
         100,

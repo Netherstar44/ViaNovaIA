@@ -1,5 +1,7 @@
 # Despliegue en Cloudflare Workers
 
+**Despliegue activo:** https://vianova.netherstar44.workers.dev
+
 La app se despliega como un Worker con assets estáticos:
 
 - `server/worker.ts` monta Express con `cloudflare:node`.
@@ -48,6 +50,7 @@ npx wrangler secret put CLOUDINARY_API_KEY
 npx wrangler secret put CLOUDINARY_API_SECRET
 
 npx wrangler secret put GROQ_API_KEY
+npx wrangler secret put GROQ_MODEL
 npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 
@@ -60,16 +63,27 @@ npx wrangler secret put SMTP_FROM
 
 `JWT_SECRET` y `SESSION_SECRET` deben tener al menos 32 caracteres.
 
-Variables públicas recomendadas:
+Variables públicas obligatorias para este Worker (ya configuradas):
 
 ```powershell
 # URL final del Worker o dominio propio. Se usa para CORS, OAuth y enlaces.
 npx wrangler secret put PUBLIC_URL
-npx wrangler secret put CLIENT_URL
+# https://vianova.netherstar44.workers.dev
 
-# Opcional: callback exacto si usas otro dominio en Google Cloud Console.
+npx wrangler secret put CLIENT_URL
+# https://vianova.netherstar44.workers.dev
+
+npx wrangler secret put CORS_ALLOWED_ORIGINS
+# https://vianova.netherstar44.workers.dev
+
+# Callback exacto registrado en Google Cloud Console.
 npx wrangler secret put GOOGLE_REDIRECT_URI
+# https://vianova.netherstar44.workers.dev/api/auth/google
 ```
+
+`PUBLIC_URL`, `CLIENT_URL` y `CORS_ALLOWED_ORIGINS` deben coincidir con el
+dominio real. Si usas un dominio personalizado, cambia los tres valores y
+vuelve a desplegar.
 
 Opcional para rate limiting distribuido entre isolates:
 
@@ -100,27 +114,35 @@ muestra la URL, normalmente:
 https://vianova.<subdominio-de-tu-cuenta>.workers.dev
 ```
 
-Después del primer despliegue, configura `PUBLIC_URL` y `CLIENT_URL` con esa URL
-real (o tu dominio personalizado) y vuelve a desplegar. Sin eso, la app usa el
-fallback de producción de `server/config.ts`, que apunta a Vercel.
+Después de cada cambio de dominio, actualiza `PUBLIC_URL`, `CLIENT_URL`,
+`CORS_ALLOWED_ORIGINS` y `GOOGLE_REDIRECT_URI`, y vuelve a desplegar. Sin eso,
+la app usa el fallback de producción de `server/config.ts`, que apunta a
+Vercel y rompe OAuth/CORS en Cloudflare.
 
 ## 5. Google OAuth
 
 En Google Cloud Console agrega como URI de redirección autorizado:
 
 ```text
-https://<tu-dominio>/api/auth/google
+https://vianova.netherstar44.workers.dev/api/auth/google
 ```
 
-Debe coincidir con `GOOGLE_REDIRECT_URI` o con
-`${PUBLIC_URL}/api/auth/google`.
+Debe coincidir exactamente con `GOOGLE_REDIRECT_URI` o con
+`${PUBLIC_URL}/api/auth/google`. El client ID/secret de Google también debe ser
+el mismo par usado para ese redirect URI.
 
 ## 6. Verificación
 
 ```powershell
-curl https://<tu-dominio>/api/health
-curl -I https://<tu-dominio>/
+curl https://vianova.netherstar44.workers.dev/api/health
+curl -I https://vianova.netherstar44.workers.dev/
+curl -I https://vianova.netherstar44.workers.dev/api/auth/google
 ```
+
+`/api/health` debe responder `{"ok":true}` y `/api/auth/google` debe redirigir
+(302) a `accounts.google.com` con `redirect_uri` apuntando al Worker. Si
+`/api/health` responde 500, revisa `npx wrangler tail` y confirma
+`DATABASE_URL`, `JWT_SECRET` y `SESSION_SECRET` con `npx wrangler secret list`.
 
 Comprueba también:
 

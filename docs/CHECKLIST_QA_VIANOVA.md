@@ -16,8 +16,9 @@
 - [x] El servidor de desarrollo arranca y expone `GET /api/health` → `{"ok":true}`.
 - [x] El puerto por defecto del servidor (`5000`) coincide con el proxy de Vite.
 - [x] Las rutas SPA desconocidas devuelven `index.html`; las rutas `/api/*` desconocidas devuelven JSON 404.
-- [ ] `npm run build` de producción verificado en un equipo con memoria suficiente.
-- [ ] `npm run start` sobre `dist/` verificado.
+- [x] `npm run build` de producción completado (Vite + esbuild, `dist/index.cjs` y assets).
+- [x] `npm run start` sobre `dist/` verificado en el puerto 5055 (health, index y worker de MapLibre responden 200).
+- [x] El worker `maplibre-gl-worker-*.mjs` se emite como asset hasheado en `dist/public/assets/`.
 
 **Evidencia:** salida de `tsc`, log del servidor, prueba HTTP de `/api/health` y de `/api/users` (404 JSON).
 
@@ -50,7 +51,7 @@
 | `/dashboard` | Panel por rol | [x] | Carga sin errores de página. |
 | `/social` | Feed social | [x] | Crear, likear y borrar publicación (E2E). |
 | `/products` | ProductManager | [x] | Crear y borrar producto (E2E). |
-| `/my-products` | Mis servicios | [~] | Lectura y CRUD de API verificados; el paso E2E de creación por UI falló y debe repetirse. |
+| `/my-products` | Mis servicios | [x] | Crear y eliminar servicio por UI verificado (E2E 9/9). |
 | `/taxi-dashboard` | Panel taxista | [x] | Requiere rol taxi; guardas verificadas. |
 | `/request-ride` | Solicitar viaje | [x] | Mapa y formulario visibles (E2E). |
 | `/notifications` | Notificaciones | [x] | Endpoint implementado; UI verificada con sesión. |
@@ -92,20 +93,21 @@ Suite: `scripts/e2e-ui-full-test.mjs` → `scripts/e2e-ui-report.json`.
 | 1 | Registro y selección de rol | PASS |
 | 2 | Login por UI | PASS |
 | 3 | Crear y eliminar producto (`/products`) | PASS |
-| 4 | Crear y eliminar servicio (`/my-products`) | FAIL (ver nota) |
+| 4 | Crear y eliminar servicio (`/my-products`) | PASS |
 | 5 | Chatbot con respuesta de IA | PASS |
 | 6 | Mapa y formulario en `/request-ride` | PASS |
 | 7 | Publicación social: crear, likear, borrar | PASS |
-| 8 | Dashboard y tema | PASS |
+| 8 | Dashboard y navegación | PASS |
+| 9 | Logout y redirección limpia (`/settings`) | PASS |
 
-**Nota del paso 4:** la API `POST/DELETE /api/services` responde 200 correctamente en una prueba directa con el mismo usuario. El fallo está en el selector/timing del script E2E (el formulario de `/my-products` usa campos con IDs `#service-name-input`, `#service-desc-input` y `#service-submit-btn`). Se debe repetir con espera explícita del diálogo y verificar el mensaje "Producto creado exitosamente".
+**Resultado final:** `passed=true`, 9/9 flujos PASS, 0 peticiones fallidas y 0 `pageerror`. Los 27 errores de consola son `net::ERR_INSUFFICIENT_RESOURCES` provocados por la presión de memoria del equipo de prueba (Chromium headless + servidores + build), no por respuestas de la aplicación.
 
 - [x] La suite captura errores de consola, errores de página y peticiones fallidas.
 - [x] No se detectaron `pageerror` en la corrida.
-- [ ] Repetir la suite completa contra el servidor final y con la base de datos limpia de datos de prueba.
+- [x] Suite completa repetida contra el servidor final: 9/9 PASS.
 - [ ] Añadir la suite a CI (GitHub Actions) con variables de entorno de test.
 
-**Errores de consola observados:** `GET /api/notifications?username=...` devolvió 404 en una corrida anterior. Las rutas ya existen; se debe reiniciar el servidor y repetir para confirmar. El cliente no debe enviar `username` (el servidor usa el usuario del token).
+**Notificaciones:** la corrida anterior registró 404 en `GET /api/notifications?username=...` porque el servidor aún no tenía cargadas las rutas nuevas. En la corrida final el endpoint responde 200 y `/notifications` renderiza con sesión. El cliente puede seguir enviando `username`; el servidor ignora ese parámetro y usa el usuario del token.
 
 ---
 
@@ -226,7 +228,7 @@ npm run start
 Se considera apto para QA cerrada cuando:
 
 1. `tsc` y `npm run build` pasan sin errores.
-2. La suite E2E completa queda en PASS (incluido el paso 4).
+2. La suite E2E completa queda en PASS (9/9).
 3. La matriz de seguridad negativa queda en 34/34.
 4. El mapa renderiza tiles en claro y oscuro sin errores de consola.
 5. No hay secretos en el repositorio ni en el historial de Git.

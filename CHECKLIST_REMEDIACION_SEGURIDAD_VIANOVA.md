@@ -6,7 +6,7 @@
 
 ---
 
-> **Estado de verificacion (2026-10-22):** los items marcados se verificaron por revision de codigo y/o pruebas HTTP negativas (34/34 PASS). Los items de "Test" quedan sin marcar salvo la matriz 401/403 del bloque 1.2, que si se ejecuto. Rotacion de credenciales, historial de secretos y gestor de secretos siguen pendientes de una ventana de produccion.
+> **Estado de verificación (2026-10-22):** los ítems marcados se verificaron por revisión de código y/o pruebas HTTP negativas (34/34 PASS). Los ítems de "Test" quedan sin marcar salvo la matriz 401/403 del bloque 1.2, que sí se ejecutó. La rotación de credenciales, el historial de secretos y el gestor de secretos siguen pendientes de una ventana de producción.
 
 ## 0. Preparación
 

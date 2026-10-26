@@ -1,5 +1,6 @@
 NODE_ENV=development
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+CATALOG_DATABASE_URL=postgresql://vianova_catalog_reader:password@host/database?sslmode=require
 JWT_SECRET=replace-with-a-random-secret-at-least-32-chars
 SESSION_SECRET=replace-with-a-random-secret-at-least-32-chars
 
@@ -18,6 +19,8 @@ SMTP_FROM=
 
 CLIENT_URL=http://localhost:8787
 PUBLIC_URL=http://localhost:8787
+CORS_ALLOWED_ORIGINS=http://localhost:8787
+GOOGLE_REDIRECT_URI=http://localhost:8787/api/auth/google
 
 # Opcional: rate limiting distribuido entre isolates de Workers.
 # UPSTASH_REDIS_REST_URL=

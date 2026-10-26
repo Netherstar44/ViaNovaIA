@@ -39,7 +39,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
         {media.map((asset) => (
           <SwiperSlide key={asset.id} className="w-full h-full">
             <div className="w-full h-full bg-black/5 flex items-center justify-center relative overflow-hidden">
-              {asset.type === '3d_model' ? (
+              {asset.type === '3d_model' || asset.type === 'model_3d' ? (
                 <Viewer3D src={asset.url} alt={asset.caption || "3D Model"} />
               ) : asset.type === '360_image' ? (
                 <Viewer360 url={asset.url} />

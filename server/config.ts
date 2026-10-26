@@ -69,18 +69,19 @@ export function getAllowedOrigins(): string[] {
     .map((value) => normalizeOrigin(value.trim()))
     .filter((value): value is string => Boolean(value));
 
-  const local = [
-    "http://localhost:5000",
-    "http://127.0.0.1:5000",
-    "http://localhost:5055",
-    "http://127.0.0.1:5055",
-    "capacitor://localhost",
-    // Origen del WebView de Capacitor en Android.
-    "https://localhost",
-  ];
+  // El WebView nativo usa estos orígenes en producción y en desarrollo.
+  const native = ["capacitor://localhost", "https://localhost"];
+  const local = isProduction()
+    ? []
+    : [
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "http://localhost:5055",
+        "http://127.0.0.1:5055",
+      ];
 
-  const defaults = isProduction() ? ["https://via-nova-ia.vercel.app"] : local;
-  return Array.from(new Set([...configured, ...defaults, ...local]));
+  const defaults = isProduction() ? ["https://via-nova-ia.vercel.app"] : [];
+  return Array.from(new Set([...configured, ...defaults, ...native, ...local]));
 }
 
 export function isOriginAllowed(origin: string | undefined | null): boolean {

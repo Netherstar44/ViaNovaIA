@@ -251,7 +251,9 @@ export function safeEqualString(a: unknown, b: unknown): boolean {
 
 export function isValidUsername(value: unknown): boolean {
   const username = String(value ?? "");
-  return /^[a-zA-Z0-9_.-]{3,40}$/.test(username);
+  // El username puede ser un correo (cuentas demo y login por email). No se
+  // permiten espacios, barras ni caracteres de control.
+  return /^[a-zA-Z0-9_.@-]{3,80}$/.test(username);
 }
 
 export function isValidEmail(value: unknown): boolean {
@@ -498,6 +500,17 @@ export function maskPaymentDetails(value: unknown): string {
   const compact = plaintext.replace(/\s+/g, "");
   const last4 = compact.slice(-4);
   return `****${last4}`;
+}
+
+/**
+ * Los productos públicos nunca exponen el costo interno ni el id numérico del
+ * proveedor. El costo solo se muestra al dueño o a un administrador.
+ */
+export function sanitizeProduct(product: any, canViewPrivate = false) {
+  if (!product || typeof product !== "object") return product;
+  if (canViewPrivate) return product;
+  const { cost, provider_id, providerId, ...publicFields } = product;
+  return publicFields;
 }
 
 /** Nunca devolver detalles completos de un método de pago. */

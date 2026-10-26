@@ -122,7 +122,7 @@ export default function Login() {
         // servidor contra JWKS; nunca confiamos en email/name enviados por el cliente.
         const { SocialLogin } = await import('@capgo/capacitor-social-login');
         const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID
-          || "963320565575-69dp01atb3oo5cmrhiq4uf2ca8fc2g79.apps.googleusercontent.com";
+          || "656432401280-99atd8asquojvvf7uqklt58sjs703888.apps.googleusercontent.com";
         const googleConfig: Record<string, unknown> = { webClientId };
         const iosClientId = import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID;
         if (iosClientId) {
@@ -336,7 +336,7 @@ export default function Login() {
       </div>
 
       {/* RIGHT SIDE — FORMS */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 relative z-10 bg-background/60 backdrop-blur-2xl shadow-[-20px_0_40px_rgba(0,0,0,0.35)]">
+      <div className="relative z-10 flex w-full items-center justify-center bg-background p-4 sm:p-8 lg:w-1/2 lg:border-l lg:border-border/60 lg:p-12">
         <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8">
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden flex flex-col items-center">
@@ -437,7 +437,7 @@ export default function Login() {
                   {/* ─── REGISTER TAB (no role selection) ─── */}
                   <TabsContent value="register" className="mt-0">
                     <form onSubmit={handleRegister} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="reg-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nombre Completo</Label>
                           <Input id="reg-name" placeholder="Juan Pérez" value={regName} onChange={(e) => setRegName(e.target.value)} required className="bg-secondary/20 h-12 px-4 rounded-xl border-border/50 focus-visible:ring-primary transition-all" />
@@ -454,7 +454,7 @@ export default function Login() {
                           <Input id="reg-email" type="email" placeholder="correo@ejemplo.com" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} required className="bg-secondary/20 h-12 pl-12 pr-4 rounded-xl border-border/50 focus-visible:ring-primary transition-all" />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="reg-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contraseña</Label>
                           <div className="relative">

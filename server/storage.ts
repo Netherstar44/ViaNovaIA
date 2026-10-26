@@ -71,6 +71,59 @@ export function getDb() {
   return drizzle({ client: sql });
 }
 
+// La tabla services no guarda el nombre de la ciudad: solo coordenadas. Para
+// que el RAG pueda responder por destino, resolvemos la ciudad a un centro
+// aproximado y filtramos por cercanía. Si la ciudad no está mapeada, se usa el
+// catálogo global como respaldo (nunca se consulta una columna inexistente).
+const CITY_CENTERS: Record<string, [number, number]> = {
+  bogota: [4.711, -74.0721],
+  medellin: [6.2442, -75.5812],
+  cali: [3.4516, -76.532],
+  cartagena: [10.391, -75.4794],
+  "santa marta": [11.2408, -74.199],
+  barranquilla: [10.9685, -74.7813],
+  bucaramanga: [7.1193, -73.1227],
+  pereira: [4.8133, -75.6961],
+  manizales: [5.0703, -75.5138],
+  armenia: [4.535, -75.6811],
+  ibague: [4.4389, -75.2322],
+  villavicencio: [4.142, -73.6266],
+  pasto: [1.2136, -77.2811],
+  monteria: [8.748, -75.8814],
+  sincelejo: [9.3047, -75.3978],
+  valledupar: [10.4631, -73.2532],
+  tunja: [5.5353, -73.3678],
+  popayan: [2.4448, -76.6147],
+  leticia: [-4.2153, -69.9406],
+  riohacha: [11.5444, -72.9072],
+  quibdo: [5.6947, -76.6611],
+  florencia: [1.6144, -75.6062],
+  neiva: [2.9345, -75.2809],
+  "san andres": [12.5847, -81.7006],
+  buenaventura: [3.8801, -77.0312],
+  yopal: [5.3378, -72.3959],
+  arauca: [7.0847, -70.7591],
+};
+
+function normalizeCity(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function distanceKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
 export class DbStorage implements IStorage {
   async insertService(svc: InsertService): Promise<Service> {
     const db = getDb();
@@ -111,11 +164,56 @@ export class DbStorage implements IStorage {
 
   async listServicesByCity(city: string): Promise<Service[]> {
     const db = getDb();
-    // Case-insensitive match on city column (added by seed script)
-    const rows = await db.execute(
-      drizzleSql`SELECT * FROM services WHERE lower(city) LIKE lower(${'%' + city + '%'}) ORDER BY rating DESC NULLS LAST LIMIT 20`
+    const term = `%${city.trim()}%`;
+
+    // Primero intentamos coincidencia textual real (nombre/descripción).
+    const direct = await db.execute(
+      drizzleSql`SELECT * FROM services
+        WHERE lower(name) LIKE lower(${term})
+           OR lower(coalesce(description, '')) LIKE lower(${term})
+        ORDER BY rating DESC NULLS LAST
+        LIMIT 20`,
     );
-    return (rows as any).rows ?? (rows as any) ?? [];
+    const directRows = ((direct as any).rows ?? direct ?? []) as Service[];
+    if (directRows.length > 0) return directRows;
+
+    const center = CITY_CENTERS[normalizeCity(city)];
+    if (!center) {
+      const fallback = await db.execute(
+        drizzleSql`SELECT * FROM services ORDER BY rating DESC NULLS LAST LIMIT 20`,
+      );
+      return ((fallback as any).rows ?? fallback ?? []) as Service[];
+    }
+
+    const rows = await db.execute(
+      drizzleSql`SELECT * FROM services
+        WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL
+        ORDER BY rating DESC NULLS LAST
+        LIMIT 300`,
+    );
+    const candidates = ((rows as any).rows ?? rows ?? []) as Service[];
+    const nearby = candidates
+      .map((service) => {
+        const lat = Number(service.locationLat);
+        const lng = Number(service.locationLng);
+        return {
+          service,
+          distance: Number.isFinite(lat) && Number.isFinite(lng)
+            ? distanceKm(center[0], center[1], lat, lng)
+            : Number.POSITIVE_INFINITY,
+        };
+      })
+      .filter((entry) => entry.distance <= 120)
+      .sort((a, b) => a.distance - b.distance || (b.service.rating ?? 0) - (a.service.rating ?? 0))
+      .slice(0, 20)
+      .map((entry) => entry.service);
+
+    if (nearby.length > 0) return nearby;
+
+    const fallback = await db.execute(
+      drizzleSql`SELECT * FROM services ORDER BY rating DESC NULLS LAST LIMIT 20`,
+    );
+    return ((fallback as any).rows ?? fallback ?? []) as Service[];
   }
 
   async insertComment(cmt: InsertComment): Promise<Comment> {
