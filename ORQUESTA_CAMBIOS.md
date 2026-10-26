@@ -4,8 +4,9 @@
 **Fecha de integración:** 2026-10-25  
 **Directorio:** `C:\Users\Famil\Downloads\ViaNovaIA-main\ViaNovaIA-main`  
 **Commit base:** `b5353d1 fix(e2e): full interactive UI validation, relative positioning, and clean logout redirect`  
+**Commit de integración:** `732df9b feat: integrate security, trips, PWA and chat glass` (publicado en `origin/main`)<br>
 **Rama local:** `main`  
-**Estado Git:** 29 archivos rastreados modificados/eliminados + 26 archivos nuevos sin rastrear (incluido este documento). Sin commit, sin push, sin merge y sin rebase. `HEAD` sigue en `b5353d1`; `main` está 1 commit detrás de `origin/main` (`0ba5a1b`).
+**Estado Git:** árbol limpio; `main` sincronizado con `origin/main`. `732df9b` es el commit de código desplegado; esta verificación de cierre se publica en un commit de documentación posterior.
 
 ---
 
@@ -30,8 +31,10 @@ Resultado:
 - Build de producción generado y servido en `http://127.0.0.1:5055`.
 - Smoke de navegador: Home, marketplace, chatbot, MapLibre y PWA responden; sin errores de consola de la aplicación.
 - Refracción del chat reforzada con `.chat-glass`: base `var(--card)` opaca, gradiente 96/90 y `blur(36px) saturate(200%)`; verificada en tema claro y oscuro sin mezcla de textos.
-- Diagnóstico de deploys: Cloudflare y Vercel están en línea y el bot responde **con sesión**; ambos sirven builds anteriores al cambio de refracción. El `401` anónimo es intencional (`requireAuth`).
-- El deploy externo de Vercel detectado durante la sesión **no se atribuye a esta integración** y es anterior a los últimos cambios.
+- Diagnóstico previo: Cloudflare y Vercel estaban en línea y el bot respondía **con sesión**; ambos servían builds anteriores al cambio de refracción. El `401` anónimo es intencional (`requireAuth`).
+- Push y deploy completados: `732df9b` en `origin/main`; Vercel `dpl_3KFCT6aQpBXDWi3C6coaxxmthpAv` y Cloudflare `4745df09-3be5-4f6b-bd0a-1da83f3d8651`.
+- Ambos hosts sirven `index-BZr2hc4v.js` + `index-D-UyG8j1.css`, con `.chat-glass`; chat autenticado `200`.
+- Credencial demo sacada del código: el seed exige `SEED_DEMO_PASSWORD` y `SEED_NEIVA.md` ya no publica la contraseña.
 
 ---
 
@@ -213,8 +216,9 @@ Estas correcciones no pertenecen a un solo agente; fueron necesarias para que am
 | 5 | `.env.example` estaba oculto por una regla duplicada `.env*`. | Se eliminó la regla duplicada y se mantuvo `!.env.example`; el archivo queda visible como untracked. | `.gitignore`, `.env.example` |
 | 6 | El build dependía de memoria y de procesos residuales en Windows. | Se cerraron procesos de build/servidor residuales y se compiló con `NODE_OPTIONS=--max-old-space-size=2048`. | `package.json`, entorno de build |
 | 7 | El chatbot y el panel de viaje se agregaron en paralelo con contratos distintos. | El backend normaliza el tipo; el cliente tolera ambas variantes y el panel consume el DTO final. | `Chatbot.tsx`, `TripPlannerPanel.tsx`, `trips.ts` |
-| 8 | El deploy de Vercel ocurrió desde un árbol sin commit y antes de los últimos cambios. | No se revirtió ni se reclamó; se documenta como evento externo y se deja el build local como referencia válida. | `vercel-deploy.log`, `ORQUESTA_CAMBIOS.md` |
+| 8 | El deploy de Vercel ocurría desde un árbol sin commit y antes de los últimos cambios. | Se resolvió con el commit `732df9b`, rebase sobre `origin/main` y redeploy de Vercel/Cloudflare. | `ORQUESTA_CAMBIOS.md`, hosts |
 | 9 | El chat flotante dejaba traslucir el hero y el marketplace; los textos se mezclaban con el fondo. | Se agregó `.chat-glass` con superficie opaca y mayor refracción, y se elevaron las capas internas del chat y del planificador. No se modificó `.glass-panel` global. | `client/src/index.css`, `Chatbot.tsx`, `TripPlannerPanel.tsx` |
+| 10 | El seed y su informe incluían la contraseña demo en texto plano. | Se eliminó del código; `SEED_DEMO_PASSWORD` es obligatorio (mínimo 12) y el informe se redactó. | `scripts/neiva-assets.mjs`, `scripts/seed-neiva.mjs`, `SEED_NEIVA.md`, `.env.example` |
 
 ---
 
@@ -306,9 +310,9 @@ Responden `401` sin sesión:
 
 > Esa evidencia fue producida por el flujo de seed y no se re-ejecutó durante esta integración. Se conserva como validación del agente, no como una nueva corrida de este documento.
 
-### 6.5 Diagnóstico de despliegues (Cloudflare / Vercel)
+### 6.5 Diagnóstico previo (antes del redeploy)
 
-Comprobaciones ejecutadas el 2026-10-25 alrededor de las 20:05 (America/Bogota), sin push ni redeploy:
+Comprobaciones ejecutadas el 2026-10-25 alrededor de las 20:05 (America/Bogota), antes del commit y del redeploy:
 
 | Host | Estado | Build servido | Evidencia |
 |---|---|---|---|
@@ -323,13 +327,30 @@ Hallazgos:
 - **El `401` es intencional.** `POST /api/chat` usa `requireAuth`: sin cookie de sesión devuelve `401` (Vercel con body vacío; Cloudflare con `{"message":"No autenticado"}`). Un visitante anónimo percibe que el bot “no sirve”, pero es la política de acceso actual.
 - **Los deploys están desactualizados.** Los bundles desplegados contienen **Planear** y **Establecer ruta**, pero no la clase `chat-glass`; por tanto son anteriores al cambio de refracción. Cloudflare además sirve un entry de 932 KB frente a 366 KB del build local, señal de un empaquetado/build anterior.
 - **El routing no es el problema.** `vercel.json` reescribe `/api/*` a `api/index.ts` y `wrangler.jsonc` usa `run_worker_first` para `/api`; ambos health checks lo confirman.
-- **No se publicó nada en esta sesión.** No hubo commit, push, `vercel deploy` ni `wrangler deploy`. Los deployments observados son previos.
+- **No se había publicado nada en ese momento.** El commit, push y redeploy se ejecutaron después; ver 6.6.
+
+### 6.6 Verificación post-deploy (2026-10-25 ~20:23)
+
+| Host | Home | Build servido | `/api/health` | Chat anónimo | Chat con sesión |
+|---|---|---|---|---|---|
+| Vercel | `200` | `index-BZr2hc4v.js` + `index-D-UyG8j1.css` | `200` | `401` | `200` |
+| Cloudflare | `200` | `index-BZr2hc4v.js` + `index-D-UyG8j1.css` | `200` | `401` | `200` |
+
+- **Commit publicado:** `732df9b` en `origin/main`, rebasado sobre `0ba5a1b`.
+- **Vercel:** deployment verificado `dpl_3KFCT6aQpBXDWi3C6coaxxmthpAv` (target production, `READY`) y alias `https://via-nova-ia.vercel.app`. El push de cierre puede generar un deployment equivalente sin cambios de runtime.
+- **Cloudflare:** version `4745df09-3be5-4f6b-bd0a-1da83f3d8651` al 100 %, Worker `vianova`.
+- El CSS servido por ambos contiene `.chat-glass`; el JS principal es el mismo hash que el build local.
+- Chat autenticado: `200` con hoteles y precios del catálogo. Estilos computados: oscuro `rgb(22,22,26)`, claro `rgb(255,255,255)`, `backdrop-filter: blur(36px) saturate(2)`.
+- Chat anónimo: `401` en ambos, consistente con `requireAuth`.
+- **Cloudflare, primer request tras el deploy:** `POST /api/chat` devolvió `500` una vez; los 4 siguientes y un login limpio dieron `200`. Se atribuye a propagación/cold start y no se reprodujo. Los endpoints `/api/chat/history` y `/api/trips/latest` respondieron `200`.
+- Sin errores de consola en el flujo final de login + chat.
+- Evidencia visual local (ignorada por Git): `qa-deploy-vercel.png`, `qa-deploy-cloudflare-dark.png`.
 
 ---
 
 ## 7. Inventario de archivos
 
-### 7.1 Archivos rastreados modificados o eliminados (29)
+### 7.1 Archivos modificados o eliminados en el commit (29)
 
 | Archivo | Estado | Atribución |
 |---|---|---|
@@ -363,7 +384,7 @@ Hallazgos:
 | `server/storage.ts` | M | Agente 1 |
 | `vite.config.ts` | M | Integración |
 
-### 7.2 Archivos nuevos sin rastrear (26)
+### 7.2 Archivos nuevos en el commit (26)
 
 | Archivo | Atribución |
 |---|---|
@@ -407,16 +428,14 @@ Hallazgos:
 
 ### 8.1 Alta prioridad
 
-1. **Deploys desactualizados y bot solo para sesión**
-   - Vercel sirve el deployment `dpl_GiDxhPBhV3CYEMye68QciWpVqqio` (creado 19:35:38) con `index-BswTxf35.js`; Cloudflare sirve la version `357ec19e` (creada 19:16) con `index-C-2TcOnx.js`.
-   - El build local final es de las 20:00 (`index-BZr2hc4v.js`) e incluye `.chat-glass`; ninguno de los dos deploys lo tiene.
-   - Ambos hosts están en línea y el chat funciona con sesión. El `401` anónimo es la política `requireAuth`, no una caída.
-   - **Acción:** autorizar commit/push y redeploy; después validar el chat con una sesión real y decidir si se habilita acceso anónimo controlado.
+1. **Deploys y acceso al bot — resuelto**
+   - Vercel (`dpl_3KFCT6aQpBXDWi3C6coaxxmthpAv`) y Cloudflare (`4745df09`) sirven el build `index-BZr2hc4v.js` con `.chat-glass`.
+   - El chat responde `200` con sesión y `401` sin sesión. El `401` es la política `requireAuth`, no una caída.
+   - **Acción pendiente:** decidir el acceso anónimo (ver 8.4).
 
-2. **Rama local detrás de `origin/main`**
-   - `main` local está 1 commit por detrás de `origin/main` (`0ba5a1b Add files via upload`).
-   - Hay 29 archivos modificados y 25 nuevos sin commit.
-   - **Acción:** revisar el commit remoto antes de pull/rebase; no hacer merge ni push forzado sin confirmación.
+2. **Rama local detrás de `origin/main` — resuelto**
+   - Se hizo rebase sobre `0ba5a1b` y push de `732df9b`; `main` quedó sincronizado y el árbol limpio.
+   - **Acción:** ninguna.
 
 3. **Migración de seguridad sin aplicar**
    - `scripts/security-migration.mjs` existe y tiene scripts npm, pero no se ejecutó en esta integración.
@@ -426,9 +445,9 @@ Hallazgos:
    - Si `CATALOG_DATABASE_URL` no está definida, el catálogo usa `DATABASE_URL` y pierde el aislamiento del rol de solo lectura.
    - **Acción:** provisionar `vianova_catalog_reader`, establecer `CATALOG_DATABASE_URL` y verificar que solo pueda leer `catalog.catalog_items`.
 
-5. **Credenciales demo en `SEED_NEIVA.md`**
-   - El documento incluye usuario y contraseña de demostración.
-   - **Acción:** no commitear el archivo con esa contraseña en un repositorio público; rotarla o eliminarla antes de publicar.
+5. **Credenciales demo — resuelto en el repositorio**
+   - `SEED_NEIVA.md` ya no publica la contraseña; `scripts/neiva-assets.mjs` no la contiene y `scripts/seed-neiva.mjs` exige `SEED_DEMO_PASSWORD` (mínimo 12).
+   - La cuenta demo en la base conserva la contraseña anterior. **Acción:** rotarla si se compartió fuera del equipo o si se quiere eliminar el acceso demo.
 
 ### 8.2 Prioridad media
 
@@ -449,18 +468,18 @@ Hallazgos:
    - El build requiere `NODE_OPTIONS=--max-old-space-size=2048` en este equipo.
    - **Acción:** mantener el límite en CI (el workflow usa 4096) y cerrar procesos de build/servidor residuales antes de compilar.
 
-10. **Service worker y caché**
-    - El SW usa `vianova-v4` y limpia cachés anteriores, pero los clientes con una versión vieja pueden seguir sirviendo el shell hasta que el nuevo SW se active.
-    - **Acción:** tras el redeploy, verificar `skipWaiting`/`clients.claim` y recargar en una ventana limpia.
+10. **Service worker y caché — verificado**
+    - Tras el redeploy, ambos hosts sirven el hash nuevo (`index-BZr2hc4v.js`) y el chat carga con `.chat-glass`.
+    - **Acción:** clientes con una pestaña vieja pueden requerir recarga; se mantiene `skipWaiting`/`clients.claim`.
 
 ### 8.3 Prioridad baja
 
-11. **`.env.example` sin rastrear**
-    - Es correcto que exista y esté visible, pero todavía no está agregado al índice.
-    - **Acción:** incluirlo en el commit junto con la documentación de variables.
+11. **`.env.example` — incorporado**
+    - Ya está en el repositorio con placeholders y `SEED_DEMO_PASSWORD` documentada.
+    - **Acción:** ninguna.
 
 12. **Documento preexistente**
-    - `INFORME_AVANCES_VIANOVA.md` contiene el estado de una sesión anterior y no se actualizó aquí.
+    - `INFORME_AVANCES_VIANOVA.md` se incorporó al repositorio; conserva el estado de una sesión anterior y no se reescribió.
     - **Acción:** archivarlo o enlazarlo desde la documentación final si se decide conservarlo.
 
 ### 8.4 Decisión pendiente
@@ -479,18 +498,19 @@ Hallazgos:
 - **Correcciones de integración:** aplicadas y verificadas.
 - **Refracción del chat:** aplicada con `.chat-glass` y capas internas más opacas; validada en claro/oscuro sin mezcla de textos.
 - **Archivos eliminados:** solo assets obsoletos de logo/favicon; no se eliminaron archivos funcionales de ninguno de los agentes.
-- **Commit/push:** no ejecutados. `HEAD` sigue en `b5353d1` y `main` está 1 commit detrás de `origin/main`.
+- **Commit/push:** `732df9b` publicado en `origin/main`, rebasado sobre `0ba5a1b`; árbol limpio.
 - **Servidor local:** activo en `http://127.0.0.1:5055` con el build final (PID 139168).
-- **Deploys externos:** Cloudflare y Vercel están en línea, pero sirven builds anteriores al cambio de refracción; el bot exige sesión.
+- **Deploys:** Vercel `dpl_3KFCT6aQpBXDWi3C6coaxxmthpAv` (verificado) y Cloudflare `4745df09`; ambos sirven `index-BZr2hc4v.js` con `.chat-glass`.
+- **Verificación:** `/api/health` `200`, chat con sesión `200`, chat anónimo `401` en ambos hosts.
+- **Incidente transitorio:** el primer `POST /api/chat` en Cloudflare tras el deploy devolvió `500`; los 4 siguientes y un login limpio dieron `200`.
 
 ### Próximos pasos recomendados
 
-1. Revisar `git diff` y `git status` con ambos agentes.
-2. Resolver la relación con `origin/main` (`0ba5a1b`) antes de commitear.
-3. Autorizar commit y push; después redeployar Cloudflare y Vercel y revalidar el chat **con sesión**.
-4. Ejecutar la migración de seguridad y configurar `CATALOG_DATABASE_URL`.
-5. Corregir la configuración OAuth/CORS para el host real.
-6. Rotar o retirar la contraseña demo antes de publicar `SEED_NEIVA.md`.
-7. Decidir el comportamiento del chat para visitantes anónimos.
-8. Commit en dos bloques lógicos (backend/seguridad y frontend/performance) o en un único commit de integración, según preferencia del equipo.
-9. Verificar PWA, OAuth y el flujo de viajes en los hosts redeployados.
+1. Rotar la contraseña demo en la base si se compartió fuera del equipo.
+2. Ejecutar la migración de seguridad y configurar `CATALOG_DATABASE_URL`.
+3. Corregir la configuración OAuth/CORS para el host real.
+4. Decidir el comportamiento del chat para visitantes anónimos.
+5. Agregar un E2E autenticado del planificador (generar viaje, abrir panel, establecer ruta).
+6. Reemplazar la imagen externa de Unsplash que responde `404`/`ERR_BLOCKED_BY_ORB`.
+7. Verificar OAuth, PWA y el flujo completo de viajes en los hosts redeployados.
+8. Vigilar los logs de Cloudflare por si reaparece el `500` transitorio del primer request.
