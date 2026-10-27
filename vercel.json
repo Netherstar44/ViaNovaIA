@@ -8,11 +8,11 @@
   "rewrites": [
     {
       "source": "/api/tts",
-      "destination": "/api/tts.py"
+      "destination": "/api/tts"
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.ts"
+      "destination": "/api/index"
     },
     {
       "source": "/(.*)",
