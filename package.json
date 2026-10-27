@@ -17,7 +17,8 @@
     "db:migrate:phase6": "node scripts/migrate-phase6.mjs",
     "build:cloudflare": "vite build && node scripts/prepare-cloudflare-assets.mjs",
     "dev:cloudflare": "wrangler dev",
-    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

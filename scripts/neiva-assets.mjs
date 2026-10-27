@@ -801,6 +801,74 @@ export function makeLandmarkGlb(index) {
   return Buffer.concat([header, jsonHeader, jsonBuffer, binHeader, binBuffer]);
 }
 
+/* ── Imágenes reales de Internet (reemplaza los pósters generados por IA) ── */
+
+/* Fotos reales de Unsplash, una por categoría (hotel / restaurante /
+   recreación). Se trae cada URL con Cloudinary y se guarda como asset propio.
+   Las 36 URLs únicas cubren 12 servicios + 12 productos de cada categoría
+   (72 slots en total). Si alguna URL falla, se usa FALLBACK_URL para que el
+   seed nunca se rompa. */
+const FALLBACK_URL =
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80";
+
+const HOTEL_IMAGES = [
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80",
+  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80",
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=1200&q=80",
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
+  "https://images.unsplash.com/photo-1509056662677-6f96162daed1?w=1200&q=80",
+  "https://images.unsplash.com/photo-1533043832722-8ed635e482c9?w=1200&q=80",
+  "https://images.unsplash.com/photo-1560185007-cde436f6fa47?w=1200&q=80",
+  "https://images.unsplash.com/photo-1519173813791-8e3704115974?w=1200&q=80",
+  "https://images.unsplash.com/photo-1507525428034-b723cf965d3e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1527944344600-5a30c8d9c4d6?w=1200&q=80",
+];
+
+const RESTAURANT_IMAGES = [
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80",
+  "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&q=80",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80",
+  "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=1200&q=80",
+  "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
+  "https://images.unsplash.com/photo-1494226117840-b7bce2c3cb11?w=1200&q=80",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80",
+  "https://images.unsplash.com/photo-1556742049-0cfed4f7a06d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1524758643624-e55b79bdc4ee?w=1200&q=80",
+  "https://images.unsplash.com/photo-1505265523756-3752a92ef9a4?w=1200&q=80",
+  "https://images.unsplash.com/photo-1544035580-620d4d681c76?w=1200&q=80",
+];
+
+const RECREATION_IMAGES = [
+  "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=1200&q=80",
+  "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=1200&q=80",
+  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80",
+  "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&q=80",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
+  "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&q=80",
+  "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1200&q=80",
+  "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1200&q=80",
+  "https://images.unsplash.com/photo-1558980395-be7e5d3b9063?w=1200&q=80",
+  "https://images.unsplash.com/photo-1522088851919-3b494d807c95?w=1200&q=80",
+  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80",
+];
+
+// 72 slots: 12 servicios hotel, 12 servicios restaurant, 12 servicios recreation,
+// 12 productos hotel, 12 productos restaurant, 12 productos recreation.
+export const NEIVA_IMAGE_URLS = [
+  ...HOTEL_IMAGES, // 0-11  servicios hotel
+  ...RESTAURANT_IMAGES, // 12-23 servicios restaurant
+  ...RECREATION_IMAGES, // 24-35 servicios recreation
+  ...HOTEL_IMAGES, // 36-47 productos hotel
+  ...RESTAURANT_IMAGES, // 48-59 productos restaurant
+  ...RECREATION_IMAGES, // 60-71 productos recreation
+];
+
+export { FALLBACK_URL };
+
 /* ── Datos de la semilla ─────────────────────────────────────────────────── */
 
 const hotelSeeds = [
@@ -895,9 +963,9 @@ const productSeeds = {
 
 function buildServices() {
   const roles = [
-    { category: "hotel", seeds: hotelSeeds, priceType: "noche", duration: "1 noche", capacity: [1, 4], difficulty: null },
-    { category: "restaurant", seeds: restaurantSeeds, priceType: "persona", duration: "1.5 horas", capacity: [1, 12], difficulty: null },
-    { category: "recreation", seeds: recreationSeeds, priceType: "persona", duration: "medio día", capacity: [2, 15], difficulty: null },
+    { category: "hotel", seeds: hotelSeeds, imageOffset: 0, priceType: "noche", duration: "1 noche", capacity: [1, 4], difficulty: null },
+    { category: "restaurant", seeds: restaurantSeeds, imageOffset: 12, priceType: "persona", duration: "1.5 horas", capacity: [1, 12], difficulty: null },
+    { category: "recreation", seeds: recreationSeeds, imageOffset: 24, priceType: "persona", duration: "medio día", capacity: [2, 15], difficulty: null },
   ];
   const services = [];
   for (const role of roles) {
@@ -917,7 +985,7 @@ function buildServices() {
         minCapacity: role.capacity[0],
         maxCapacity: role.capacity[1],
         difficulty: role.difficulty,
-        imageIndex: 36 + index,
+        imageIndex: role.imageOffset + index,
         included: role.category === "hotel"
           ? ["Desayuno", "WiFi", "Parqueadero"]
           : role.category === "restaurant"
@@ -931,7 +999,7 @@ function buildServices() {
 }
 
 function buildProducts() {
-  const offsets = { hotel: 0, restaurant: 12, recreation: 24 };
+  const offsets = { hotel: 36, restaurant: 48, recreation: 60 };
   const products = [];
   for (const roleCategory of ["hotel", "restaurant", "recreation"]) {
     productSeeds[roleCategory].forEach((seed, index) => {

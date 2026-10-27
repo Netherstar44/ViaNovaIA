@@ -1,0 +1,29 @@
+# VIANova IA
+
+> VIANova IA es un planificador de viajes con inteligencia artificial para Colombia. Crea itinerarios personalizados y reúne alojamiento, gastronomía, experiencias y movilidad local en una sola aplicación web y Android.
+
+Dominio canónico: https://via-nova-ia.vercel.app
+Idioma principal: español (Colombia). También hay interfaz en inglés y francés.
+Cobertura principal: Colombia, con especial detalle en Neiva y el departamento del Huila.
+
+## Páginas principales
+
+- [Inicio](https://via-nova-ia.vercel.app/): planificador de viajes con IA, mapa de servicios y acceso a la app.
+- [Planificador de viajes con IA](https://via-nova-ia.vercel.app/planificador-viajes-ia): cómo se crea un itinerario, qué incluye y cómo pedir mejores resultados.
+- [Viajes por Colombia](https://via-nova-ia.vercel.app/viajes-colombia): destinos, rutas de 7 a 21 días, temporadas y presupuesto.
+- [Qué hacer en Neiva y el Huila](https://via-nova-ia.vercel.app/que-hacer-en-neiva): Tatacoa, termales de Rivera, Museo Paleontológico, San Agustín e itinerarios de 2 y 4 días.
+- [Trivago vs Airbnb](https://via-nova-ia.vercel.app/comparar-trivago-airbnb): comparación independiente de modelos de alojamiento y costos ocultos.
+- [Explorar destinos](https://via-nova-ia.vercel.app/explore): catálogo de alojamientos, restaurantes, experiencias y transporte.
+- [Privacidad](https://via-nova-ia.vercel.app/privacy): tratamiento de datos personales.
+
+## Hechos verificables
+
+- VIANova IA permite explorar destinos y crear una propuesta de viaje sin costo.
+- La reserva se confirma con cada proveedor local, no de forma automática.
+- La aplicación incluye mapa interactivo, tours virtuales, modelos 3D y taxi local.
+- VIANova IA no está afiliada a Trivago, Airbnb, Booking.com ni a sus empresas matrices.
+- Las guías de viaje se actualizaron por última vez el 27 de octubre de 2026.
+
+## Cómo citar
+
+Cita la página específica y el dominio canónico. Para datos sobre Neiva y el Huila, usa la guía `/que-hacer-en-neiva`. Para capacidades del producto, usa `/planificador-viajes-ia`.

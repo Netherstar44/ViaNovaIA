@@ -1,12 +1,119 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CO">
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-  <title>VIANova App - Explora tu destino</title>
-  <meta name="description" content="Descubre los mejores hoteles, restaurantes y sitios recreativos." />
-  <meta name="theme-color" content="#f5f4f0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5" />
+
+  <!-- SEO:START -->
+  <title>VIANova IA | Planificador de Viajes con IA en Colombia</title>
+  <meta name="description"
+    content="Planifica tu viaje con inteligencia artificial: itinerarios, hoteles, restaurantes, experiencias y taxi local en un solo lugar. Explora Colombia con VIANova IA." />
+  <meta name="keywords"
+    content="planificador de viajes con IA, viajes, turismo, turismo en Colombia, hoteles, restaurantes, experiencias, Neiva, Huila" />
+  <meta name="author" content="VIANova IA" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="application-name" content="VIANova IA" />
+  <meta name="apple-mobile-web-app-title" content="VIANova" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <meta name="geo.region" content="CO-HUI" />
+  <meta name="geo.placename" content="Neiva, Huila, Colombia" />
+  <meta name="geo.position" content="2.9273;-75.2819" />
+  <meta name="ICBM" content="2.9273, -75.2819" />
+
+  <link rel="canonical" href="https://via-nova-ia.vercel.app/" />
+  <link rel="alternate" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+  <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="VIANova IA" />
+  <meta property="og:locale" content="es_CO" />
+  <meta property="og:title" content="VIANova IA | Planificador de Viajes con IA en Colombia" />
+  <meta property="og:description"
+    content="Crea itinerarios con inteligencia artificial, descubre hoteles, restaurantes y experiencias, y muévete con taxi local. Tu viaje completo en un solo lugar." />
+  <meta property="og:url" content="https://via-nova-ia.vercel.app/" />
+  <meta property="og:image" content="https://via-nova-ia.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="VIANova IA, planificador de viajes con inteligencia artificial" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="VIANova IA | Planificador de Viajes con IA en Colombia" />
+  <meta name="twitter:description"
+    content="Crea itinerarios con inteligencia artificial y descubre hoteles, restaurantes, experiencias y transporte local." />
+  <meta name="twitter:image" content="https://via-nova-ia.vercel.app/og-image.png" />
+  <meta name="twitter:image:alt" content="VIANova IA, planificador de viajes con inteligencia artificial" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://via-nova-ia.vercel.app/#organization",
+        "name": "VIANova IA",
+        "alternateName": "VIANova",
+        "url": "https://via-nova-ia.vercel.app",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://via-nova-ia.vercel.app/brand-icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "description": "Planificador de viajes con inteligencia artificial para Colombia: itinerarios, alojamiento, gastronomía, experiencias y movilidad local.",
+        "areaServed": {
+          "@type": "Country",
+          "name": "Colombia"
+        },
+        "knowsLanguage": ["es-CO", "en", "fr"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://via-nova-ia.vercel.app/#website",
+        "url": "https://via-nova-ia.vercel.app",
+        "name": "VIANova IA",
+        "alternateName": "VIANova",
+        "inLanguage": "es-CO",
+        "publisher": { "@id": "https://via-nova-ia.vercel.app/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://via-nova-ia.vercel.app/#app",
+        "name": "VIANova IA",
+        "applicationCategory": "TravelApplication",
+        "applicationSubCategory": "Trip planner",
+        "operatingSystem": "Web, Android",
+        "url": "https://via-nova-ia.vercel.app",
+        "description": "Aplicación de planificación de viajes con IA: crea itinerarios, descubre proveedores locales y organiza alojamiento, gastronomía, experiencias y transporte.",
+        "inLanguage": "es-CO",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "COP",
+          "description": "Explorar destinos y crear una propuesta de viaje sin costo."
+        },
+        "featureList": [
+          "Itinerarios personalizados con inteligencia artificial",
+          "Descubrimiento de hoteles, restaurantes y experiencias",
+          "Mapa interactivo y rutas",
+          "Tours virtuales y modelos 3D",
+          "Reserva de servicios locales",
+          "Taxi y movilidad local"
+        ],
+        "publisher": { "@id": "https://via-nova-ia.vercel.app/#organization" }
+      }
+    ]
+  }
+  </script>
+  <!-- SEO:END -->
+
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" sizes="180x180" href="/brand-apple-touch-icon.png" />
 
@@ -16,6 +123,9 @@
   <!-- Fonts: Poppins for headings, Inter for UI -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="dns-prefetch" href="https://images.unsplash.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap"
     rel="stylesheet">
@@ -28,6 +138,24 @@
 <body>
 
   <div id="root"></div>
+
+  <noscript>
+    <div style="max-width:72rem;margin:0 auto;padding:2rem 1rem;font-family:system-ui,sans-serif;line-height:1.6">
+      <h1>VIANova IA: planificador de viajes con inteligencia artificial</h1>
+      <p>VIANova IA crea itinerarios personalizados con IA y reúne hoteles, restaurantes, experiencias y transporte
+        local en un solo lugar. Explora destinos de Colombia como Neiva, el Desierto de la Tatacoa, el Huila y San
+        Agustín.</p>
+      <p>Activa JavaScript para usar el planificador interactivo. Mientras tanto, puedes leer nuestras guías:</p>
+      <ul>
+        <li><a href="/planificador-viajes-ia">Planificador de viajes con IA</a></li>
+        <li><a href="/viajes-colombia">Viajes por Colombia: destinos y rutas</a></li>
+        <li><a href="/que-hacer-en-neiva">Qué hacer en Neiva y el Huila</a></li>
+        <li><a href="/comparar-trivago-airbnb">Trivago vs Airbnb: cómo comparar</a></li>
+      </ul>
+      <p><a href="/explore">Explorar destinos y servicios</a> · <a href="/privacy">Política de privacidad</a></p>
+    </div>
+  </noscript>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

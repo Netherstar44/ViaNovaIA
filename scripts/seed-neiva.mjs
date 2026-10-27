@@ -6,7 +6,8 @@ import { neon } from "@neondatabase/serverless";
 import { v2 as cloudinary } from "cloudinary";
 import {
   NEIVA_DATA,
-  makePosterPng,
+  NEIVA_IMAGE_URLS,
+  FALLBACK_URL,
   makeLandmarkGlb,
 } from "./neiva-assets.mjs";
 import { ensureCatalogSchema } from "../server/catalog.js";
@@ -68,26 +69,41 @@ async function uploadAssets() {
 
   if (REUSE_ASSETS && fs.existsSync(CACHE_PATH)) {
     const cached = JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
-    if (Array.isArray(cached.images) && cached.images.length === 48 && Array.isArray(cached.models) && cached.models.length === 12) {
-      log("usando 48 imágenes y 12 modelos 3D cacheados");
+    if (Array.isArray(cached.images) && cached.images.length === 72 && Array.isArray(cached.models) && cached.models.length === 12) {
+      log("usando 72 imágenes y 12 modelos 3D cacheados");
       return cached;
     }
   }
 
-  log("generando y subiendo 48 pósters PNG a Cloudinary...");
-  const images = await mapLimit(Array.from({ length: 48 }, (_, index) => index), 4, async (index) => {
-    const buffer = makePosterPng(index);
-    const result = await uploadBuffer(buffer, {
-      resource_type: "image",
-      folder: "vianova/neiva/images",
-      public_id: `neiva-poster-${String(index + 1).padStart(2, "0")}`,
-      format: "png",
-      overwrite: true,
-      invalidate: true,
-    });
-    log(`imagen ${index + 1}/48 subida (${Math.round(buffer.length / 1024)} KB)`);
-    return { url: result.secure_url, publicId: result.public_id, bytes: buffer.length };
-  });
+  log("subiendo 72 imágenes reales de Internet a Cloudinary...");
+  const images = await mapLimit(
+    Array.from({ length: 72 }, (_, index) => index),
+    4,
+    async (index) => {
+      const imageUrl = NEIVA_IMAGE_URLS[index] || FALLBACK_URL;
+      let result;
+      try {
+        result = await cloudinary.uploader.upload(imageUrl, {
+          resource_type: "image",
+          folder: "vianova/neiva/images",
+          public_id: `neiva-image-${String(index + 1).padStart(2, "0")}`,
+          overwrite: true,
+          invalidate: true,
+        });
+      } catch (error) {
+        log(`  ⚠ No se pudo subir ${imageUrl}, usando fallback: ${error.message}`);
+        result = await cloudinary.uploader.upload(FALLBACK_URL, {
+          resource_type: "image",
+          folder: "vianova/neiva/images",
+          public_id: `neiva-image-${String(index + 1).padStart(2, "0")}`,
+          overwrite: true,
+          invalidate: true,
+        });
+      }
+      log(`imagen ${index + 1}/72 subida`);
+      return { url: result.secure_url, publicId: result.public_id, bytes: result.bytes || 0 };
+    }
+  );
 
   log("generando y subiendo 12 modelos GLB...");
   const models = await mapLimit(Array.from({ length: 12 }, (_, index) => index), 3, async (index) => {

@@ -28,6 +28,7 @@ const Messages = lazy(() => import("@/pages/Messages"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const ProductManager = lazy(() => import("@/pages/ProductManager"));
 const ProductStore = lazy(() => import("@/pages/ProductStore"));
+const SeoLanding = lazy(() => import("@/pages/SeoLanding"));
 
 function PageLoader() {
   return (
@@ -70,6 +71,13 @@ function Router() {
         <Route path="/products" component={ProductManager} />
         <Route path="/explore" component={ProductStore} />
 
+        {/* Guías públicas con contenido prerenderizado para buscadores. */}
+        {seoPages.map((page) => (
+          <Route key={page.slug} path={`/${page.slug}`}>
+            <SeoLanding slug={page.slug} />
+          </Route>
+        ))}
+
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -78,6 +86,13 @@ function Router() {
 
 import { ThemeProvider } from "next-themes";
 import ThemeFavicon from "@/components/ThemeFavicon";
+import { useSeo } from "@/hooks/useSeo";
+import { seoPages } from "@shared/seo-content";
+
+function SeoManager() {
+  useSeo();
+  return null;
+}
 
 function App() {
   return (
@@ -89,6 +104,7 @@ function App() {
       themes={["light", "dark", "sunset", "ocean", "forest"]}
     >
       <ThemeFavicon />
+      <SeoManager />
       <QueryClientProvider client={queryClient}>
         <Toaster />
         <Router />

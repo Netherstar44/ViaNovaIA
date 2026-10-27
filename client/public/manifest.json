@@ -1,15 +1,18 @@
 {
-  "name": "ViaNova IA - Explora tu destino",
+  "id": "/",
+  "name": "ViaNova IA - Planificador de viajes",
   "short_name": "ViaNova",
-  "description": "Descubre hoteles, restaurantes, experiencias y servicios locales con ayuda de IA.",
-  "lang": "es",
+  "description": "Planifica tu viaje con inteligencia artificial: itinerarios, hoteles, restaurantes, experiencias y taxi local en Colombia.",
+  "lang": "es-CO",
   "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f5f4f0",
+  "background_color": "#0b0b0c",
   "theme_color": "#ffbf00",
+  "categories": ["travel", "navigation", "lifestyle"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/brand-icon-192.png",
@@ -28,6 +31,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Planificador de viajes con IA",
+      "short_name": "Planificador",
+      "url": "/planificador-viajes-ia",
+      "icons": [{ "src": "/brand-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Explorar destinos",
+      "short_name": "Explorar",
+      "url": "/explore",
+      "icons": [{ "src": "/brand-icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

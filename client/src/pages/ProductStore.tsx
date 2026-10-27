@@ -155,7 +155,7 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-0 sm:p-6"
     >
-      <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+      <button onClick={onClose} aria-label="Cerrar producto" className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
         <X className="h-6 w-6" />
       </button>
 
@@ -164,7 +164,7 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
         className="w-full h-full sm:h-[85vh] max-w-6xl bg-card border border-border/50 sm:rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-2xl"
       >
         {/* Media Section */}
-        <div className="w-full lg:w-3/5 h-[50vh] lg:h-full bg-black/50 relative border-b lg:border-b-0 lg:border-r border-border/50">
+        <div className="relative h-[52dvh] min-h-[200px] w-full shrink-0 border-b border-border/50 bg-black/50 sm:h-[50vh] lg:h-full lg:w-3/5 lg:shrink lg:border-b-0 lg:border-r">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -175,8 +175,8 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
         </div>
 
         {/* Info Section */}
-        <div className="w-full lg:w-2/5 h-full flex flex-col bg-gradient-to-b from-card to-background overflow-y-auto">
-          <div className="p-6 sm:p-10 flex-1">
+        <div className="w-full lg:w-2/5 flex-1 min-h-0 lg:h-full lg:flex-none flex flex-col bg-gradient-to-b from-card to-background overflow-y-auto">
+          <div className="p-6 lg:p-10 flex-1">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-10 w-10 rounded-full bg-secondary/50 overflow-hidden border border-border/50 shrink-0">
                 {product.avatar_url ? (

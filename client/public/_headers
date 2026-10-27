@@ -1,0 +1,66 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), microphone=(self), camera=(self), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/og-image.png
+  Cache-Control: public, max-age=604800
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/login
+  X-Robots-Tag: noindex, nofollow
+
+/select-role
+  X-Robots-Tag: noindex, nofollow
+
+/dashboard
+  X-Robots-Tag: noindex, nofollow
+
+/admin
+  X-Robots-Tag: noindex, nofollow
+
+/settings
+  X-Robots-Tag: noindex, nofollow
+
+/my-products
+  X-Robots-Tag: noindex, nofollow
+
+/notifications
+  X-Robots-Tag: noindex, nofollow
+
+/messages
+  X-Robots-Tag: noindex, nofollow
+
+/social
+  X-Robots-Tag: noindex, nofollow
+
+/products
+  X-Robots-Tag: noindex, nofollow
+
+/taxi-dashboard
+  X-Robots-Tag: noindex, nofollow
+
+/taxi/*
+  X-Robots-Tag: noindex, nofollow
+
+/request-ride
+  X-Robots-Tag: noindex, nofollow
+
+/ride-history
+  X-Robots-Tag: noindex, nofollow
+
+/u/*
+  X-Robots-Tag: noindex, nofollow

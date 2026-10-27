@@ -460,8 +460,10 @@
     box-shadow: inset 0 1px 0 var(--glass-highlight), 0 24px 55px -28px rgba(0, 0, 0, 0.5);
   }
 
+  /* Do not set `position` here: overlays (Dialog, Sheet, AlertDialog) rely on
+     their own `fixed` utility. Declaring `relative` in this later-defined
+     utility class overrode it and pushed every modal to the bottom of the page. */
   .glass-popover {
-    position: relative;
     background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
     -webkit-backdrop-filter: blur(24px) saturate(190%);
     backdrop-filter: blur(24px) saturate(190%);

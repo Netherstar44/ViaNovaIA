@@ -1,6 +1,6 @@
-import hotelImg from '@assets/generated_images/modern_luxury_hotel_exterior_with_pool.png';
-import restaurantImg from '@assets/generated_images/cozy_italian_restaurant_interior.png';
-import recreationImg from '@assets/generated_images/adventure_park_with_zip_lines.png';
+import hotelImg from '@assets/generated_images/modern_luxury_hotel_exterior_with_pool.webp';
+import restaurantImg from '@assets/generated_images/cozy_italian_restaurant_interior.webp';
+import recreationImg from '@assets/generated_images/adventure_park_with_zip_lines.webp';
 
 export interface LocationItem {
   id: string;

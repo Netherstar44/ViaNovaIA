@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import "@google/model-viewer"; // registra <model-viewer> en cargas directas de /u/:username
 
 interface Profile {
   username: string;
@@ -42,8 +43,8 @@ function Media({ url, type }: { url: string; type?: string | null }) {
   }
   if (type === "3d_model") {
     return (
-      <div className="w-full h-56 bg-black flex items-center justify-center">
-        {createElement("model-viewer" as any, { src: url, "camera-controls": true, "auto-rotate": true, style: { width: "100%", height: "100%" } })}
+      <div className="aspect-[4/3] max-h-80 min-h-[200px] w-full bg-black flex items-center justify-center">
+        {createElement("model-viewer" as any, { src: url, "camera-controls": true, "auto-rotate": true, style: { width: "100%", height: "100%", display: "block" } })}
       </div>
     );
   }

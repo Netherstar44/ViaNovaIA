@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star, Box, Eye } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -33,6 +33,8 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
         <img 
           src={item.image} 
           alt={item.name} 
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute top-3 right-3">
@@ -77,10 +79,11 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
               <DialogContent 
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                className="glass-none h-[min(82dvh,720px)] max-h-[calc(100dvh-0.75rem)] w-[calc(100vw-0.75rem)] max-w-lg overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-none sm:h-[80vh] sm:w-full sm:max-w-[800px]"
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >
+                <DialogTitle className="sr-only">Visor de producto 3D</DialogTitle>
                  <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
                    <VRViewer mode="product" onClose={() => setVrMode(null)} />
                  </Suspense>
@@ -100,10 +103,11 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
               <DialogContent 
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                className="glass-none h-[min(82dvh,720px)] max-h-[calc(100dvh-0.75rem)] w-[calc(100vw-0.75rem)] max-w-lg overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-none sm:h-[80vh] sm:w-full sm:max-w-[800px]"
                 onInteractOutside={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => e.preventDefault()}
               >
+                <DialogTitle className="sr-only">Tour virtual interior 360°</DialogTitle>
                  <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
                    <VRViewer mode="interior" onClose={() => setVrMode(null)} />
                  </Suspense>

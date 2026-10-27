@@ -13,7 +13,7 @@ const resources = {
         role_admin: "Administrador", dashboard: "Mi Panel", switch_role: "Cambiar rol activo"
       },
       home: {
-        hero_title: "Descubre el mundo con", hero_subtitle: "Explora los destinos más exclusivos, sabores inolvidables y experiencias inmersivas impulsadas por inteligencia artificial.",
+        hero_title: "Planifica tu viaje con", hero_subtitle: "Explora destinos, sabores y experiencias inolvidables con un itinerario creado por inteligencia artificial.",
         search_placeholder: "Buscar por nombre, descripción o ciudad...", distance: "Distancia", price: "Precio", explore_btn: "Explorar",
         no_results: "No se encontraron resultados", back: "Volver a Explorar", navigate: "Ir al lugar",
         order_taxi: "Ordenar Taxi", hide_taxi: "Ocultar Taxi", "3d_model": "Ver Modelo 3D", virtual_tour: "Explorar Tour Virtual", ask_info: "Solicitar Información",
@@ -60,7 +60,7 @@ const resources = {
         role_admin: "Administrator", dashboard: "My Dashboard", switch_role: "Switch active role"
       },
       home: {
-        hero_title: "Discover the world with", hero_subtitle: "Explore the most exclusive destinations, unforgettable flavors, and immersive AI-powered experiences.",
+        hero_title: "Plan your trip with", hero_subtitle: "Explore destinations, flavors, and unforgettable experiences with an itinerary created by artificial intelligence.",
         search_placeholder: "Search by name, description or city...", distance: "Distance", price: "Price", explore_btn: "Explore",
         no_results: "No results found", back: "Back to Explore", navigate: "Navigate",
         order_taxi: "Order Taxi", hide_taxi: "Hide Taxi", "3d_model": "View 3D Model", virtual_tour: "Virtual Tour", ask_info: "Request Info",
@@ -107,7 +107,7 @@ const resources = {
         role_admin: "Administrateur", dashboard: "Mon Tableau de Bord", switch_role: "Changer de rôle actif"
       },
       home: {
-        hero_title: "Découvrez le monde avec", hero_subtitle: "Explorez les destinations les plus exclusives, des saveurs inoubliables et des expériences immersives.",
+        hero_title: "Planifiez votre voyage avec", hero_subtitle: "Explorez des destinations, des saveurs et des expériences inoubliables avec un itinéraire créé par l'intelligence artificielle.",
         search_placeholder: "Rechercher par nom, description ou ville...", distance: "Distance", price: "Prix", explore_btn: "Explorer",
         no_results: "Aucun résultat trouvé", back: "Retour", navigate: "Naviguer",
         order_taxi: "Commander Taxi", hide_taxi: "Cacher Taxi", "3d_model": "Modèle 3D", virtual_tour: "Visite Virtuelle", ask_info: "Demander Info",

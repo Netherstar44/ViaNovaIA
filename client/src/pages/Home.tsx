@@ -5,12 +5,13 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import CardItem from "@/components/CardItem";
+import HomeSeoSection from "@/components/HomeSeoSection";
 import Comments from "@/components/Comments";
 import { LocationItem, locations } from "@/data/mockData";
 import { isUsableCoordinatePair, parseCoordinate } from "@/lib/geo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Utensils,
@@ -600,6 +601,8 @@ export default function Home() {
               </div>
 
             </main>
+
+            <HomeSeoSection />
           </motion.div>
         ) : (
           // ================= DASHBOARD VIEW (Detail Focus Layout) =================
@@ -750,10 +753,11 @@ export default function Home() {
                           <DialogContent
                             onClick={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                            className="glass-none h-[min(82dvh,720px)] max-h-[calc(100dvh-0.75rem)] w-[calc(100vw-0.75rem)] max-w-lg overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-none sm:h-[80vh] sm:w-full sm:max-w-[800px]"
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
+                            <DialogTitle className="sr-only">Visor de producto 3D</DialogTitle>
                             <Suspense fallback={<InlineLoader />}>
                               <VRViewer mode="product" onClose={() => setVrMode(null)} />
                             </Suspense>
@@ -769,10 +773,11 @@ export default function Home() {
                           <DialogContent
                             onClick={(e) => e.stopPropagation()}
                             onPointerDown={(e) => e.stopPropagation()}
-                            className="glass-none sm:max-w-[800px] h-[80vh] p-0 border-none bg-transparent shadow-none"
+                            className="glass-none h-[min(82dvh,720px)] max-h-[calc(100dvh-0.75rem)] w-[calc(100vw-0.75rem)] max-w-lg overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-none sm:h-[80vh] sm:w-full sm:max-w-[800px]"
                             onInteractOutside={(e) => e.preventDefault()}
                             onPointerDownOutside={(e) => e.preventDefault()}
                           >
+                            <DialogTitle className="sr-only">Tour virtual interior 360°</DialogTitle>
                             <Suspense fallback={<InlineLoader />}>
                               <VRViewer mode="interior" onClose={() => setVrMode(null)} />
                             </Suspense>

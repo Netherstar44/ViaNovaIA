@@ -21,6 +21,7 @@ tsc-out.txt
 !client/public/brand-icon-512.png
 !client/public/brand-icon-maskable-512.png
 !client/public/brand-apple-touch-icon.png
+!client/public/og-image.png
 !client/src/assets/favicons/*.png
 !docs/seed-neiva-chat.png
 !docs/seed-neiva-3d.png

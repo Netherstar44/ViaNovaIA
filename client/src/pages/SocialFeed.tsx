@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import TranslatedText from "@/components/TranslatedText";
+import "@google/model-viewer"; // registra <model-viewer> en cargas directas de /social
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 interface Post {
@@ -200,12 +201,12 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
       {post.media_url && (
         <div className="relative mx-3 sm:mx-5 overflow-hidden rounded-[16px] shadow-lg">
           {post.media_type === "3d_model" ? (
-            <div className="w-full h-[360px] bg-black">
+            <div className="aspect-[4/3] max-h-[520px] min-h-[240px] w-full bg-black sm:aspect-video">
               {createElement("model-viewer" as any, {
                 src: post.media_url,
                 "camera-controls": true,
                 "auto-rotate": true,
-                style: { width: "100%", height: "100%" },
+                style: { width: "100%", height: "100%", display: "block" },
               })}
             </div>
           ) : post.media_type.includes("video") ? (
