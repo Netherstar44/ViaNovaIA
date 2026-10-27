@@ -817,13 +817,14 @@ const HOTEL_IMAGES = [
   "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80",
   "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80",
   "https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=1200&q=80",
-  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
-  "https://images.unsplash.com/photo-1509056662677-6f96162daed1?w=1200&q=80",
-  "https://images.unsplash.com/photo-1533043832722-8ed635e482c9?w=1200&q=80",
-  "https://images.unsplash.com/photo-1560185007-cde436f6fa47?w=1200&q=80",
-  "https://images.unsplash.com/photo-1519173813791-8e3704115974?w=1200&q=80",
-  "https://images.unsplash.com/photo-1507525428034-b723cf965d3e?w=1200&q=80",
-  "https://images.unsplash.com/photo-1527944344600-5a30c8d9c4d6?w=1200&q=80",
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80",
+  // Rotación de fotos validadas para completar 12 servicios/productos hotel
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80",
+  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80",
+  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80",
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80",
+  "https://images.unsplash.com/photo-1602002418082-a4443e081dd1?w=1200&q=80",
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80",
 ];
 
 const RESTAURANT_IMAGES = [
@@ -833,12 +834,13 @@ const RESTAURANT_IMAGES = [
   "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?w=1200&q=80",
   "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=1200&q=80",
   "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
-  "https://images.unsplash.com/photo-1494226117840-b7bce2c3cb11?w=1200&q=80",
   "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80",
-  "https://images.unsplash.com/photo-1556742049-0cfed4f7a06d?w=1200&q=80",
-  "https://images.unsplash.com/photo-1524758643624-e55b79bdc4ee?w=1200&q=80",
-  "https://images.unsplash.com/photo-1505265523756-3752a92ef9a4?w=1200&q=80",
-  "https://images.unsplash.com/photo-1544035580-620d4d681c76?w=1200&q=80",
+  "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1200&q=80",
+  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=80",
+  // Rotación de fotos validadas para completar 12 servicios/productos restaurant
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80",
+  "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&q=80",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80",
 ];
 
 const RECREATION_IMAGES = [
@@ -851,9 +853,9 @@ const RECREATION_IMAGES = [
   "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1200&q=80",
   "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1200&q=80",
   "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=1200&q=80",
-  "https://images.unsplash.com/photo-1558980395-be7e5d3b9063?w=1200&q=80",
-  "https://images.unsplash.com/photo-1522088851919-3b494d807c95?w=1200&q=80",
   "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80",
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&q=80",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80",
 ];
 
 // 72 slots: 12 servicios hotel, 12 servicios restaurant, 12 servicios recreation,
