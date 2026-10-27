@@ -24,7 +24,11 @@ function escapeHtml(value: string): string {
 }
 
 function verificationTags(): string {
-  const google = process.env.GOOGLE_SITE_VERIFICATION || process.env.VITE_GOOGLE_SITE_VERIFICATION;
+  // Token público de Google Search Console. No es un secreto.
+  const google =
+    process.env.GOOGLE_SITE_VERIFICATION ||
+    process.env.VITE_GOOGLE_SITE_VERIFICATION ||
+    "YG7IZrSM9mL6VVBcMZn3w4bjMzKqU10vgEH-lkLXtFM";
   const bing = process.env.BING_SITE_VERIFICATION || process.env.VITE_BING_SITE_VERIFICATION;
   return [
     google ? `<meta name="google-site-verification" content="${escapeHtml(google)}" />` : "",
