@@ -1,0 +1,31 @@
+1
+00:00:00,500 --> 00:00:03,800
+¿Y si tu próximo viaje empezara con una conversación?
+
+2
+00:00:04,500 --> 00:00:09,800
+Sin veinte pestañas. Sin adivinar. Con ViaNovaIA, solo tienes que decirlo.
+
+3
+00:00:10,500 --> 00:00:16,800
+La IA te responde con lugares reales: hoteles, restaurantes, experiencias y transporte local.
+
+4
+00:00:17,500 --> 00:00:22,000
+Ajusta fechas, pregunta por precios o dicta tu plan.
+
+5
+00:00:22,500 --> 00:00:26,500
+El asistente arma tu itinerario y te deja a un paso de reservar.
+
+6
+00:00:27,500 --> 00:00:32,500
+Muévete con taxis locales y comparte tu ruta con la comunidad.
+
+7
+00:00:33,500 --> 00:00:38,500
+¿Tienes un negocio? Publica tus servicios, gestiona pedidos y entiende tus números.
+
+8
+00:00:39,500 --> 00:00:48,500
+ViaNovaIA. Planifica, descubre y vive Colombia con inteligencia artificial. Tu próximo viaje empieza en via-nova-ia.vercel.app.

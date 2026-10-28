@@ -1,0 +1,161 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0b0b0c;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .glow {
+      position: absolute;
+      left: -320px;
+      top: -360px;
+      width: 1200px;
+      height: 1100px;
+      background: radial-gradient(circle at 40% 40%, rgba(255, 191, 0, 0.18), rgba(255, 191, 0, 0.05) 38%, transparent 68%);
+      filter: blur(10px);
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 48% 44%, transparent 42%, rgba(0, 0, 0, 0.52) 100%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.055;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .thread {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+    }
+    .thread path {
+      fill: none;
+      stroke: #ffbf00;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 10px rgba(255, 191, 0, 0.55));
+    }
+    .caret {
+      position: absolute;
+      left: 148px;
+      top: 252px;
+      width: 5px;
+      height: 118px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, rgba(255, 191, 0, 0.15), #ffbf00 22%, #ffbf00 78%, rgba(255, 191, 0, 0.1));
+      box-shadow: 0 0 22px rgba(255, 191, 0, 0.75), 0 0 60px rgba(255, 191, 0, 0.28);
+    }
+    .logo-lockup {
+      position: absolute;
+      left: 224px;
+      top: 92px;
+      display: flex;
+      align-items: center;
+      gap: 26px;
+    }
+    .logo-lockup img {
+      width: 186px;
+      height: auto;
+      mix-blend-mode: screen;
+      filter: drop-shadow(0 10px 34px rgba(255, 191, 0, 0.24));
+    }
+    .wordmark {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 74px;
+      letter-spacing: -0.045em;
+      line-height: 1;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .wordmark .ia {
+      color: #ffbf00;
+    }
+    .rule {
+      position: absolute;
+      left: 152px;
+      top: 476px;
+      width: 118px;
+      height: 3px;
+      border-radius: 3px;
+      background: #ffbf00;
+      box-shadow: 0 0 18px rgba(255, 191, 0, 0.55);
+    }
+    .headline {
+      position: absolute;
+      left: 148px;
+      top: 510px;
+      width: 1540px;
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 92px;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      color: #ffffff;
+    }
+    .headline .gold {
+      color: #ffbf00;
+    }
+  </style>
+  <div id="root" data-composition-id="s1-opening" data-width="1920" data-height="1080">
+    <div class="glow" data-layout-ignore></div>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path d="M 151 372 C 190 372, 214 344, 244 326 C 276 306, 306 300, 342 296" />
+    </svg>
+    <div class="caret"></div>
+    <div class="logo-lockup">
+      <img src="assets/img/logo.png" alt="ViaNova" />
+      <div class="wordmark">VIANova <span class="ia">IA</span></div>
+    </div>
+    <div class="rule"></div>
+    <h1 class="headline">¿Y si tu próximo viaje<br />empezara con una <span class="gold">conversación</span>?</h1>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.logo-lockup', { opacity: 0, y: 24, scale: 0.94 });
+    gsap.set('.rule', { width: 0, opacity: 0 });
+    gsap.set('.headline', { opacity: 0, y: 30 });
+    gsap.set('.thread', { opacity: 0, scaleX: 0.4, transformOrigin: 'left center' });
+    gsap.set('.caret', { opacity: 0, scaleY: 0.3, transformOrigin: 'top center' });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s - 1.0s: Caret appears and pulses
+    tl.to('.caret', { opacity: 1, scaleY: 1, duration: 0.5, ease: 'power2.out' }, 0.2);
+    tl.to('.caret', { opacity: 0.35, duration: 0.25, repeat: 2, yoyo: true }, 0.7);
+
+    // 1.0s: Golden thread starts expanding
+    tl.to('.thread', { opacity: 1, scaleX: 1, duration: 1.2, ease: 'power2.out' }, 1.0);
+
+    // 1.2s: Logo lockup reveals
+    tl.to('.logo-lockup', { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'power3.out' }, 1.2);
+
+    // 1.8s: Accent rule expands
+    tl.to('.rule', { width: 118, opacity: 1, duration: 0.6, ease: 'power2.out' }, 1.8);
+
+    // 2.0s: Headline reveals
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, 2.0);
+
+    // 2.5s - 4.0s: Subtle push-in
+    tl.to('#root', { scale: 1.035, transformOrigin: 'center center', duration: 1.5, ease: 'sine.inOut' }, 2.5);
+
+    window.__timelines["s1-opening"] = tl;
+  </script>
+</template>

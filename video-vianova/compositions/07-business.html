@@ -1,0 +1,253 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      background: #f5f4f0; color: #0b0b0c; font-family: Inter, sans-serif;
+    }
+    .grain {
+      position: absolute; inset: 0; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply;
+    }
+    .glow {
+      position: absolute; right: -260px; top: -300px; width: 1100px; height: 900px;
+      background: radial-gradient(circle, rgba(255,191,0,0.16), transparent 66%);
+    }
+    .headline {
+      position: absolute; left: 140px; top: 76px; z-index: 3;
+      font-family: Poppins, sans-serif; font-weight: 800; font-size: 62px;
+      letter-spacing: -0.04em; line-height: 1.02; color: #0b0b0c;
+    }
+    .headline .gold { color: #ffbf00; }
+    .headline .underline {
+      display: inline-block; position: relative;
+    }
+    .headline .underline::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 4px;
+      border-radius: 4px; background: #ffbf00; box-shadow: 0 0 18px rgba(255,191,0,.4);
+    }
+    .window {
+      position: absolute; left: 140px; top: 232px; width: 1640px; height: 790px;
+      border-radius: 24px; background: #ffffff; overflow: hidden;
+      border: 1px solid rgba(11,11,12,0.08);
+      box-shadow: 0 50px 120px rgba(11,11,12,0.16), 0 2px 0 rgba(11,11,12,0.03);
+      z-index: 2;
+    }
+    .window-bar {
+      height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 18px;
+      background: #f0efeb; border-bottom: 1px solid rgba(11,11,12,0.06);
+    }
+    .window-bar i { width: 10px; height: 10px; border-radius: 50%; background: #d7d4cc; }
+    .window-bar i:first-child { background: #ffbf00; }
+    .window-bar .url {
+      margin-left: 16px; height: 26px; flex: 1; border-radius: 8px; background: #ffffff;
+      display: flex; align-items: center; padding: 0 12px;
+      font-size: 12px; color: rgba(11,11,12,0.4);
+    }
+    .topnav {
+      height: 64px; display: flex; align-items: center; gap: 18px; padding: 0 26px;
+      border-bottom: 1px solid rgba(11,11,12,0.07);
+    }
+    .topnav .brand { display: flex; align-items: center; gap: 10px; }
+    .topnav .logo-box {
+      width: 34px; height: 34px; border-radius: 9px; background: #0b0b0c;
+      display: grid; place-items: center;
+    }
+    .topnav .logo-box img { width: 25px; mix-blend-mode: screen; }
+    .topnav .wordmark {
+      font-family: Poppins, sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.04em;
+    }
+    .topnav .wordmark span { color: #ffbf00; }
+    .topnav .links { display: flex; gap: 18px; margin-left: 20px; font-size: 12px; color: rgba(11,11,12,0.46); }
+    .topnav .links b { color: #ffbf00; font-weight: 600; }
+    .topnav .user {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: rgba(11,11,12,0.55);
+    }
+    .topnav .user .pic {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+    }
+    .content { padding: 24px 26px 0; }
+    .content-head { display: flex; align-items: flex-start; gap: 16px; }
+    .content-head h2 {
+      font-family: Poppins, sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -0.035em;
+    }
+    .content-head p { margin-top: 5px; font-size: 13px; color: rgba(11,11,12,0.46); }
+    .roles { margin-left: auto; display: flex; gap: 8px; }
+    .roles span {
+      padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(11,11,12,0.1);
+      font-size: 12px; font-weight: 600; color: rgba(11,11,12,0.46);
+    }
+    .roles span.active { background: #ffbf00; border-color: #ffbf00; color: #0b0b0c; }
+    .chips { display: flex; gap: 8px; margin-top: 16px; }
+    .chips span {
+      padding: 7px 12px; border-radius: 999px; background: #f5f4f0;
+      font-size: 11px; font-weight: 600; color: rgba(11,11,12,0.5);
+    }
+    .chips span:first-child { background: rgba(255,191,0,0.16); color: #a86a00; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+    .kpi {
+      border-radius: 14px; border: 1px solid rgba(11,11,12,0.07); background: #fbfaf7;
+      padding: 16px 18px; position: relative; overflow: hidden;
+    }
+    .kpi .label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(11,11,12,0.4); }
+    .kpi .value { margin-top: 7px; font-family: Poppins, sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.04em; }
+    .kpi .delta { margin-top: 4px; font-size: 11px; color: #2f9e63; font-weight: 600; }
+    .kpi .icon {
+      position: absolute; right: 14px; top: 14px; width: 30px; height: 30px; border-radius: 9px;
+      background: rgba(255,191,0,0.16); display: grid; place-items: center; color: #b47400;
+    }
+    .kpi .icon svg { width: 16px; height: 16px; }
+    .lower { display: grid; grid-template-columns: 1.55fr 1fr; gap: 14px; margin-top: 14px; }
+    .chart-card, .orders-card {
+      border-radius: 16px; border: 1px solid rgba(11,11,12,0.07); background: #ffffff;
+      padding: 18px 20px; box-shadow: 0 10px 30px rgba(11,11,12,0.03);
+    }
+    .card-head { display: flex; align-items: center; gap: 10px; }
+    .card-head h3 { font-size: 15px; font-weight: 700; }
+    .card-head span { margin-left: auto; font-size: 11px; color: rgba(11,11,12,0.4); }
+    .chart { position: relative; height: 210px; margin-top: 14px; }
+    .chart svg { width: 100%; height: 100%; overflow: visible; }
+    .chart .grid line { stroke: rgba(11,11,12,0.06); stroke-width: 1; }
+    .chart .axis text { fill: rgba(11,11,12,0.36); font-size: 10px; }
+    .chart .line {
+      fill: none; stroke: #ffbf00; stroke-width: 3.2; stroke-linecap: round;
+      filter: drop-shadow(0 0 8px rgba(255,191,0,0.35));
+    }
+    .chart .area { fill: url(#goldArea); }
+    .orders { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .order { display: flex; align-items: center; gap: 10px; }
+    .order .dot {
+      width: 30px; height: 30px; border-radius: 9px; background: rgba(255,191,0,0.16);
+      display: grid; place-items: center; color: #b47400; flex: 0 0 auto;
+    }
+    .order .dot svg { width: 15px; height: 15px; }
+    .order strong { display: block; font-size: 12px; font-weight: 600; }
+    .order span { display: block; margin-top: 2px; font-size: 10px; color: rgba(11,11,12,0.42); }
+    .order .status {
+      margin-left: auto; padding: 5px 8px; border-radius: 999px;
+      background: rgba(255,191,0,0.16); color: #a86a00; font-size: 9px; font-weight: 700;
+    }
+    .toast {
+      position: absolute; right: 24px; top: 20px; z-index: 5;
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      border-radius: 12px; background: #0b0b0c; color: #fff;
+      box-shadow: 0 18px 40px rgba(11,11,12,0.2);
+    }
+    .toast .icon {
+      width: 28px; height: 28px; border-radius: 8px; background: #ffbf00;
+      display: grid; place-items: center; color: #0b0b0c;
+    }
+    .toast .icon svg { width: 15px; height: 15px; }
+    .toast strong { display: block; font-size: 11px; font-weight: 600; }
+    .toast span { display: block; margin-top: 2px; font-size: 9px; color: rgba(255,255,255,0.5); }
+    .demo {
+      position: absolute; right: 26px; bottom: 16px; font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: rgba(11,11,12,0.3);
+    }
+  </style>
+  <div id="root" data-composition-id="s7-business" data-width="1920" data-height="1080">
+    <div class="glow" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+    <h1 class="headline">Tu negocio,<br /><span class="underline">en el <span class="gold">mapa.</span></span></h1>
+
+    <div class="window">
+      <div class="window-bar"><i></i><i></i><i></i><div class="url">via-nova-ia.vercel.app/panel</div></div>
+      <div class="topnav">
+        <div class="brand">
+          <div class="logo-box"><img src="assets/img/logo.png" alt="ViaNova" /></div>
+          <div class="wordmark">VIANova <span>IA</span></div>
+        </div>
+        <div class="links"><span>Explorar</span><span>Social</span><b>Mi Panel</b></div>
+      </div>
+
+      <div class="content">
+        <div class="content-head">
+          <div><h2>Panel del Proveedor</h2><p>Reservas, pedidos y números de tu negocio.</p></div>
+          <div class="roles"><span>Viajero</span><span class="active">Hotel</span></div>
+        </div>
+        <div class="chips"><span>Hotel</span><span>Restaurante</span><span>Recreación</span><span>Taxi</span><span>Traductor</span></div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="label">Ingresos</div><div class="value">$2.4M</div><div class="delta">+18% este mes</div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6"/></svg></div></div>
+          <div class="kpi"><div class="label">Pedidos</div><div class="value">18</div><div class="delta">+6 esta semana</div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/></svg></div></div>
+          <div class="kpi"><div class="label">Stock</div><div class="value">12</div><div class="delta">Disponible</div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v13H4zM4 7l2-4h12l2 4"/></svg></div></div>
+          <div class="kpi"><div class="label">Ocupación</div><div class="value">78%</div><div class="delta">+12 pts</div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 12l4-3"/></svg></div></div>
+        </div>
+
+        <div class="lower">
+          <div class="chart-card">
+            <div class="card-head"><h3>Ingresos últimos 30 días</h3><span>Total · $2.4M</span></div>
+            <div class="chart">
+              <svg viewBox="0 0 700 210" preserveAspectRatio="none">
+                <defs><linearGradient id="goldArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffbf00" stop-opacity="0.24"/><stop offset="1" stop-color="#ffbf00" stop-opacity="0"/></linearGradient></defs>
+                <g class="grid"><line x1="0" y1="40" x2="700" y2="40"/><line x1="0" y1="90" x2="700" y2="90"/><line x1="0" y1="140" x2="700" y2="140"/><line x1="0" y1="190" x2="700" y2="190"/></g>
+                <path class="area" d="M0 170 C 70 164, 100 150, 160 146 C 220 142, 250 120, 310 118 C 370 116, 400 92, 460 86 C 520 80, 560 58, 620 50 C 660 45, 680 40, 700 36 L700 210 L0 210 Z"/>
+                <path class="line" d="M0 170 C 70 164, 100 150, 160 146 C 220 142, 250 120, 310 118 C 370 116, 400 92, 460 86 C 520 80, 560 58, 620 50 C 660 45, 680 40, 700 36"/>
+                <g class="axis"><text x="0" y="208">1 oct</text><text x="170" y="208">8 oct</text><text x="340" y="208">15 oct</text><text x="510" y="208">22 oct</text><text x="670" y="208">30 oct</text></g>
+              </svg>
+            </div>
+          </div>
+
+          <div class="orders-card">
+            <div class="card-head"><h3>Pedidos recientes</h3><span>Hoy</span></div>
+            <div class="orders">
+              <div class="order"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v13H4zM4 7l2-4h12l2 4"/></svg></div><div><strong>Hotel Plaza Neiva</strong><span>2 noches · 2 huéspedes</span></div><div class="status">Nuevo</div></div>
+              <div class="order"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/></svg></div><div><strong>Cena · Asadero El Huilense</strong><span>Vie 30 · 8:00 p. m.</span></div><div class="status">Nuevo</div></div>
+              <div class="order"><div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4c2.5 2.2 3.8 5 3.8 8s-1.3 5.8-3.8 8"/></svg></div><div><strong>Tour Tatacoa 360°</strong><span>Sáb 31 · 2 personas</span></div><div class="status">Nuevo</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/></svg></div>
+        <div><strong>Nuevo pedido</strong><span>Tour Tatacoa 360°</span></div>
+      </div>
+      <div class="demo">Vista de demostración</div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.headline', { opacity: 0, y: 22 });
+    gsap.set('.board', { opacity: 0, y: 28, scale: 0.95 });
+    gsap.set('.chips span', { opacity: 0, y: 12 });
+    gsap.set('.kpi', { opacity: 0, y: 16 });
+    gsap.set('.chart-card', { opacity: 0, y: 20 });
+    gsap.set('.orders-card', { opacity: 0, y: 20 });
+    gsap.set('.chart path.line', { opacity: 0, scaleY: 0.3, transformOrigin: 'bottom center' });
+    gsap.set('.toast', { opacity: 0, x: 45, scale: 0.92 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s: Headline appears
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.2);
+
+    // 0.3s: Dashboard panel appears
+    tl.to('.board', { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: 'power3.out' }, 0.3);
+
+    // 0.8s: Chips slide in
+    tl.to('.chips span', { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: 'power2.out' }, 0.8);
+
+    // 1.3s: KPIs stagger in
+    tl.to('.kpi', { opacity: 1, y: 0, duration: 0.5, stagger: 0.15, ease: 'back.out(1.4)' }, 1.3);
+
+    // 2.0s: Chart & Orders cards appear
+    tl.to('.chart-card', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 2.0);
+    tl.to('.orders-card', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 2.2);
+
+    // 2.5s: Chart line animates up
+    tl.to('.chart path.line', { opacity: 1, scaleY: 1, duration: 1.2, ease: 'power2.out' }, 2.5);
+
+    // 3.8s: New order toast pops in
+    tl.to('.toast', { opacity: 1, x: 0, scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, 3.8);
+
+    // Push camera
+    tl.to('#root', { scale: 1.03, transformOrigin: 'center center', duration: 6.0, ease: 'none' }, 0);
+
+    window.__timelines["s7-business"] = tl;
+  </script>
+</template>

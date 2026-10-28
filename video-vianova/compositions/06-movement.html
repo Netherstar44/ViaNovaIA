@@ -1,0 +1,621 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0b0b0c;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .map {
+      position: absolute;
+      inset: -30px;
+      background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.62) saturate(0.9);
+      transform: scale(1.04);
+    }
+    .map-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 11, 12, 0.9) 0%, rgba(11, 11, 12, 0.42) 44%, rgba(11, 11, 12, 0.3) 100%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 38% 48%, transparent 38%, rgba(0, 0, 0, 0.5) 100%);
+    }
+    .route {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+    }
+    .route path {
+      fill: none;
+      stroke: #ffbf00;
+      stroke-width: 3.4;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 10px rgba(255, 191, 0, 0.65));
+    }
+    .taxi {
+      position: absolute;
+      left: 720px;
+      top: 520px;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+      box-shadow: 0 0 0 1px rgba(255, 230, 150, 0.65), 0 0 34px rgba(255, 191, 0, 0.45), 0 18px 40px rgba(0, 0, 0, 0.45);
+      z-index: 3;
+    }
+    .taxi svg {
+      width: 30px;
+      height: 30px;
+      color: #0b0b0c;
+    }
+    .headline {
+      position: absolute;
+      left: 96px;
+      bottom: 104px;
+      z-index: 4;
+    }
+    .headline .rule {
+      width: 92px;
+      height: 3px;
+      border-radius: 3px;
+      background: #ffbf00;
+      box-shadow: 0 0 18px rgba(255, 191, 0, 0.5);
+      margin-bottom: 26px;
+    }
+    .headline h2 {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 68px;
+      line-height: 1.02;
+      letter-spacing: -0.038em;
+      color: #ffffff;
+    }
+    .headline h2 .gold {
+      color: #ffbf00;
+    }
+    .taxi-card {
+      position: absolute;
+      left: 96px;
+      top: 250px;
+      width: 420px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 191, 0, 0.26);
+      background: linear-gradient(158deg, rgba(30, 28, 24, 0.92), rgba(12, 12, 13, 0.96));
+      box-shadow: 0 34px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(24px) saturate(130%);
+      padding: 24px;
+      z-index: 4;
+    }
+    .taxi-card .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ffbf00;
+    }
+    .taxi-card .eyebrow svg {
+      width: 15px;
+      height: 15px;
+    }
+    .taxi-card h3 {
+      margin-top: 12px;
+      font-family: Poppins, sans-serif;
+      font-size: 31px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+    }
+    .taxi-card .sub {
+      margin-top: 6px;
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .taxi-card .driver {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .taxi-card .driver .pic {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+      color: #0b0b0c;
+      font-weight: 800;
+      font-size: 17px;
+    }
+    .taxi-card .driver strong {
+      display: block;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .taxi-card .driver span {
+      display: block;
+      margin-top: 2px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.46);
+    }
+    .taxi-card .eta {
+      margin-left: auto;
+      text-align: right;
+    }
+    .taxi-card .eta b {
+      display: block;
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffbf00;
+    }
+    .taxi-card .eta span {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    .progress {
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      margin-top: 18px;
+      overflow: hidden;
+    }
+    .progress i {
+      display: block;
+      width: 64%;
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #b47400, #ffbf00);
+      box-shadow: 0 0 12px rgba(255, 191, 0, 0.45);
+    }
+    .push {
+      position: absolute;
+      left: 560px;
+      top: 96px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 191, 0, 0.24);
+      background: rgba(14, 14, 15, 0.8);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      z-index: 4;
+    }
+    .push .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+    }
+    .push .icon svg {
+      width: 21px;
+      height: 21px;
+      color: #0b0b0c;
+    }
+    .push strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .push span {
+      display: block;
+      margin-top: 3px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.46);
+    }
+    .social {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 800px;
+      height: 1080px;
+      background: #f5f4f0;
+      clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%);
+      z-index: 5;
+      overflow: hidden;
+      box-shadow: -40px 0 100px rgba(0, 0, 0, 0.35);
+    }
+    .social::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(700px 400px at 82% 8%, rgba(255, 191, 0, 0.12), transparent 68%);
+    }
+    .social-edge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      z-index: 6;
+    }
+    .social-edge line {
+      stroke: #ffbf00;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 10px rgba(255, 191, 0, 0.55));
+    }
+    .social-inner {
+      position: relative;
+      padding: 76px 110px 0 190px;
+      color: #0b0b0c;
+    }
+    .social-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .social-brand .pin {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+      box-shadow: 0 10px 24px rgba(255, 191, 0, 0.28);
+    }
+    .social-brand .pin svg {
+      width: 21px;
+      height: 21px;
+      color: #0b0b0c;
+    }
+    .social-brand .name {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 42px;
+      letter-spacing: -0.045em;
+      color: #ffbf00;
+    }
+    .social-brand .name span {
+      color: #0b0b0c;
+    }
+    .social-tag {
+      margin-top: 10px;
+      font-size: 22px;
+      color: rgba(11, 11, 12, 0.56);
+    }
+    .post {
+      margin-top: 34px;
+      width: 520px;
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 30px 70px rgba(11, 11, 12, 0.12), 0 2px 0 rgba(11, 11, 12, 0.03);
+      overflow: hidden;
+    }
+    .post-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+    }
+    .post-head .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+      color: #0b0b0c;
+      font-weight: 800;
+      font-size: 17px;
+    }
+    .post-head strong {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0b0b0c;
+    }
+    .post-head span {
+      display: block;
+      margin-top: 2px;
+      font-size: 13px;
+      color: rgba(11, 11, 12, 0.46);
+    }
+    .post-head .more {
+      margin-left: auto;
+      color: rgba(11, 11, 12, 0.35);
+      font-size: 20px;
+      letter-spacing: 0.1em;
+    }
+    .post-image {
+      position: relative;
+      height: 300px;
+      background-image: url("assets/img/tatacoa.jpg");
+      background-size: cover;
+      background-position: center bottom;
+    }
+    .post-image::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 52%, rgba(11, 11, 12, 0.48) 100%);
+    }
+    .post-image .location {
+      position: absolute;
+      left: 18px;
+      bottom: 16px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(11, 11, 12, 0.55);
+      backdrop-filter: blur(12px);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .post-image .location svg {
+      width: 13px;
+      height: 13px;
+      color: #ffbf00;
+    }
+    .post-body {
+      padding: 16px 20px 20px;
+    }
+    .post-body h3 {
+      font-family: Poppins, sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: #0b0b0c;
+    }
+    .post-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .like-wrap {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+    }
+    .like-wrap .ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 191, 0, 0.55);
+      box-shadow: 0 0 24px rgba(255, 191, 0, 0.35);
+    }
+    .like-wrap .ray {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 4px;
+      height: 14px;
+      border-radius: 4px;
+      background: #ffbf00;
+      transform-origin: 50% 34px;
+      box-shadow: 0 0 8px rgba(255, 191, 0, 0.5);
+    }
+    .like-wrap svg {
+      width: 28px;
+      height: 28px;
+      color: #ffbf00;
+      filter: drop-shadow(0 0 8px rgba(255, 191, 0, 0.4));
+    }
+    .count {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0b0b0c;
+    }
+    .comment {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: rgba(11, 11, 12, 0.45);
+    }
+    .comment svg {
+      width: 18px;
+      height: 18px;
+    }
+    .comment-line {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(11, 11, 12, 0.08);
+      font-size: 14px;
+      line-height: 1.4;
+      color: rgba(11, 11, 12, 0.62);
+    }
+    .comment-line b {
+      color: #0b0b0c;
+    }
+  </style>
+  <div id="root" data-composition-id="s6-movement" data-width="1920" data-height="1080">
+    <div class="map" data-layout-ignore></div>
+    <div class="map-shade" data-layout-ignore></div>
+    <svg class="route" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path d="M 214 660 C 320 600, 420 612, 520 560 C 640 498, 690 540, 752 552" />
+    </svg>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="push">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 16h14l-1.4-5.2A2 2 0 0 0 15.7 9H8.3a2 2 0 0 0-1.9 1.8L5 16Z"></path>
+          <path d="M4 16v3h2v-3M18 16v3h2v-3"></path>
+          <circle cx="7.5" cy="16" r="1.2"></circle>
+          <circle cx="16.5" cy="16" r="1.2"></circle>
+        </svg>
+      </div>
+      <div><strong>Conductor en camino</strong><span>Tu taxi local llega en 4 min</span></div>
+    </div>
+
+    <div class="taxi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 16h14l-1.4-5.2A2 2 0 0 0 15.7 9H8.3a2 2 0 0 0-1.9 1.8L5 16Z"></path>
+        <path d="M4 16v3h2v-3M18 16v3h2v-3"></path>
+        <circle cx="7.5" cy="16" r="1.2"></circle>
+        <circle cx="16.5" cy="16" r="1.2"></circle>
+      </svg>
+    </div>
+
+    <div class="taxi-card">
+      <div class="eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 16h14l-1.4-5.2A2 2 0 0 0 15.7 9H8.3a2 2 0 0 0-1.9 1.8L5 16Z"></path>
+          <path d="M4 16v3h2v-3M18 16v3h2v-3"></path>
+        </svg>
+        Viaje solicitado
+      </div>
+      <h3>Conductor en camino</h3>
+      <div class="sub">Taxi local · Neiva</div>
+      <div class="driver">
+        <div class="pic">C</div>
+        <div><strong>Conductor local</strong><span>Placa · DEMO 123</span></div>
+        <div class="eta"><b>4 min</b><span>Llegada</span></div>
+      </div>
+      <div class="progress"><i></i></div>
+    </div>
+
+    <div class="headline">
+      <div class="rule"></div>
+      <h2>Muévete. <span class="gold">Comparte.</span> Vive.</h2>
+    </div>
+
+    <div class="social">
+      <div class="social-inner">
+        <div class="social-brand">
+          <div class="pin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"></path>
+              <circle cx="12" cy="10" r="2.6"></circle>
+            </svg>
+          </div>
+          <div class="name">Via<span>Social</span></div>
+        </div>
+        <div class="social-tag">Comparte tu Aventura</div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">C</div>
+            <div><strong>Camila Viajera</strong><span>@camila.viaja · Ahora</span></div>
+            <div class="more">···</div>
+          </div>
+          <div class="post-image">
+            <div class="location">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="2.6"></circle>
+              </svg>
+              Villavieja, Huila
+            </div>
+          </div>
+          <div class="post-body">
+            <h3>Atardecer en la Tatacoa</h3>
+            <div class="post-actions">
+              <div class="like-wrap">
+                <div class="ring" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(0deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(45deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(90deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(135deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(180deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(225deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(270deg) translateY(-34px)" data-layout-ignore></div>
+                <div class="ray" style="transform: translate(-50%, -50%) rotate(315deg) translateY(-34px)" data-layout-ignore></div>
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 21s-7.5-4.7-9.4-9.2C1.2 8.4 3 5.3 6.3 5.3c2 0 3.3 1.1 4 2.2.7-1.1 2-2.2 4-2.2 3.3 0 5.1 3.1 3.7 6.5C19.5 16.3 12 21 12 21Z" />
+                </svg>
+              </div>
+              <div class="count">128</div>
+              <div class="comment">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a8.5 8.5 0 0 1-8.5 8.5H7L3 23v-5.5A8.5 8.5 0 1 1 21 12Z"></path>
+                </svg>
+                12
+              </div>
+            </div>
+            <div class="comment-line"><b>ViaNova Travel</b> Ruta guardada en tu itinerario.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <svg class="social-edge" viewBox="0 0 1920 1080" data-layout-ignore>
+      <line x1="1232" y1="0" x2="1120" y2="1080" />
+    </svg>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.headline', { opacity: 0, y: 22 });
+    gsap.set('.taxi-card', { opacity: 0, y: 28, scale: 0.94 });
+    gsap.set('.taxi', { opacity: 0, x: -40, y: 20 });
+    gsap.set('.progress i', { width: '18%' });
+    gsap.set('.social', { opacity: 0, x: 80 });
+    gsap.set('.ring', { opacity: 0, scale: 0.2 });
+    gsap.set('.ray', { opacity: 0, scale: 0.2 });
+    gsap.set('.comment-line', { opacity: 0, y: 12 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s: Headline appears
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.2);
+
+    // 0.4s: Taxi card & taxi icon appear
+    tl.to('.taxi-card', { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.5)' }, 0.4);
+    tl.to('.taxi', { opacity: 1, duration: 0.4 }, 0.4);
+
+    // 0.8s - 2.6s: Taxi moves along the route
+    tl.to('.taxi', { x: 75, y: -35, duration: 1.8, ease: 'power1.inOut' }, 0.8);
+    tl.to('.progress i', { width: '85%', duration: 1.8, ease: 'power1.inOut' }, 0.8);
+
+    // 2.4s: ViaSocial card slides in
+    tl.to('.social', { opacity: 1, x: 0, duration: 0.8, ease: 'power3.out' }, 2.4);
+
+    // 3.5s: Like heart bounce and ring/rays burst
+    tl.to('.like-wrap svg', { scale: 1.35, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.out' }, 3.5);
+    tl.to('.ring', { opacity: 0.85, scale: 2.2, duration: 0.45, ease: 'power2.out' }, 3.5);
+    tl.to('.ring', { opacity: 0, duration: 0.2 }, 3.8);
+    tl.to('.ray', { opacity: 0.9, scale: 1.6, duration: 0.4, ease: 'power2.out' }, 3.5);
+    tl.to('.ray', { opacity: 0, duration: 0.2 }, 3.8);
+
+    // 4.3s: Comment line appears
+    tl.to('.comment-line', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 4.3);
+
+    // Push camera
+    tl.to('#root', { scale: 1.03, transformOrigin: 'center center', duration: 6.0, ease: 'none' }, 0);
+
+    window.__timelines["s6-movement"] = tl;
+  </script>
+</template>

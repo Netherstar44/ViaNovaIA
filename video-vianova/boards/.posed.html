@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #0b0b0c;
+        --gold: #ffbf00;
+        --cream: #f5f4f0;
+        --white: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ground);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="46"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="s1-opening"
+        data-composition-id="s1-opening"
+        data-composition-src="compositions/01-opening.html"
+        data-start="0"
+        data-duration="4"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s2-chat"
+        data-composition-id="s2-chat"
+        data-composition-src="compositions/02-chat.html"
+        data-start="4"
+        data-duration="6"
+        data-track-index="2"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s3-discovery"
+        data-composition-id="s3-discovery"
+        data-composition-src="compositions/03-discovery.html"
+        data-start="10"
+        data-duration="7"
+        data-track-index="3"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s4-booking"
+        data-composition-id="s4-booking"
+        data-composition-src="compositions/04-booking.html"
+        data-start="17"
+        data-duration="5.5"
+        data-track-index="4"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s5-voice"
+        data-composition-id="s5-voice"
+        data-composition-src="compositions/05-voice.html"
+        data-start="22.5"
+        data-duration="4.5"
+        data-track-index="5"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s6-movement"
+        data-composition-id="s6-movement"
+        data-composition-src="compositions/06-movement.html"
+        data-start="27"
+        data-duration="6"
+        data-track-index="6"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s7-business"
+        data-composition-id="s7-business"
+        data-composition-src="compositions/07-business.html"
+        data-start="33"
+        data-duration="6"
+        data-track-index="7"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s8-closing"
+        data-composition-id="s8-closing"
+        data-composition-src="compositions/08-closing.html"
+        data-start="39"
+        data-duration="7"
+        data-track-index="8"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

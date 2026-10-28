@@ -1,0 +1,438 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      background: #0b0b0c; color: #ffffff; font-family: Inter, sans-serif;
+    }
+    .halo {
+      position: absolute; right: -180px; top: -260px; width: 1400px; height: 1200px;
+      background: radial-gradient(circle at 52% 44%, rgba(255,191,0,0.20), rgba(255,191,0,0.06) 34%, transparent 66%);
+      filter: blur(8px);
+    }
+    .halo-2 {
+      position: absolute; left: -300px; bottom: -420px; width: 1100px; height: 900px;
+      background: radial-gradient(circle, rgba(255,191,0,0.09), transparent 64%);
+    }
+    .curves { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0.5; }
+    .curves path { fill: none; stroke: rgba(255,191,0,0.16); stroke-width: 1.4; }
+    .curves circle { fill: rgba(255,191,0,0.55); }
+    .grain {
+      position: absolute; inset: 0; opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .vignette {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 46% 46%, transparent 40%, rgba(0,0,0,0.55) 100%);
+    }
+
+    .logo-lockup {
+      position: absolute; left: 132px; top: 92px; display: flex; align-items: center; gap: 18px;
+    }
+    .logo-lockup img {
+      width: 94px; height: auto; mix-blend-mode: screen;
+      filter: drop-shadow(0 8px 26px rgba(255,191,0,0.26));
+    }
+    .wordmark {
+      font-family: Poppins, sans-serif; font-weight: 800; font-size: 42px;
+      letter-spacing: -0.045em; line-height: 1; white-space: nowrap;
+    }
+    .wordmark .ia { color: #ffbf00; }
+
+    .tagline {
+      position: absolute; left: 128px; top: 292px;
+      font-family: Poppins, sans-serif; font-weight: 800; font-size: 104px;
+      line-height: 0.99; letter-spacing: -0.045em;
+    }
+    .tagline span { display: block; }
+    .tagline .gold { color: #ffbf00; }
+
+    .url-block { position: absolute; left: 134px; top: 652px; }
+    .url {
+      position: relative; display: inline-block;
+      font-size: 38px; font-weight: 600; letter-spacing: -0.02em; color: #ffffff;
+    }
+    .url::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -12px; height: 4px;
+      border-radius: 4px; background: #ffbf00;
+      box-shadow: 0 0 18px rgba(255,191,0,0.65), 0 0 44px rgba(255,191,0,0.28);
+    }
+    .platforms {
+      margin-top: 34px; font-size: 17px; font-weight: 600; letter-spacing: 0.2em;
+      text-transform: uppercase; color: rgba(255,255,255,0.5);
+    }
+
+    .qr-card {
+      position: absolute; left: 134px; top: 810px; width: 158px; height: 158px;
+      border-radius: 18px; background: #f5f4f0; padding: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    .qr-card img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .qr-corner {
+      position: absolute; left: 112px; top: 788px; width: 202px; height: 202px;
+      border: 1px solid rgba(255,191,0,0.35); border-radius: 26px;
+      pointer-events: none;
+    }
+
+    .laptop {
+      position: absolute; left: 748px; top: 178px; width: 1040px; height: 636px;
+      border-radius: 22px; background: #16161a;
+      border: 1px solid rgba(255,255,255,0.13);
+      box-shadow: 0 70px 140px rgba(0,0,0,0.62), 0 0 0 1px rgba(255,191,0,0.08),
+                  inset 0 1px 0 rgba(255,255,255,0.1);
+      padding: 12px;
+    }
+    .screen {
+      width: 100%; height: 100%; border-radius: 13px; overflow: hidden;
+      background: #0f0f12; border: 1px solid rgba(255,255,255,0.07);
+    }
+    .screen-bar {
+      height: 38px; display: flex; align-items: center; gap: 7px; padding: 0 14px;
+      background: #17171b; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .screen-bar i { width: 9px; height: 9px; border-radius: 50%; background: #34343a; }
+    .screen-bar i:first-child { background: #ffbf00; }
+    .screen-bar .addr {
+      margin-left: 14px; flex: 1; height: 22px; border-radius: 6px;
+      background: rgba(255,255,255,0.05); display: flex; align-items: center;
+      padding: 0 10px; font-size: 10px; color: rgba(255,255,255,0.38);
+    }
+    .app { display: flex; height: calc(100% - 38px); }
+    .side {
+      width: 168px; flex: 0 0 auto; padding: 16px 12px;
+      background: #121216; border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .side .brand { display: flex; align-items: center; gap: 8px; padding: 0 6px 12px; }
+    .side .brand .box {
+      width: 26px; height: 26px; border-radius: 7px; background: #0b0b0c;
+      display: grid; place-items: center;
+    }
+    .side .brand .box .mark {
+      width: 19px; height: 19px; mix-blend-mode: screen;
+      background: url("assets/img/logo.png") center / contain no-repeat;
+    }
+    .side .brand b {
+      font-family: Poppins, sans-serif; font-size: 14px; font-weight: 800; letter-spacing: -0.04em;
+    }
+    .side .brand b span { color: #ffbf00; }
+    .side .item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+      font-size: 11px; color: rgba(255,255,255,0.42);
+    }
+    .side .item svg { width: 13px; height: 13px; }
+    .side .item.active { background: rgba(255,191,0,0.14); color: #ffbf00; }
+    .side .foot {
+      margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 8px 6px 0;
+      border-top: 1px solid rgba(255,255,255,0.06); font-size: 10px; color: rgba(255,255,255,0.4);
+    }
+    .side .foot .pic {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+    }
+    .chat { flex: 1; padding: 18px 22px 16px; display: flex; flex-direction: column; min-width: 0; }
+    .chat-head { display: flex; align-items: center; gap: 10px; }
+    .chat-head .orb {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, #ffe89a, #ffbf00 48%, #a86a00 100%);
+      box-shadow: 0 0 22px rgba(255,191,0,0.4);
+    }
+    .chat-head h3 { font-size: 14px; font-weight: 700; }
+    .chat-head p { margin-top: 2px; font-size: 10px; color: rgba(255,255,255,0.38); }
+    .chat-head .badge {
+      margin-left: auto; padding: 5px 9px; border-radius: 999px;
+      background: rgba(255,191,0,0.12); color: #ffbf00; font-size: 9px; font-weight: 700;
+    }
+    .thread { margin-top: 16px; display: flex; flex-direction: column; gap: 11px; }
+    .msg { max-width: 74%; font-size: 12.5px; line-height: 1.45; }
+    .msg.user {
+      align-self: flex-end; padding: 11px 14px; border-radius: 14px 14px 4px 14px;
+      background: #ffbf00; color: #0b0b0c; font-weight: 600;
+      box-shadow: 0 10px 26px rgba(255,191,0,0.18);
+    }
+    .msg.ai {
+      align-self: flex-start; padding: 11px 14px; border-radius: 14px 14px 14px 4px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.86);
+    }
+    .plan {
+      margin-top: 13px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px;
+    }
+    .days { display: flex; flex-direction: column; gap: 8px; }
+    .day {
+      display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 10px;
+      background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.06);
+    }
+    .day .num {
+      width: 24px; height: 24px; border-radius: 7px; background: rgba(255,191,0,0.16);
+      color: #ffbf00; font-size: 10px; font-weight: 800; display: grid; place-items: center;
+      flex: 0 0 auto;
+    }
+    .day b { display: block; font-size: 11px; font-weight: 600; }
+    .day span { display: block; margin-top: 1px; font-size: 9px; color: rgba(255,255,255,0.38); }
+    .day .tag {
+      margin-left: auto; font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: rgba(255,191,0,0.8);
+    }
+    .mini-map {
+      position: relative; border-radius: 12px; overflow: hidden;
+      background: #101014; border: 1px solid rgba(255,255,255,0.07); min-height: 132px;
+    }
+    .mini-map .img {
+      position: absolute; inset: 0; background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover; background-position: center; filter: brightness(0.6) saturate(0.85);
+    }
+    .mini-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .mini-map path { fill: none; stroke: #ffbf00; stroke-width: 2.2; stroke-linecap: round; }
+    .mini-map .pin {
+      position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #ffbf00;
+      box-shadow: 0 0 0 4px rgba(255,191,0,0.18), 0 0 14px rgba(255,191,0,0.55);
+    }
+    .input {
+      margin-top: auto; display: flex; align-items: center; gap: 10px;
+      height: 40px; padding: 0 8px 0 14px; border-radius: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .input span { font-size: 11px; color: rgba(255,255,255,0.3); }
+    .input .send {
+      margin-left: auto; width: 28px; height: 28px; border-radius: 8px; background: #ffbf00;
+      display: grid; place-items: center; color: #0b0b0c;
+    }
+    .input .send svg { width: 14px; height: 14px; }
+
+    .base {
+      position: absolute; left: 748px; top: 814px; width: 1040px; height: 15px;
+      border-radius: 0 0 16px 16px; background: linear-gradient(180deg, #2a2a30, #151519);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+    }
+    .base::after {
+      content: ""; position: absolute; left: 42%; right: 42%; top: 0; height: 4px;
+      border-radius: 0 0 6px 6px; background: #0b0b0c;
+    }
+
+    .phone {
+      position: absolute; left: 1584px; top: 536px; width: 258px; height: 520px;
+      border-radius: 34px; background: #101014; padding: 9px;
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 50px 100px rgba(0,0,0,0.66), 0 0 0 1px rgba(255,191,0,0.1),
+                  inset 0 1px 0 rgba(255,255,255,0.14);
+      z-index: 4;
+    }
+    .phone-screen {
+      position: relative; width: 100%; height: 100%; border-radius: 26px; overflow: hidden;
+      background: #0b0b0c; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .phone-map {
+      position: absolute; inset: 0; background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover; background-position: 52% 46%; filter: brightness(0.52) saturate(0.8);
+    }
+    .phone-screen .shade {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(11,11,12,0.82) 0%, rgba(11,11,12,0.1) 34%, rgba(11,11,12,0.86) 100%);
+    }
+    .phone-screen .notch {
+      position: absolute; left: 50%; top: 9px; transform: translateX(-50%);
+      width: 76px; height: 18px; border-radius: 999px; background: #050506; z-index: 4;
+    }
+    .phone-top {
+      position: absolute; left: 14px; right: 14px; top: 40px; z-index: 3;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .phone-top .box {
+      width: 24px; height: 24px; border-radius: 6px; background: #0b0b0c;
+      display: grid; place-items: center; border: 1px solid rgba(255,191,0,0.28);
+    }
+    .phone-top .box .mark {
+      width: 17px; height: 17px; mix-blend-mode: screen;
+      background: url("assets/img/logo.png") center / contain no-repeat;
+    }
+    .phone-top b {
+      font-family: Poppins, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: -0.04em;
+    }
+    .phone-top b span { color: #ffbf00; }
+    .phone-pin {
+      position: absolute; left: 58%; top: 40%; width: 12px; height: 12px; border-radius: 50%;
+      background: #ffbf00; box-shadow: 0 0 0 6px rgba(255,191,0,0.16), 0 0 20px rgba(255,191,0,0.6);
+      z-index: 2;
+    }
+    .phone-pin.two {
+      left: 32%; top: 53%; width: 9px; height: 9px;
+      box-shadow: 0 0 0 5px rgba(255,191,0,0.12), 0 0 16px rgba(255,191,0,0.5);
+    }
+    .phone-route {
+      position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    .phone-route path {
+      fill: none; stroke: #ffbf00; stroke-width: 2.4; stroke-linecap: round;
+      filter: drop-shadow(0 0 5px rgba(255,191,0,0.55));
+    }
+    .phone-card {
+      position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 3;
+      border-radius: 16px; padding: 12px;
+      background: rgba(20,20,24,0.82); border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(12px) saturate(1.3);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.45);
+    }
+    .phone-card .thumb {
+      height: 66px; border-radius: 10px; background-image: url("assets/img/hotel-plaza.jpg");
+      background-size: cover; background-position: center; margin-bottom: 9px;
+    }
+    .phone-card b { display: block; font-size: 11px; font-weight: 700; }
+    .phone-card span { display: block; margin-top: 2px; font-size: 9px; color: rgba(255,255,255,0.45); }
+    .phone-card .row { display: flex; align-items: center; margin-top: 8px; }
+    .phone-card .price { font-size: 11px; font-weight: 700; color: #ffbf00; }
+    .phone-card .cta {
+      margin-left: auto; padding: 5px 9px; border-radius: 999px; background: #ffbf00;
+      color: #0b0b0c; font-size: 8px; font-weight: 800;
+    }
+
+    .thread-link {
+      position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none;
+    }
+    .thread-link path {
+      fill: none; stroke: #ffbf00; stroke-width: 2.2; stroke-linecap: round;
+      filter: drop-shadow(0 0 8px rgba(255,191,0,0.5));
+    }
+  </style>
+  <div id="root" data-composition-id="s8-closing" data-width="1920" data-height="1080">
+    <div class="halo" data-layout-ignore></div>
+    <div class="halo-2" data-layout-ignore></div>
+    <svg class="curves" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path d="M 980 1080 C 1120 900, 1280 880, 1360 760 C 1440 640, 1420 470, 1560 360 C 1650 288, 1760 270, 1920 268" />
+      <path d="M 860 1080 C 1030 930, 1180 940, 1260 830 C 1340 720, 1320 560, 1450 470" />
+      <path d="M 1180 1080 C 1300 990, 1460 980, 1540 880" />
+      <circle cx="1560" cy="360" r="3.5" />
+      <circle cx="1450" cy="470" r="3" />
+    </svg>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="logo-lockup">
+      <img src="assets/img/logo.png" alt="ViaNova" />
+      <div class="wordmark">VIANova <span class="ia">IA</span></div>
+    </div>
+
+    <div class="tagline">
+      <span>Planifica.</span>
+      <span>Descubre.</span>
+      <span class="gold">Vive.</span>
+    </div>
+
+    <div class="url-block">
+      <div class="url">via-nova-ia.vercel.app</div>
+      <div class="platforms">Web · PWA · Android</div>
+    </div>
+
+    <div class="qr-corner" data-layout-ignore></div>
+    <div class="qr-card"><img src="assets/img/qr.png" alt="QR a via-nova-ia.vercel.app" /></div>
+
+    <div class="laptop">
+      <div class="screen">
+        <div class="screen-bar"><i></i><i></i><i></i><div class="addr">via-nova-ia.vercel.app/chat</div></div>
+        <div class="app">
+          <div class="side">
+            <div class="brand"><div class="box"><div class="mark"></div></div><b>VIANova <span>IA</span></b></div>
+            <div class="item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Asistente</div>
+            <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.4-7-10a7 7 0 0 1 14 0c0 5.6-7 10-7 10Z"/><circle cx="12" cy="11" r="2.4"/></svg>Explorar</div>
+            <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h16M6 18V9m4 9V5m4 13v-7m4 7V7"/></svg>Mi viaje</div>
+            <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.8"/></svg>Comunidad</div>
+            <div class="foot"><div class="pic"></div><span>Camila Viajera</span></div>
+          </div>
+
+          <div class="chat">
+            <div class="chat-head">
+              <div class="orb"></div>
+              <div><h3>ViaNova Assistant</h3><p>En línea</p></div>
+              <div class="badge">Plan de 3 días</div>
+            </div>
+
+            <div class="thread">
+              <div class="msg user">Quiero conocer el Huila en 3 días.</div>
+              <div class="msg ai">Perfecto. Te armo un plan de 3 días con hoteles, sabores y experiencias locales.</div>
+            </div>
+
+            <div class="plan">
+              <div class="days">
+                <div class="day"><div class="num">01</div><div><b>Neiva · Centro y sabor</b><span>Hotel Plaza Neiva · Asadero El Huilense</span></div><div class="tag">Hotel</div></div>
+                <div class="day"><div class="num">02</div><div><b>Tatacoa · Desierto y estrellas</b><span>Tour 360° · atardecer guiado</span></div><div class="tag">360°</div></div>
+                <div class="day"><div class="num">03</div><div><b>Regreso · Taxi local</b><span>Traslado coordinado al terminal</span></div><div class="tag">Taxi</div></div>
+              </div>
+              <div class="mini-map">
+                <div class="img"></div>
+                <svg viewBox="0 0 220 140" preserveAspectRatio="none"><path d="M 18 116 C 52 104, 64 76, 92 70 C 124 63, 142 44, 176 30" /></svg>
+                <div class="pin" style="left: 38%; top: 44%"></div>
+                <div class="pin" style="left: 76%; top: 20%"></div>
+              </div>
+            </div>
+
+            <div class="input"><span>Escribe o dicta tu próximo plan...</span><div class="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="base"></div>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-map"></div>
+        <div class="shade"></div>
+        <div class="notch"></div>
+        <div class="phone-top"><div class="box"><div class="mark"></div></div><b>VIANova <span>IA</span></b></div>
+        <svg class="phone-route" viewBox="0 0 240 500" preserveAspectRatio="none"><path d="M 66 250 C 96 236, 110 206, 138 196 C 168 185, 176 158, 196 146" /></svg>
+        <div class="phone-pin"></div>
+        <div class="phone-pin two"></div>
+        <div class="phone-card">
+          <div class="thumb"></div>
+          <b>Hotel Plaza Neiva</b>
+          <span>Alojamiento · Centro de Neiva</span>
+          <div class="row"><div class="price">Solicitar reserva</div><div class="cta">Ver</div></div>
+        </div>
+      </div>
+    </div>
+
+    <svg class="thread-link" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path d="M 1730 815 C 1500 850, 900 900, 560 748 C 470 710, 420 700, 386 706" />
+    </svg>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.laptop', { opacity: 0, scale: 0.92, y: 26 });
+    gsap.set('.base', { opacity: 0, scale: 0.92 });
+    gsap.set('.phone', { opacity: 0, scale: 0.88, y: 35 });
+    gsap.set('.curves', { opacity: 0 });
+    gsap.set('.logo-lockup', { opacity: 0, y: 20 });
+    gsap.set('.tagline span', { opacity: 0, y: 16 });
+    gsap.set('.url-block', { opacity: 0, y: 20 });
+    gsap.set('.qr-card', { opacity: 0, scale: 0.8 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s - 1.2s: Devices float into view
+    tl.to('.laptop', { opacity: 1, scale: 1, y: 0, duration: 1.0, ease: 'power3.out' }, 0.2);
+    tl.to('.base', { opacity: 1, scale: 1, duration: 1.0, ease: 'power3.out' }, 0.2);
+    tl.to('.phone', { opacity: 1, scale: 1, y: 0, duration: 1.1, ease: 'power3.out' }, 0.4);
+    tl.to('.curves', { opacity: 0.75, duration: 1.2 }, 0.6);
+
+    // 1.0s: Logo lockup reveals
+    tl.to('.logo-lockup', { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 1.0);
+
+    // 1.8s: Tagline words stagger in
+    tl.to('.tagline span', { opacity: 1, y: 0, duration: 0.6, stagger: 0.3, ease: 'power2.out' }, 1.8);
+
+    // 3.2s: URL block reveals
+    tl.to('.url-block', { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 3.2);
+
+    // 4.2s: QR code pops in
+    tl.to('.qr-card', { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.5)' }, 4.2);
+
+    // Push camera
+    tl.to('#root', { scale: 1.025, transformOrigin: 'center center', duration: 10.0, ease: 'none' }, 0);
+
+    // 9.2s - 10.0s: Final fade to deep black
+    tl.to('#root', { opacity: 0, duration: 0.8, ease: 'power2.in' }, 9.2);
+
+    window.__timelines["s8-closing"] = tl;
+  </script>
+</template>
