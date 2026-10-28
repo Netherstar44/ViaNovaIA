@@ -24,12 +24,15 @@ function escapeHtml(value: string): string {
 }
 
 function verificationTags(): string {
-  // Token público de Google Search Console. No es un secreto.
+  // Tokens públicos de verificación de buscadores. No son secretos.
   const google =
     process.env.GOOGLE_SITE_VERIFICATION ||
     process.env.VITE_GOOGLE_SITE_VERIFICATION ||
     "YG7IZrSM9mL6VVBcMZn3w4bjMzKqU10vgEH-lkLXtFM";
-  const bing = process.env.BING_SITE_VERIFICATION || process.env.VITE_BING_SITE_VERIFICATION;
+  const bing =
+    process.env.BING_SITE_VERIFICATION ||
+    process.env.VITE_BING_SITE_VERIFICATION ||
+    "28459F182F4433434EF7E43823CB0289";
   return [
     google ? `<meta name="google-site-verification" content="${escapeHtml(google)}" />` : "",
     bing ? `<meta name="msvalidate.01" content="${escapeHtml(bing)}" />` : "",
