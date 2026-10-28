@@ -4,42 +4,52 @@ Plataforma full-stack de turismo y comercio local para Colombia. ViaNovaIA conec
 
 El repositorio contiene una SPA React, una API Express ejecutable en Node.js o Cloudflare Workers, una base de datos PostgreSQL (Neon), una app Android empaquetada con Capacitor y un prototipo móvil independiente en Expo.
 
-> Estado del documento: describe la implementación real del repositorio. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
+> Estado del documento: describe la implementación real del repositorio al **27 de octubre de 2026**. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
+
+> **Resumen de estado:** MVP funcional y desplegado. La web/PWA, la API, el login local y con Google, el marketplace, las reservas, el taxi, el social y la capa SEO están operativos. Pagos PSE, offline de escrituras y publicación en tiendas siguen siendo prototipo o trabajo pendiente.
 
 ---
 
 ## Índice
 
-1. [Qué incluye la plataforma](#qué-incluye-la-plataforma)
-2. [Stack tecnológico](#stack-tecnológico)
-3. [Arquitectura](#arquitectura)
-4. [Estructura del repositorio](#estructura-del-repositorio)
-5. [Roles y permisos](#roles-y-permisos)
-6. [Modelo de seguridad](#modelo-de-seguridad)
-7. [Mapas y geolocalización](#mapas-y-geolocalización)
-8. [Ejecución local](#ejecución-local)
-9. [Variables de entorno](#variables-de-entorno)
-10. [Scripts disponibles](#scripts-disponibles)
-11. [API (resumen)](#api-resumen)
-12. [Despliegue](#despliegue)
-13. [Solución de problemas](#solución-de-problemas)
-14. [Documentación y QA](#documentación-y-qa)
-15. [Limitaciones conocidas](#limitaciones-conocidas)
+1. [Capacidades actuales](#capacidades-actuales)
+2. [Estado del prototipo](#estado-del-prototipo)
+3. [Stack tecnológico](#stack-tecnológico)
+4. [Arquitectura](#arquitectura)
+5. [Diseño y experiencia](#diseño-y-experiencia)
+6. [Estructura del repositorio](#estructura-del-repositorio)
+7. [Roles y permisos](#roles-y-permisos)
+8. [Modelo de seguridad](#modelo-de-seguridad)
+9. [Mapas y geolocalización](#mapas-y-geolocalización)
+10. [Ejecución local](#ejecución-local)
+11. [Variables de entorno](#variables-de-entorno)
+12. [Scripts disponibles](#scripts-disponibles)
+13. [API (resumen)](#api-resumen)
+14. [Despliegue](#despliegue)
+15. [Cobertura y verificación](#cobertura-y-verificación)
+16. [Solución de problemas](#solución-de-problemas)
+17. [Documentación y QA](#documentación-y-qa)
+18. [Limitaciones conocidas](#limitaciones-conocidas)
+19. [Próximamente](#próximamente)
+20. [Aspiración del prototipo](#aspiración-del-prototipo)
 
 ---
 
-## Qué incluye la plataforma
+## Capacidades actuales
 
-| Módulo | Descripción |
-|---|---|
-| Descubrimiento | Landing con categorías, búsqueda, filtros, mapa, comentarios, visor VR y recomendaciones. |
-| Asistente IA | Chat contextual con Groq, memoria persistente por usuario, catálogo real de servicios/productos y copiloto de negocio. |
-| Marketplace | Productos por rol proveedor, stock, imágenes, multimedia, órdenes, checkout Stripe opcional y reservas con bloqueo temporal. |
-| Taxi | Solicitud de viaje, tarifa estimada, aceptación por taxista, seguimiento de estados, historial, ganancias y retiros. |
-| ViaSocial | Publicaciones con imagen/video, likes, comentarios, follow, bloqueo, reportes y mensajes privados. |
-| Paneles | Analíticas para viajero, proveedor y administrador; gestión de productos, servicios, pedidos y cuentas. |
-| Cuenta | Registro local o Google, verificación de correo, 2FA, recuperación de contraseña, multi-rol, roles activos y eliminación de cuenta. |
-| Móvil | APK Android vía Capacitor y app Expo separada para pruebas nativas. |
+| Módulo | Estado | Descripción |
+|---|---|---|
+| Descubrimiento | Operativo | Landing con categorías, búsqueda, filtros, mapa, comentarios, visor VR/360/3D y recomendaciones. |
+| Asistente IA | Operativo | Chat contextual con Groq, memoria persistente por usuario, catálogo real de servicios/productos y copiloto de negocio. |
+| Marketplace | Operativo con límites | Productos por rol proveedor, stock, imágenes, multimedia, órdenes, checkout Stripe opcional y reservas con bloqueo temporal. |
+| Taxi | Operativo con límites | Solicitud, tarifa estimada, aceptación, seguimiento de estados, historial, ganancias y retiros. No hay pasarela de pago real. |
+| ViaSocial | Operativo | Publicaciones con imagen/video, likes, comentarios, follow, bloqueo, reportes y mensajes privados. |
+| Paneles | Operativo | Analíticas para viajero, proveedor y administrador; gestión de productos, servicios, pedidos y cuentas. |
+| Cuenta | Operativo | Registro local o Google, verificación de correo, 2FA, recuperación de contraseña, multi-rol, roles activos y eliminación de cuenta. |
+| SEO técnico | Operativo | 4 guías prerenderizadas, metadatos por ruta, JSON-LD, `robots.txt`, `sitemap.xml`, `llms.txt`, canonical único y `noindex` en rutas privadas. |
+| PWA | Parcial | Instalable, push y shell offline de assets. No hay cola de mutaciones ni datos privados disponibles sin red. |
+| Voz (TTS) | Operativo | Función serverless `api/tts.py` con Edge TTS, JWT y lista blanca de voces. |
+| Móvil | Prototipo | APK Android vía Capacitor y app Expo separada para pruebas nativas. Sin publicación en tiendas. |
 
 ### Flujos principales
 
@@ -47,6 +57,32 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 - **Proveedor:** añadir rol de negocio → publicar servicio/producto → recibir solicitudes/órdenes → gestionar stock y estados → consultar analíticas.
 - **Taxista:** activar disponibilidad → recibir solicitudes → aceptar → iniciar → completar → acumular ganancias → solicitar retiro.
 - **Administrador:** supervisar usuarios, proveedores, cuentas bloqueadas y salud global del negocio.
+
+---
+
+## Estado del prototipo
+
+Corte: **27 de octubre de 2026**. Escala usada: **Operativo** = flujo principal usable y verificado; **Parcial** = funciona con límites explícitos; **Prototipo** = validación técnica, todavía no listo para producción.
+
+| Dimensión | Estado | Detalle |
+|---|---|---|
+| Web / PWA | Operativo | SPA React desplegada en Vercel, espejo en Cloudflare Workers, instalable, push y shell offline. |
+| API | Operativo | Express ejecutado en Node, Vercel (`api/index`) y Cloudflare Worker. Misma lógica de dominio y seguridad. |
+| Autenticación | Operativo | Registro local, login con Google web/móvil, verificación de correo, 2FA y recuperación. Callback local documentado en `http://localhost:5000/api/auth/google`. |
+| Marketplace | Operativo con límites | CRUD de productos, stock atómico, órdenes y multimedia. Stripe es opcional; sin claves configuradas no hay cobro real. |
+| Reservas | Operativo con límites | Slots, bloqueo temporal de 5 minutos y solicitud al proveedor. La confirmación PSE es simulada. |
+| Taxi | Operativo con límites | Ciclo completo de viaje, disponibilidad, ganancias y retiros. No hay integración con pagos ni centrales de despacho reales. |
+| Social | Operativo | Feed, likes, comentarios, follow, bloqueos, reportes y mensajería privada. |
+| Asistente IA | Operativo con dependencia externa | Groq aporta el modelo; si falta cuota o clave, el chat no responde. |
+| Admin y analíticas | Operativo | Métricas por rol, supervisión de cuentas y moderación básica. |
+| SEO técnico | Operativo; verificación manual pendiente | HTML prerenderizado, JSON-LD, canonical único, `sitemap.xml`, `robots.txt`, `llms.txt` y envío IndexNow. Falta pulsar “Verificar” en Google Search Console y Bing Webmaster Tools. |
+| Offline | Parcial | El service worker cachea el shell y assets; las APIs y las escrituras siguen requiriendo red. |
+| Android | Prototipo | Proyecto Capacitor configurado. Sin APK firmado ni publicación en Play Store. |
+| Expo | Prototipo separado | App de validación en `mobile/`; no se empaqueta con Capacitor. |
+| Calidad | Cobertura inicial | `tsc` sin errores y 22 pruebas automatizadas. No hay suite E2E continua ni pruebas de carga. |
+| Operación | MVP | Logs de plataforma, healthcheck y rate limiting. Sin APM, alertas ni SLA dedicado. |
+
+**Lectura correcta:** esto es un MVP avanzado, no un producto transaccional cerrado. Antes de operar con dinero real o tráfico alto hay que resolver pagos, offline de escrituras, observabilidad y autoridad de dominio.
 
 ---
 
@@ -84,40 +120,93 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 - **Vercel** (`vercel.json`) con funciones en `api/`
 - **Capacitor 8** para Android (`android/`)
 - **Expo 54 / React Native 0.81** en `mobile/` (prototipo separado)
+- **Capa SEO de build:** `shared/seo-content.ts` + `vite-plugin-seo-pages.ts` generan HTML prerenderizado, metadatos y `sitemap.xml`
+- **PWA:** `client/public/manifest.json` + `client/public/sw.js` (shell offline, cache de assets y push)
+
+### Integraciones externas
+
+| Integración | Uso | Estado |
+|---|---|---|
+| Google OAuth | Login web y validación de ID token móvil. | Configurado; callback local `http://localhost:5000/api/auth/google`. |
+| Groq | Asistente IA y copiloto de negocio. | Requiere `GROQ_API_KEY`. |
+| Stripe | Checkout y webhook de órdenes. | Opcional; sin claves no hay cobro. |
+| Cloudinary | Imágenes, video, 360 y modelos 3D. | Requiere credenciales. |
+| SMTP / Nodemailer | Verificación, recuperación y avisos de reserva. | Requiere servidor SMTP. |
+| Edge TTS | Voz en español, inglés, francés, portugués y chino. | `api/tts.py`; JWT y voces en lista blanca. |
+| Google Search Console | Verificación y envío de sitemap. | Etiqueta inyectada; verificación manual pendiente. |
+| Bing Webmaster + IndexNow | Verificación y aviso de URLs nuevas. | Etiqueta inyectada; `npm run indexnow` operativo. |
+| OpenStreetMap / Nominatim / OSRM | Tiles, geocodificación y rutas. | Servicios públicos sin SLA. |
+| Upstash Redis | Rate limiting distribuido. | Opcional. |
+| Vercel / Cloudflare | Despliegue de la SPA, API y funciones serverless. | Ambos dominios activos. |
 
 ---
 
 ## Arquitectura
 
+ViaNovaIA es una **SPA React con un monolito modular Express** que se ejecuta en tres entornos: Node.js, Vercel Serverless y Cloudflare Workers. La base de datos es PostgreSQL (Neon) y el cliente habla con la API por HTTPS. La capa SEO se genera en tiempo de build, no en el navegador.
+
+### Vista de capas
+
+| Capa | Componentes principales | Responsabilidad |
+|---|---|---|
+| Presentación | React 19, Wouter, TanStack Query, Zustand, Tailwind 4, Radix, Framer Motion | Rutas SPA, estado remoto, sesión, formularios, mapas y visores multimedia. |
+| Entrega | Vite, `dist/public`, Vercel, Cloudflare Worker, Capacitor | Servir assets, fallback SPA, funciones serverless y empaquetado nativo. |
+| API | Express 4, `server/routes/*`, middlewares de seguridad | Validar entrada, autenticar, autorizar, orquestar dominio y responder JSON. |
+| Dominio y datos | Drizzle ORM, `server/storage.ts`, `server/taxi.storage.ts`, PostgreSQL | Consultas parametrizadas, stock atómico, locks de reserva y persistencia. |
+| Integraciones | Groq, Stripe, Cloudinary, SMTP, Edge TTS, OSM/Nominatim/OSRM | IA, pagos, medios, correo, voz y geolocalización. |
+| Build SEO | `shared/seo-content.ts`, `vite-plugin-seo-pages.ts` | Generar HTML prerenderizado, JSON-LD, metadatos y `sitemap.xml`. |
+
+### Topología de ejecución
+
 ```mermaid
 flowchart LR
     subgraph Cliente
-        Web["SPA React 19<br/>Vite + Wouter + TanStack Query"]
-        Android["APK Android<br/>Capacitor"]
-        Expo["Prototipo Expo<br/>mobile/"]
+        Web["SPA React 19<br/>Wouter + TanStack Query<br/>PWA + service worker"]
+        Native["Android Capacitor / Expo<br/>Authorization: Bearer"]
     end
 
-    subgraph Servidor["Servidor (Express / Cloudflare Worker)"]
-        API["API REST /api/*"]
-        Auth["JWT + RBAC<br/>requireAuth / requireRole"]
-        Static["Assets SPA<br/>dist/public"]
-        Services["Chat IA · Taxi · Social<br/>Bookings · Uploads · Admin"]
+    subgraph Entrega["Capa de entrega"]
+        Vercel["Vercel<br/>static + api/index + api/tts"]
+        CF["Cloudflare Worker<br/>server/worker.ts + assets"]
+        SEO["Build SEO<br/>HTML + sitemap + JSON-LD"]
     end
 
-    DB[("PostgreSQL<br/>Neon + Drizzle ORM")]
-    Cloud["Cloudinary"]
-    Ext["Groq · Stripe · SMTP<br/>OSM / Nominatim / OSRM"]
+    subgraph Nucleo["Monolito modular Express"]
+        HTTP["HTTP: CORS · CSP · CSRF · rate limit"]
+        Guard["Auth + RBAC + ownership"]
+        Domain["Auth · Users · Catalog · Orders<br/>Bookings · Taxi · Social · Chat · Admin"]
+        Static["Static SPA / Vite middleware"]
+    end
 
-    Web -->|"HTTPS + cookie HttpOnly"| API
-    Android -->|"HTTPS + Authorization: Bearer"| API
-    Expo -->|"HTTPS + Bearer"| API
-    API --> Auth
-    API --> Services
-    Services -->|"SQL parametrizado"| DB
-    Services --> Cloud
-    Services --> Ext
+    DB[("PostgreSQL Neon<br/>Drizzle ORM")]
+    Ext["Groq · Stripe · Cloudinary<br/>SMTP · TTS · OSM"]
+
+    Web -->|"HTTPS + cookie HttpOnly"| Vercel
+    Native -->|"HTTPS + Bearer"| Vercel
+    Native -->|"HTTPS + Bearer"| CF
+    Vercel --> HTTP
+    CF --> HTTP
+    HTTP --> Guard
+    Guard --> Domain
+    Domain -->|"SQL parametrizado"| DB
+    Domain --> Ext
+    SEO -.->|"HTML estático"| Vercel
+    SEO -.->|"HTML estático"| CF
     Web -.->|"fallback SPA"| Static
 ```
+
+### Topología por entorno
+
+| Entorno | Entrada | Particularidad |
+|---|---|---|
+| Desarrollo | `server/index.ts` | Express + Vite middleware en el mismo puerto (`5000` por defecto) con HMR. |
+| Node producción | `dist/index.cjs` | Express sirve la API y los assets compilados de `dist/public`. |
+| Vercel | `api/index.ts` | Express envuelto como función; `/api/*` se reescribe a `/api/index` y `/api/tts` a `api/tts.py`. |
+| Cloudflare | `server/worker.ts` | Adaptador Worker; `run_worker_first` para `/api` y assets con fallback SPA. |
+| Android | Capacitor | Web build empaquetado; usa `VITE_NATIVE_API_BASE` y Bearer. |
+| Expo | `mobile/` | Prototipo independiente; no comparte el empaquetado Capacitor. |
+
+> En Vercel, `cleanUrls: true` obliga a que los destinos de rewrite no lleven extensión. Un destino `/api/index.ts` cae en el catch-all de la SPA y devuelve HTML. El test `tests/deploy-config.test.ts` protege esta regla.
 
 ### Flujo de una petición
 
@@ -139,13 +228,88 @@ sequenceDiagram
     R-->>C: JSON + Set-Cookie (si aplica)
 ```
 
+### Módulos del backend
+
+- `server/routes/index.ts`: autenticación, usuarios, roles, catálogo, productos, órdenes, pagos, reseñas, chat, admin, notificaciones, uploads y mapas.
+- `server/routes/taxi.routes.ts`: viajes, disponibilidad, ganancias y retiros.
+- `server/routes/bookings.routes.ts`: slots, locks temporales, confirmación y solicitudes.
+- `server/routes/social.routes.ts`: feed, likes, comentarios, follow, bloqueos, reportes y mensajes.
+- `server/storage.ts` y `server/taxi.storage.ts`: acceso a datos y operaciones atómicas.
+- `server/security.ts`, `config.ts`, `http-security.ts`, `rate-limits.ts`: autenticación, RBAC, CSRF, cifrado y límites.
+- `shared/schema.ts` y `shared/taxi.schema.ts`: tablas, relaciones y validaciones compartidas.
+
+### Pipeline SEO de build
+
+1. `shared/seo-content.ts` es la fuente única: dominio canónico, guías, metadatos, FAQs, enlaces internos y generadores JSON-LD.
+2. `vite-plugin-seo-pages.ts` corre en `closeBundle`, lee `dist/public/index.html` y escribe un `.html` por guía con `<title>`, canonical, Open Graph, Twitter Cards, JSON-LD y contenido visible sin JavaScript.
+3. El mismo plugin regenera `sitemap.xml` con la fecha del build e inyecta las etiquetas de verificación de Google y Bing.
+4. `client/src/hooks/useSeo.ts` actualiza los metadatos al navegar dentro de la SPA; las rutas privadas reciben `X-Robots-Tag: noindex, nofollow` desde Vercel y Cloudflare.
+5. El HTML estático y el render React muestran el mismo contenido: no hay cloaking.
+
+### PWA y entrega offline
+
+- `client/public/manifest.json`: instalación, iconos, shortcuts y modo `standalone`.
+- `client/public/sw.js`: precache del shell, navegación network-first con fallback cacheado, cache de assets estáticos y push.
+- **Nunca** se cachean `/api/` ni respuestas autenticadas.
+- El offline actual cubre lectura del shell y assets; **no** cubre escrituras ni datos privados. La cola de mutaciones es trabajo futuro.
+
 ### Decisiones de arquitectura
 
-- **Monolito modular:** una sola API Express agrupa auth, marketplace, taxi, social, reservas y analíticas. En Cloudflare se ejecuta mediante un adaptador Worker.
+- **Monolito modular:** una sola API agrupa auth, marketplace, taxi, social, reservas y analíticas. En Cloudflare se ejecuta mediante un adaptador Worker.
 - **Servidor como fuente de verdad:** identidad, rol activo, propiedad de recursos, precios, stock y estados se validan en backend; el cliente nunca decide esos valores.
 - **Base de datos relacional:** usuarios, roles, productos, órdenes, reservas, viajes, reseñas, pagos y mensajes comparten PostgreSQL.
-- **Caché de cliente:** TanStack Query centraliza fetching, invalidación y reintentos. La sesión se hidrata contra `/api/auth/me` al iniciar.
-- **Entrega multientorno:** el mismo código corre en Node (`server/index.ts`) y en Workers (`server/worker.ts`); los assets se sirven desde `dist/public`.
+- **Operaciones atómicas:** el stock de órdenes y los locks de reserva se resuelven con SQL transaccional, no con estado del cliente.
+- **Sesión same-origin:** web usa cookie `HttpOnly`; nativo usa Bearer. La sesión se hidrata contra `/api/auth/me`.
+- **Caché de cliente:** TanStack Query centraliza fetching, invalidación y reintentos.
+- **Entrega multientorno:** el mismo código corre en Node y Workers; los assets se sirven desde `dist/public`.
+- **SEO en build:** el contenido público se prerenderiza para que los buscadores lo vean sin ejecutar React.
+- **Seguridad por defecto:** validación Zod, sanitización, rate limiting, CSRF, CSP y cifrado de datos de pago.
+
+---
+
+## Diseño y experiencia
+
+### Sistema visual
+
+- **Marca:** acento amarillo `#ffbf00`, fondos cálidos (`#f5f4f0` en claro, `#0b0b0c` en oscuro) y superficies blancas con bordes suaves.
+- **Tipografía:** Inter para texto y Poppins para títulos, definidas como tokens en `client/src/index.css`.
+- **Tokens semánticos:** color, radio, sombra, tipografía y estados (`success`, `warning`, `info`, `destructive`) se declaran en CSS y se consumen vía Tailwind/shadcn. No hay colores hardcodeados en cada página.
+- **Temas:** `next-themes` con cinco variantes: `light` (por defecto), `dark`, `sunset`, `ocean` y `forest`. El tema se guarda en `localStorage` y se aplica como clase en `<html>`.
+- **Componentes:** Radix UI + shadcn/ui en `client/src/components/ui`; patrones de tarjeta, diálogo, tabs, formularios y navegación reutilizables.
+
+### Liquid Glass
+
+`client/src/styles/glass.css` define el lenguaje de superficies:
+
+- Tokens `--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-blur` y `--glass-highlight`.
+- Capas de **blur + saturación**, borde translúcido, brillo interior y una textura de ruido sutil para dar profundidad.
+- Variantes `liquid-glass`, `liquid-glass--strong` y `liquid-glass--hover` para tarjetas, paneles y contenedores.
+- `prefers-reduced-motion` desactiva las transiciones no esenciales y `hover: none` evita transformaciones en pantallas táctiles.
+
+### Movimiento y respuesta
+
+- Framer Motion para entradas, transiciones y estados; las animaciones de glass usan una curva corta (`200ms cubic-bezier(0.23, 1, 0.32, 1)`) para no bloquear la interacción.
+- Estados de carga con skeletons/spinners, estados vacíos explícitos y feedback de error en formularios.
+- Layout responsive con Tailwind: navegación adaptativa, grillas que colapsan a una columna y controles de mapa/tarjetas dimensionados para móvil.
+
+### Accesibilidad
+
+- Base Radix: navegación por teclado, foco visible y roles ARIA en diálogos, menús, tabs y selectores.
+- Etiquetas `aria-label` en acciones icónicas (notificaciones, tema, menú) y textos alternativos en imágenes.
+- Token `--primary-ink` para texto dorado con contraste legible sobre fondos claros.
+- Respeto de `prefers-reduced-motion` en el sistema de glass.
+- **Pendiente:** no se ha ejecutado una auditoría WCAG formal ni pruebas con lector de pantalla en todos los flujos.
+
+### Medios y guías
+
+- `Viewer360`, `Viewer3D` y `VRViewer` cubren fotos 360, modelos 3D y experiencias inmersivas; `MediaGallery` unifica la presentación.
+- Las guías SEO usan un layout editorial propio, con tabla de contenidos, FAQs, enlaces internos y CTA. Su HTML se prerenderiza con CSS inline para que se vea completo antes de hidratar React.
+
+### Límites de diseño
+
+- No hay Storybook ni pruebas de regresión visual.
+- La cobertura de temas es funcional, pero no todos los componentes han sido revisados en las cinco variantes.
+- Los chunks de mapas y 3D siguen siendo grandes (`map-style` ~1,1 MB, Three ~720 KB); las rutas ya son lazy, pero esas dependencias pesan cuando se cargan.
 
 ---
 
@@ -154,10 +318,15 @@ sequenceDiagram
 ```text
 ViaNovaIA/
 ├─ client/
-│  ├─ index.html
+│  ├─ index.html               # head SEO base y JSON-LD global
 │  ├─ public/
-│  │  ├─ sw.js                 # service worker de notificaciones push
-│  │  └─ favicon.png
+│  │  ├─ manifest.json         # PWA instalable y shortcuts
+│  │  ├─ sw.js                 # shell offline, cache de assets y push
+│  │  ├─ robots.txt
+│  │  ├─ sitemap.xml           # base; el build lo regenera
+│  │  ├─ llms.txt
+│  │  ├─ _headers              # cabeceras Cloudflare
+│  │  └─ og-image.png
 │  └─ src/
 │     ├─ App.tsx               # rutas SPA
 │     ├─ main.tsx
@@ -218,9 +387,14 @@ ViaNovaIA/
 │  └─ static.ts / vite.ts
 ├─ shared/
 │  ├─ schema.ts                # tablas y esquemas Zod principales
-│  └─ taxi.schema.ts           # rides, earnings, withdrawals
-├─ scripts/                    # migraciones, diagnósticos y smoke tests
+│  ├─ taxi.schema.ts           # rides, earnings, withdrawals
+│  └─ seo-content.ts           # guías, metadatos y JSON-LD
+├─ tests/
+│  ├─ security.test.ts         # validación de helpers de seguridad
+│  └─ deploy-config.test.ts    # regresión de rewrites de Vercel
+├─ scripts/                    # migraciones, diagnósticos, seeds e IndexNow
 ├─ script/build.ts             # build de producción
+├─ vite-plugin-seo-pages.ts    # prerender SEO + sitemap en build
 ├─ api/                        # funciones Vercel (index.ts, tts.py)
 ├─ mobile/                     # prototipo Expo independiente
 ├─ android/                    # proyecto nativo Capacitor
@@ -235,7 +409,9 @@ ViaNovaIA/
 
 ### Rutas SPA registradas
 
-`/`, `/login`, `/select-role`, `/settings`, `/my-products`, `/notifications`, `/dashboard`, `/admin`, `/taxi-dashboard`, `/taxi/ride/:id`, `/taxi/earnings`, `/request-ride`, `/ride-history`, `/social`, `/messages`, `/u/:username`, `/privacy`, `/products`, `/explore`.
+`/`, `/login`, `/select-role`, `/settings`, `/my-products`, `/notifications`, `/dashboard`, `/admin`, `/taxi-dashboard`, `/taxi/ride/:id`, `/taxi/earnings`, `/request-ride`, `/ride-history`, `/social`, `/messages`, `/u/:username`, `/privacy`, `/products`, `/explore`, `/planificador-viajes-ia`, `/viajes-colombia`, `/que-hacer-en-neiva`, `/comparar-trivago-airbnb`.
+
+Las cuatro últimas rutas se generan desde `seoPages` en `shared/seo-content.ts`; cada una tiene HTML prerenderizado y entrada en `sitemap.xml`.
 
 > `ProviderDashboard.tsx` existe, pero **no está registrado** en `client/src/App.tsx`. `MyProducts.tsx` tiene ruta `/my-products`, aunque el Navbar enlaza "Mis Productos" a `/products` (ProductManager). Ver [Limitaciones conocidas](#limitaciones-conocidas).
 
@@ -374,6 +550,7 @@ npm run dev
 - Levanta Express y Vite en modo middleware sobre el mismo puerto.
 - URL por defecto: `http://localhost:5000` (o el valor de `PORT`).
 - Incluye HMR de Vite.
+- **Login con Google local:** abre `http://localhost:5000/login`. El callback debe ser `http://localhost:5000/api/auth/google`; `5055`, `127.0.0.1` y otros puertos no están autorizados en Google Console. Si cambias `.env`, reinicia el servidor.
 
 Alternativa solo cliente:
 
@@ -401,6 +578,7 @@ npm run start
 
 - `build` genera el cliente y el bundle de servidor (`dist/index.cjs`).
 - `start` ejecuta el servidor compilado en modo producción.
+- Si el build local falla por memoria (`Fatal process out of memory`), ejecuta `NODE_OPTIONS=--max-old-space-size=8192 npm run build` (Windows PowerShell: `$env:NODE_OPTIONS='--max-old-space-size=8192'; npm run build`).
 
 ### Base de datos
 
@@ -450,7 +628,7 @@ Solo se listan nombres; los valores deben configurarse en el gestor de secretos 
 | `GROQ_MODEL` | Modelo Groq (opcional). |
 | `GOOGLE_CLIENT_ID` | OAuth/ID token. |
 | `GOOGLE_CLIENT_SECRET` | OAuth web. |
-| `GOOGLE_REDIRECT_URI` | Callback OAuth (opcional). |
+| `GOOGLE_REDIRECT_URI` | Callback OAuth; debe coincidir con una URI autorizada. Local: `http://localhost:5000/api/auth/google`. |
 | `GOOGLE_MOBILE_CLIENT_ID` | ID token móvil (opcional). |
 | `GOOGLE_ALLOWED_CLIENT_IDS` | Lista de client IDs permitidos (opcional). |
 | `SMTP_HOST` / `SMTP_PORT` | Correo. |
@@ -459,8 +637,19 @@ Solo se listan nombres; los valores deben configurarse en el gestor de secretos 
 | `STRIPE_SECRET_KEY` | Checkout/webhook (opcional). |
 | `STRIPE_WEBHOOK_SECRET` | Firma del webhook (opcional). |
 | `VITE_NATIVE_API_BASE` | API base para builds nativos. |
+| `TTS_RATE_LIMIT_PER_MINUTE` | Límite de la función TTS (opcional, por defecto 20). |
 
-> `CLIENT_URL` debe coincidir con el origen real del navegador. Un origen distinto provoca fallos de CORS y 403 por CSRF.
+### SEO y buscadores
+
+| Variable | Uso |
+|---|---|
+| `GOOGLE_SITE_VERIFICATION` | Etiqueta de Google Search Console; se inyecta en el build. |
+| `VITE_GOOGLE_SITE_VERIFICATION` | Alternativa pública para Google. |
+| `BING_SITE_VERIFICATION` | Etiqueta de Bing Webmaster Tools. |
+| `VITE_BING_SITE_VERIFICATION` | Alternativa pública para Bing. |
+| `INDEXNOW_KEY` | Clave IndexNow (opcional; por defecto la publicada en `client/public/84f844541d60e9b000ccb51fc22f265d.txt`). |
+
+> `CLIENT_URL` debe coincidir con el origen real del navegador. Un origen distinto provoca fallos de CORS y 403 por CSRF. En local usa `http://localhost:5000`; `5055` no está autorizado en Google.
 
 ---
 
@@ -471,14 +660,17 @@ Solo se listan nombres; los valores deben configurarse en el gestor de secretos 
 | `npm run dev` | Express + Vite en desarrollo. |
 | `npm run dev:client` | Solo Vite en el puerto 5000. |
 | `npm run check` | TypeScript sin emisión. |
+| `npm test` | Suite de pruebas (`security` + configuración de despliegue). |
+| `npm run test:security` | Solo pruebas de seguridad. |
 | `npm run build` | Build de producción Node. |
 | `npm run start` | Sirve el build compilado. |
 | `npm run db:push` | Sincroniza Drizzle con la base. |
 | `npm run build:cloudflare` | Build de cliente + assets para Workers. |
 | `npm run dev:cloudflare` | Wrangler en local. |
 | `npm run deploy:cloudflare` | Build y despliegue a Cloudflare. |
+| `npm run indexnow` | Envía las URLs del `sitemap.xml` a IndexNow. Requiere `npm run build` previo. |
 
-`scripts/` contiene migraciones por fases y utilidades de diagnóstico/smoke tests. No son parte del runtime de producción.
+`scripts/` contiene migraciones por fases, seeds y utilidades de diagnóstico/smoke tests. No son parte del runtime de producción.
 
 ---
 
@@ -559,6 +751,7 @@ Base: `/api`. Todas las respuestas son JSON salvo uploads y el webhook de Stripe
 | POST | `/chat` | Autenticado (rate limit) | Mensaje al asistente IA. |
 | POST | `/upload` | Autenticado | Subida validada a Cloudinary. |
 | GET | `/maps/resolve` | Autenticado | Resuelve enlaces de Google Maps con allowlist. |
+| POST | `/tts` | Autenticado (Bearer) | Sintetiza texto con Edge TTS. Solo en Vercel (`api/tts.py`); voces y longitud en lista blanca. |
 
 ### Taxi
 
@@ -639,11 +832,16 @@ Los secretos se cargan con `wrangler secret put <NOMBRE>` (nunca en `wrangler.js
 
 - Build: `npm run build`
 - Salida estática: `dist/public`
-- `/api/tts` → `api/tts.py`
-- `/api/*` → `api/index.ts`
-- Resto → `index.html` (SPA)
+- `cleanUrls: true` y `trailingSlash: false`
+- `/api/tts` → `api/tts` (función Python)
+- `/api/*` → `api/index` (función Express)
+- Resto → `/` (fallback SPA)
+- `X-Robots-Tag: noindex, nofollow` en rutas privadas
+- `Cache-Control` específico para `sitemap.xml`, `robots.txt` y assets
 
-Configura las variables de entorno en el panel de Vercel. El proyecto usa el mismo backend Express a través de la función de `api/index.ts`.
+> **Regla crítica:** con `cleanUrls`, los destinos de rewrite **no llevan extensión**. `/api/index.ts` o `/api/tts.py` no coinciden y la petición cae en la SPA. El test `tests/deploy-config.test.ts` falla si vuelve a ocurrir.
+
+Configura las variables de entorno en el panel de Vercel. El proyecto usa el mismo backend Express a través de la función de `api/index.ts`. Las guías SEO se sirven como HTML estático generado en el build; el sitemap se regenera con la fecha de compilación.
 
 ### Android / Capacitor
 
@@ -661,10 +859,45 @@ npx cap open android
 
 1. Configurar PostgreSQL y ejecutar `npm run db:push` (o migraciones controladas).
 2. Cargar secretos (`JWT_SECRET`, `SESSION_SECRET`, `DATABASE_URL`, integraciones).
-3. Definir `CLIENT_URL`/`PUBLIC_URL` con el dominio final.
-4. `npm run check` y `npm run build`.
-5. Desplegar Worker o Vercel.
-6. Verificar `/api/health`, login, cookies y un flujo de lectura/escritura.
+3. Definir `CLIENT_URL`/`PUBLIC_URL` con el dominio final y registrar el callback en Google.
+4. Ejecutar `npm run check`, `npm test` y `npm run build`.
+5. Verificar que el build generó las guías, `sitemap.xml`, `robots.txt` y `llms.txt`.
+6. Desplegar Worker o Vercel.
+7. Verificar `/api/health`, login local/Google, cookies, `/api/products` y una escritura autenticada.
+8. Enviar el sitemap a Search Console/Bing y ejecutar `npm run indexnow` si aplica.
+
+---
+
+## Cobertura y verificación
+
+### Controles automatizados
+
+| Control | Comando | Resultado (27 oct 2026) | Alcance |
+|---|---|---|---|
+| Tipos | `npm run check` | 0 errores | Todo el proyecto TypeScript. |
+| Pruebas | `npm test` | 22/22 | 21 pruebas de seguridad + 1 de configuración de despliegue. |
+| Build | `npm run build` | Correcto | SPA, bundle de servidor, guías prerenderizadas y sitemap. |
+| Regresión Vercel | `tests/deploy-config.test.ts` | Correcto | Impide rewrites `/api` con extensión bajo `cleanUrls`. |
+
+No hay porcentaje de cobertura de código ni suite E2E continua en CI. Las pruebas actuales cubren helpers de seguridad y la configuración de despliegue, no todos los flujos de negocio.
+
+### Cobertura SEO y sitemap XML
+
+- `sitemap.xml` contiene **7 URLs canónicas**: `/`, las 4 guías (`/planificador-viajes-ia`, `/viajes-colombia`, `/que-hacer-en-neiva`, `/comparar-trivago-airbnb`), `/explore` y `/privacy`.
+- Cada entrada incluye `<loc>`, `<lastmod>`, `<changefreq>` y `<priority>`. El plugin `vite-plugin-seo-pages.ts` regenera el XML en cada build con la fecha de compilación.
+- `robots.txt` bloquea `/api/` y las rutas privadas, permite rastreadores de IA y declara el sitemap.
+- Las 4 guías se sirven como HTML prerenderizado con un solo `<h1>`, canonical, Open Graph, Twitter Cards y JSON-LD (`Organization`, `WebSite`, `SoftwareApplication`, `WebPage`, `Article`, `BreadcrumbList`, `FAQPage`, `TouristDestination`).
+- Las rutas privadas reciben `X-Robots-Tag: noindex, nofollow` desde Vercel y Cloudflare, antes de ejecutar JavaScript.
+- `llms.txt` resume el producto y enlaza las páginas públicas para asistentes de IA.
+- `npm run indexnow` lee el sitemap generado y envía sus URLs a `api.indexnow.org`.
+- **Pendiente manual:** verificar propiedad en Google Search Console y Bing Webmaster Tools, enviar el sitemap, solicitar indexación y validar JSON-LD en Rich Results Test.
+
+### Verificación funcional
+
+- Playwright local (`http://localhost:5000/login`) y producción (`https://via-nova-ia.vercel.app/login`): el botón de Google llega a la pantalla de Google sin `redirect_uri_mismatch`.
+- Producción: `/api/health` responde `200 application/json`, `/api/products` `200 application/json` y `/api/auth/google` `302` hacia Google con el callback de producción.
+- Espejo Cloudflare: SPA, guías y assets responden; el canonical apunta al dominio de Vercel.
+- **No cubierto:** consentimiento completo con una cuenta Google real en automatización, matriz multi-dispositivo, pruebas de carga y auditoría WCAG formal.
 
 ---
 
@@ -716,9 +949,31 @@ npx cap open android
 
 ### Notificaciones vacías o error al marcarlas como leídas
 
-- La UI llama a `GET /api/notifications` y `PATCH /api/notifications/:id/read`.
-- Esas rutas **no están registradas** en `server/routes`; solo existen la tabla y funciones de storage.
-- Es una brecha conocida, no un fallo de sesión.
+- La UI llama a `GET /api/notifications` y `PATCH /api/notifications/:id/read`; ambas rutas existen en `server/routes/index.ts`.
+- La campana del Navbar solo consulta para usuarios autenticados con rol distinto de `traveler`; la página `/notifications` funciona para cualquier usuario autenticado.
+- Si la lista está vacía, revisa que existan filas en `notifications` para el username y el rol activo.
+- Un `404` al marcar como leída suele significar que la notificación pertenece a otro usuario.
+
+### El login con Google falla con `redirect_uri_mismatch`
+
+- La URI enviada debe estar registrada **exactamente** en Google Cloud Console.
+- Local: usa `http://localhost:5000/api/auth/google`. `5055`, `127.0.0.1` y otros puertos no están autorizados.
+- Producción: `https://via-nova-ia.vercel.app/api/auth/google`.
+- Si cambias de puerto, actualiza `PORT`, `CLIENT_URL` y `GOOGLE_REDIRECT_URI` en `.env`, y reinicia el servidor.
+- No construyas el callback desde `Host`/`X-Forwarded-Host`; el backend lo fija por entorno.
+
+### En producción `/api/...` devuelve HTML o 404
+
+- Es un rewrite mal configurado. Con `cleanUrls: true`, `/api/*` debe apuntar a `/api/index` (sin `.ts`) y `/api/tts` a `/api/tts`.
+- Verifica con `curl -I https://via-nova-ia.vercel.app/api/health`: debe ser `200 application/json`.
+- Ejecuta `npm test`; `tests/deploy-config.test.ts` detecta destinos con extensión.
+- Tras corregir `vercel.json`, vuelve a desplegar; el cambio no aplica hasta el nuevo build.
+
+### El service worker sirve una versión vieja
+
+- El cache usa `CACHE_VERSION` en `client/public/sw.js`; súbelo al cambiar assets críticos.
+- En DevTools → Application → Service Workers, usa “Update” o “Unregister” y recarga.
+- El service worker nunca cachea `/api/`; si una respuesta privada aparece vieja, el problema es de la API o del estado de TanStack Query, no del SW.
 
 ### El servidor no arranca
 
@@ -738,10 +993,12 @@ npx cap open android
 
 | Documento | Ubicación | Estado |
 |---|---|---|
-| README técnico | `README.md` | Actualizado; describe arquitectura, seguridad, API y operación. |
+| README técnico | `README.md` | Actualizado; arquitectura, diseño, estado, cobertura, API y operación. |
+| SEO avanzado | `docs/SEO_AVANZADO_VIANOVA.md` | Estrategia, URLs, prerender, JSON-LD, sitemap y checklist de indexación. |
 | Informe de QA y seguridad | `INFORME_QA_SEGURIDAD_VIANOVA.md` | Documento de hallazgos y contexto de auditoría. |
 | Checklist de remediación | `CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md` | Seguimiento de acciones de seguridad. |
-| Checklist QA front/back | `docs/CHECKLIST_QA_VIANOVA.md` | Nuevo; cubre UI, endpoints, integración, E2E y rendimiento. |
+| Checklist QA front/back | `docs/CHECKLIST_QA_VIANOVA.md` | Cubre UI, endpoints, integración, E2E y rendimiento. |
+| Pruebas automatizadas | `tests/` | `security.test.ts` y `deploy-config.test.ts`; ejecutar con `npm test`. |
 | Despliegue Cloudflare | `CLOUDFLARE_DEPLOY.md` | Guía específica de despliegue. |
 | Notas históricas | `CAMBIOS_ASTRA6.MD`, `Errores.md`, `plan_implementacion.txt` | Contexto de evolución; no son especificación vigente. |
 
@@ -764,16 +1021,103 @@ No adjuntes secretos, tokens, contraseñas ni datos personales en capturas o iss
 
 Estas brechas están presentes en el código y deben considerarse al planificar QA o producción:
 
-- **Notificaciones:** las rutas `GET /api/notifications` y `PATCH /api/notifications/:id/read` ya existen; la campana del Navbar solo se muestra para roles proveedor distintos de viajero y admin, aunque la página `/notifications` funciona para cualquier usuario autenticado.
+- **Notificaciones:** las rutas `GET /api/notifications` y `PATCH /api/notifications/:id/read` existen; la campana del Navbar solo consulta para roles proveedor distintos de viajero, aunque la página `/notifications` funciona para cualquier usuario autenticado.
 - **ProviderDashboard:** componente completo sin ruta en `App.tsx`; no es accesible por URL.
 - **MyProducts vs ProductManager:** `/my-products` existe, pero el Navbar lleva a `/products`; hay dos experiencias de gestión con contratos distintos.
 - **Social:** el router activo vive en `server/routes/social.routes.ts`; el feed se obtiene con `GET /api/social/posts` (no existe `/api/social/feed`).
 - **Pagos PSE simulados:** la confirmación de reservas no cobra realmente; Stripe es opcional y su webhook crea órdenes sin reservar stock atómicamente.
+- **Offline de escrituras:** el service worker cachea shell y assets, pero no encola reservas, órdenes, mensajes, publicaciones ni solicitudes de taxi. Sin red, esas acciones fallan.
+- **Datos privados offline:** no se cachean respuestas de `/api/`; el catálogo visible sin conexión se limita a lo que ya esté en memoria o en el shell.
 - **Mapas:** OSM/Nominatim/OSRM son servicios públicos sin SLA; no aptos para tráfico alto sin proxy o proveedor dedicado.
-- **Rutas no lazy:** `App.tsx` importa todas las páginas de forma eager; el bundle inicial puede crecer.
-- **PWA parcial:** hay service worker de push, pero no manifest ni estrategia offline completa.
+- **Chunks pesados:** las rutas son lazy, pero `map-style` (~1,1 MB), Three (~720 KB), `Dashboard` (~473 KB) y `model-viewer` (~426 KB) elevan el costo cuando se cargan. Leaflet se importa al montar el mapa.
+- **SEO:** la parte técnica está completa, pero la verificación en Search Console/Bing, el envío del sitemap y la indexación siguen siendo pasos manuales. Los dominios actuales son subdominios compartidos, no un dominio propio.
 - **i18n parcial:** existen cinco idiomas, pero no todas las cadenas están traducidas.
 - **Datos mock:** `RideHistory` inserta reservas de ejemplo para viajeros; no son datos reales.
 - **Analytics admin:** el endpoint ya no devuelve usernames, pero la UI todavía intenta mostrar `log.username`.
+- **Operación:** sin APM, alertas, SLA ni suite E2E continua. Los logs son los de la plataforma.
+- **Móvil:** Capacitor está configurado, pero no hay APK firmado ni publicación en tiendas; Expo es un prototipo separado.
 
-Para el detalle de pruebas, usa `docs/CHECKLIST_QA_VIANOVA.md`.
+Para el detalle de pruebas, usa `docs/CHECKLIST_QA_VIANOVA.md` y `docs/SEO_AVANZADO_VIANOVA.md`.
+
+---
+
+## Próximamente
+
+### 1. Offline para interacciones con señal inestable (prioridad alta)
+
+Objetivo: que el usuario pueda **seguir actuando** en zonas con cobertura intermitente sin perder datos ni duplicar acciones. No se implementará offline total: se elegirán interacciones reconciliables.
+
+| Interacción | ¿Offline? | Estrategia |
+|---|---|---|
+| Ver catálogo, guías y último contenido público | Sí, solo lectura | Cache de la última respuesta pública + assets del shell. |
+| Enviar solicitud de reserva | Sí, en cola | Outbox en IndexedDB; el proveedor confirma después. |
+| Publicar en social, comentar o dar like | Sí, en cola | Idempotencia por cliente; likes reconciliados por estado final. |
+| Enviar mensaje privado | Sí, en cola | Orden por timestamp de cliente y reintento con backoff. |
+| Escribir reseña | Sí, en cola | Se envía al recuperar red; requiere viaje completado. |
+| Crear orden o pagar | **No** | El stock y el dinero exigen confirmación inmediata del servidor. |
+| Bloquear slot o confirmar reserva | **No** | El lock dura 5 minutos; no tiene sentido offline. |
+| Pedir taxi | **No** | Es tiempo real; se muestra reintento y estado de conexión. |
+| Login, 2FA, subidas grandes | **No** | Requieren red y validación del servidor. |
+
+Diseño técnico previsto:
+
+1. **Outbox en IndexedDB** con estados `pending`, `syncing`, `failed`, `synced`.
+2. **Background Sync** cuando el navegador lo soporte; fallback a reintento al recuperar `online`.
+3. **Idempotency keys** por operación para evitar duplicados al reintentar.
+4. **UI optimista** con etiqueta “Pendiente de sincronizar” y opción de descartar.
+5. **Resolución de conflictos** con el servidor como autoridad: si el recurso cambió, se muestra el estado real.
+6. **TTL y limpieza** de la cola para no reenviar acciones viejas.
+7. **Métricas** de sincronización, fallos y conflictos.
+
+Criterio de salida: reserva, mensaje y publicación creados sin red se sincronizan una sola vez al volver la conexión, con prueba E2E que simule offline/online.
+
+### 2. Otros frentes
+
+| Frente | Prioridad | Criterio de salida |
+|---|---|---|
+| Pagos reales (PSE/Stripe) | Alta | Checkout y webhook verificados en sandbox y producción; reserva y orden conciliadas. |
+| Dominio propio + redirecciones 301 | Alta | `vianova.co` (o similar) canónico, Search Console verificado y sitemap enviado. |
+| Notificaciones push de punta a punta | Media | Evento de reserva/mensaje genera push y deep link verificable. |
+| APK firmado y beta en Play Store | Media | Build firmado, política de privacidad y pruebas en dispositivos reales. |
+| Rendimiento | Media | Dividir los chunks de mapas/3D, cargar Leaflet solo al abrir el mapa y medir LCP/CLS con PageSpeed. |
+| Observabilidad | Media | Errores, latencia y embudo de reservas con alertas. |
+| Suite E2E en CI | Media | Flujos críticos en cada PR: login, reserva, orden, taxi y social. |
+| Contenido SEO | Continua | 12 guías del plan de 90 días con datos reales y enlaces internos. |
+
+---
+
+## Aspiración del prototipo
+
+ViaNovaIA aspira a ser el **sistema operativo de viajes locales de Colombia**: un lugar donde el viajero planifica con IA, descubre inventario real, reserva con proveedores verificados, se mueve con taxi local y comparte la experiencia; y donde el proveedor pequeño gestiona su negocio sin depender de una OTA global.
+
+### Horizonte corto (0–3 meses)
+
+- Cerrar la brecha offline para reservas, mensajes y social.
+- Dominio propio, Search Console/Bing verificados y sitemap indexado.
+- Pagos en sandbox con conciliación real de reserva y orden.
+- Suite E2E de los flujos críticos y observabilidad básica.
+
+### Horizonte medio (3–6 meses)
+
+- Proveedores verificados y acuerdos locales en Neiva y el Huila.
+- Reservas con confirmación y cancelación trazables; pagos reales.
+- Beta Android firmada y notificaciones push completas.
+- Analíticas de proveedor con ocupación, ingresos y reputación.
+
+### Horizonte largo (6–12+ meses)
+
+- Cobertura multi-ciudad y multi-proveedor con inventario propio.
+- Modo offline-first real para viajeros en carretera y zonas rurales.
+- Herramientas SaaS para hoteles, restaurantes, operadores y taxistas.
+- Recomendación con IA basada en inventario, clima, temporada y presupuesto.
+- Marca y autoridad de dominio suficientes para competir en búsquedas long-tail de turismo en Colombia.
+
+### Principios
+
+- **Local primero:** proveedores y contexto colombiano, no un catálogo genérico.
+- **Confianza:** reseñas verificadas, identidad clara y confirmación humana cuando el pago o el inventario lo exigen.
+- **Resiliencia:** la app debe degradarse con dignidad cuando la señal es mala.
+- **Accesibilidad:** español primero, interfaz clara, teclado y lectores de pantalla.
+- **Honestidad:** no prometer disponibilidad instantánea, cobertura nacional ni posiciones SEO que el producto aún no puede sostener.
+
+**Lo que no es:** no es una OTA con confirmación instantánea, no es un motor de reservas global y no sustituye la operación real de los proveedores. Es una capa de planificación, descubrimiento y coordinación.
