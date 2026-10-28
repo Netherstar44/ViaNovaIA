@@ -23,7 +23,6 @@ const buttonVariants = cva(
         glass: "relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-white/20 hover:border-white/30 transition-all duration-300 before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/30 before:to-transparent before:opacity-0 hover:before:opacity-100 active:scale-[0.98]",
       },
       size: {
-        // @replit changed sizes
         default: "min-h-9 px-4 py-2",
         sm: "min-h-8 rounded-md px-3 text-xs",
         lg: "min-h-10 rounded-md px-8",
