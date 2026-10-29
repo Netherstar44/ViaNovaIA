@@ -1,0 +1,259 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 60px 100px;
+    }
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 36px;
+      height: 100%;
+    }
+    .panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.15);
+      border-radius: 28px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+    .panel-header {
+      margin-bottom: 28px;
+    }
+    .panel-title {
+      font-family: Poppins, sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+    .panel-subtitle {
+      font-size: 28px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    /* Bar items */
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      justify-content: center;
+    }
+    .bar-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bar-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .bar-name { color: #f1f5f9; }
+    .bar-val { color: #facc15; font-weight: 700; }
+    .bar-track {
+      width: 100%;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #ca8a04 0%, #facc15 100%);
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.4);
+      transform-origin: left center;
+    }
+
+    /* Stock Alerts */
+    .alerts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      justify-content: center;
+    }
+    .alert-card {
+      border-radius: 20px;
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid;
+    }
+    .alert-card.warning {
+      background: rgba(234, 179, 8, 0.08);
+      border-color: rgba(234, 179, 8, 0.35);
+    }
+    .alert-card.healthy {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.35);
+    }
+    .alert-card.danger {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .alert-info h4 {
+      font-size: 30px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .alert-info p {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+
+    .status-badge {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 28px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .status-warning {
+      background: rgba(234, 179, 8, 0.2);
+      color: #facc15;
+    }
+    .status-healthy {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+    .status-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+  </style>
+  <div id="root" data-composition-id="s4-inventory" data-width="1920" data-height="1080">
+    <div class="layout-grid">
+      <!-- Left: Top Products -->
+      <div class="panel panel-left">
+        <div class="panel-header">
+          <h3 class="panel-title">Productos Más Vendidos</h3>
+          <p class="panel-subtitle">Ingresos por servicio en el periodo</p>
+        </div>
+
+        <div class="bar-list">
+          <!-- Item 1 -->
+          <div class="bar-item">
+            <div class="bar-labels">
+              <span class="bar-name">Suite Balcón Río Magdalena</span>
+              <span class="bar-val">$3,840,000</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill b1" style="width: 88%;"></div>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="bar-item">
+            <div class="bar-labels">
+              <span class="bar-name">Tour Astronómico Tatacoa</span>
+              <span class="bar-val">$2,450,000</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill b2" style="width: 68%;"></div>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="bar-item">
+            <div class="bar-labels">
+              <span class="bar-name">Experiencia Huilense (Asado)</span>
+              <span class="bar-val">$1,280,000</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill b3" style="width: 44%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Stock Alerts -->
+      <div class="panel panel-right">
+        <div class="panel-header">
+          <h3 class="panel-title">Alertas de Inventario</h3>
+          <p class="panel-subtitle">Prevención de quiebre de stock</p>
+        </div>
+
+        <div class="alerts-list">
+          <div class="alert-card warning alert-1">
+            <div class="alert-info">
+              <h4>Habitación Doble Estándar</h4>
+              <p>Quedan solo 2 cupos para el fin de semana</p>
+            </div>
+            <div class="status-badge status-warning">Stock Bajo</div>
+          </div>
+
+          <div class="alert-card healthy alert-2">
+            <div class="alert-info">
+              <h4>Tour Desierto de la Tatacoa</h4>
+              <p>18 cupos disponibles con alta demanda</p>
+            </div>
+            <div class="status-badge status-healthy">Saludable</div>
+          </div>
+
+          <div class="alert-card danger alert-3">
+            <div class="alert-info">
+              <h4>Paquete Tradicional Huila</h4>
+              <p>Inventario agotado · Reposición pendiente</p>
+            </div>
+            <div class="status-badge status-danger">Agotado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.panel-left', { opacity: 0, x: -30 });
+    gsap.set('.panel-right', { opacity: 0, x: 30 });
+    gsap.set('.b1', { scaleX: 0 });
+    gsap.set('.b2', { scaleX: 0 });
+    gsap.set('.b3', { scaleX: 0 });
+    gsap.set('.alert-1', { opacity: 0, y: 15 });
+    gsap.set('.alert-2', { opacity: 0, y: 15 });
+    gsap.set('.alert-3', { opacity: 0, y: 15 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.panel-left', { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, 0.2);
+    tl.to('.panel-right', { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, 0.4);
+
+    // Expand bars
+    tl.to('.b1', { scaleX: 1, duration: 1.0, ease: 'power2.out' }, 0.6);
+    tl.to('.b2', { scaleX: 1, duration: 1.0, ease: 'power2.out' }, 0.8);
+    tl.to('.b3', { scaleX: 1, duration: 1.0, ease: 'power2.out' }, 1.0);
+
+    // Alerts pop
+    tl.to('.alert-1', { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' }, 1.3);
+    tl.to('.alert-2', { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' }, 1.6);
+    tl.to('.alert-3', { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' }, 1.9);
+
+    tl.to('#root', { scale: 1.02, transformOrigin: 'center center', duration: 5.5, ease: 'sine.inOut' }, 2.0);
+
+    window.__timelines["s4-inventory"] = tl;
+  </script>
+</template>
+

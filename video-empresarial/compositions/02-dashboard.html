@@ -1,0 +1,256 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 60px 100px;
+    }
+    .glow {
+      position: absolute;
+      right: -150px;
+      top: -150px;
+      width: 1000px;
+      height: 900px;
+      background: radial-gradient(circle at 50% 50%, rgba(250, 204, 21, 0.12), rgba(250, 204, 21, 0.02) 50%, transparent 70%);
+      filter: blur(15px);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.12);
+    }
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.15);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #facc15;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .period-badge {
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .title {
+      font-family: Poppins, sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .title span {
+      color: #facc15;
+    }
+    .header-actions {
+      display: flex;
+      gap: 16px;
+    }
+    .btn-action {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-size: 28px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+    .btn-excel {
+      background: #facc15;
+      border-color: #facc15;
+      color: #0b1220;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      margin-bottom: 40px;
+    }
+    .kpi-card {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(250, 204, 21, 0.2);
+      border-radius: 24px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+    .kpi-card.highlight {
+      border-color: rgba(250, 204, 21, 0.5);
+      background: linear-gradient(145deg, rgba(250, 204, 21, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+    }
+    .kpi-label {
+      font-size: 28px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
+    }
+    .kpi-value {
+      font-family: Poppins, sans-serif;
+      font-size: 54px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    .kpi-value.gold {
+      color: #facc15;
+    }
+    .kpi-value.green {
+      color: #22c55e;
+    }
+    .kpi-hint {
+      font-size: 28px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kpi-hint .tag {
+      color: #22c55e;
+      font-weight: 700;
+    }
+    .lower-banner {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 24px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .lower-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .lower-desc {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+  </style>
+  <div id="root" data-composition-id="s2-dashboard" data-width="1920" data-height="1080">
+    <div class="glow" data-layout-ignore></div>
+
+    <div class="header">
+      <div class="header-left">
+        <div class="badge-row">
+          <div class="role-badge">● Panel Hotel</div>
+          <div class="period-badge">Últimos 30 días</div>
+        </div>
+        <h2 class="title">Hotel Plaza Neiva · <span>Control Financiero</span></h2>
+      </div>
+      <div class="header-actions">
+        <div class="btn-action">Actualizar</div>
+        <div class="btn-action btn-excel">Exportar Excel</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <!-- KPI 1 -->
+      <div class="kpi-card highlight card-1">
+        <div>
+          <div class="kpi-label">Ingresos Totales</div>
+          <div class="kpi-value gold">$8,450,000</div>
+        </div>
+        <div class="kpi-hint">142 órdenes pagadas</div>
+      </div>
+
+      <!-- KPI 2 -->
+      <div class="kpi-card highlight card-2">
+        <div>
+          <div class="kpi-label">Ganancia Neta</div>
+          <div class="kpi-value green">$3,210,000</div>
+        </div>
+        <div class="kpi-hint"><span class="tag">Margen 38.0%</span> de rentabilidad</div>
+      </div>
+
+      <!-- KPI 3 -->
+      <div class="kpi-card card-3">
+        <div>
+          <div class="kpi-label">Gastos Operativos</div>
+          <div class="kpi-value">$5,240,000</div>
+        </div>
+        <div class="kpi-hint">Costos de venta + comisión</div>
+      </div>
+
+      <!-- KPI 4 -->
+      <div class="kpi-card card-4">
+        <div>
+          <div class="kpi-label">Ticket Promedio</div>
+          <div class="kpi-value">$59,500</div>
+        </div>
+        <div class="kpi-hint">118 clientes activos</div>
+      </div>
+    </div>
+
+    <div class="lower-banner">
+      <div class="lower-title">Visibilidad inmediata de toda tu operación</div>
+      <div class="lower-desc">Datos calculados y sincronizados en tiempo real</div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.header', { opacity: 0, y: -25 });
+    gsap.set('.card-1', { opacity: 0, y: 30, scale: 0.95 });
+    gsap.set('.card-2', { opacity: 0, y: 30, scale: 0.95 });
+    gsap.set('.card-3', { opacity: 0, y: 30, scale: 0.95 });
+    gsap.set('.card-4', { opacity: 0, y: 30, scale: 0.95 });
+    gsap.set('.lower-banner', { opacity: 0, y: 20 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.header', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.2);
+
+    tl.to('.card-1', { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.2)' }, 0.4);
+    tl.to('.card-2', { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.2)' }, 0.6);
+    tl.to('.card-3', { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.2)' }, 0.8);
+    tl.to('.card-4', { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.2)' }, 1.0);
+
+    tl.to('.lower-banner', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 1.4);
+
+    // Camera push-in
+    tl.to('#root', { scale: 1.03, transformOrigin: 'center 40%', duration: 7.0, ease: 'sine.inOut' }, 1.5);
+
+    window.__timelines["s2-dashboard"] = tl;
+  </script>
+</template>
+

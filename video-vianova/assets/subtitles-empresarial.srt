@@ -1,0 +1,24 @@
+1
+00:00:00,500 --> 00:00:04,100
+¿Sabes exactamente cuánto le está dejando el turismo a tu negocio hoy?
+
+2
+00:00:04,600 --> 00:00:13,100
+Con ViaNovaIA, tienes el control financiero de tu operación en tiempo real.
+
+3
+00:00:13,300 --> 00:00:19,100
+Monitorea tus tendencias día a día y conoce el margen real de cada servicio.
+
+4
+00:00:19,300 --> 00:00:25,000
+Identifica tus productos estrella y recibe alertas de stock antes de perder una sola venta.
+
+5
+00:00:25,300 --> 00:00:32,600
+Y con un solo clic, exporta reportes contables profesionales en Excel, listos para tu balance.
+
+6
+00:00:33,000 --> 00:00:42,100
+Hoteles, restaurantes, experiencias y transporte. Haz crecer tu negocio con ViaNovaIA en via-nova-ia.vercel.app.
+

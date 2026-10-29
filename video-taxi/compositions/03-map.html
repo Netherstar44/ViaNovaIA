@@ -1,0 +1,286 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    /* Dark map background */
+    .map-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 55%, #0f172a 0%, #070b14 70%);
+    }
+    /* Grid overlay simulating map streets */
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background-image:
+        linear-gradient(rgba(250,204,21,0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(250,204,21,0.4) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+    }
+    .map-glow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1400px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(250,204,21,0.07) 0%, transparent 65%);
+      filter: blur(30px);
+    }
+    /* Route SVG path */
+    .route-svg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    /* Origin pin */
+    .pin-origin {
+      position: absolute;
+      left: 280px;
+      top: 660px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .pin-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 800;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .pin-icon.green { background: #22c55e; color: #070b14; }
+    .pin-icon.gold { background: #facc15; color: #070b14; }
+    .pin-label {
+      margin-top: 8px;
+      background: rgba(15,23,42,0.92);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 28px;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+    }
+    /* Destination pin */
+    .pin-dest {
+      position: absolute;
+      left: 880px;
+      top: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* Car icon moving */
+    .car-icon {
+      position: absolute;
+      left: 320px;
+      top: 640px;
+      font-size: 48px;
+      filter: drop-shadow(0 4px 16px rgba(250,204,21,0.5));
+    }
+    /* Info panel overlay */
+    .info-panel {
+      position: absolute;
+      left: 160px;
+      top: 80px;
+      background: rgba(11,18,32,0.92);
+      border: 1px solid rgba(250,204,21,0.35);
+      border-radius: 24px;
+      padding: 32px 40px;
+      width: 580px;
+      backdrop-filter: blur(20px);
+    }
+    .info-panel-title {
+      font-family: Poppins, sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: #facc15;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-icon { font-size: 28px; width: 36px; text-align: center; }
+    .info-text { font-size: 28px; color: #e2e8f0; font-weight: 500; }
+    .info-text strong { color: #facc15; font-weight: 700; }
+    .info-text .green { color: #22c55e; }
+    /* Status bar */
+    .status-bar {
+      position: absolute;
+      bottom: 80px;
+      left: 660px;
+      background: rgba(11,18,32,0.95);
+      border: 1px solid rgba(34,197,94,0.5);
+      border-radius: 999px;
+      padding: 16px 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 0 30px rgba(34,197,94,0.2);
+    }
+    .status-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34,197,94,0.8);
+    }
+    .status-text {
+      font-family: Poppins, sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    /* Right callout */
+    .right-callout {
+      position: absolute;
+      right: 140px;
+      top: 180px;
+      width: 680px;
+    }
+    .right-headline {
+      font-family: Poppins, sans-serif;
+      font-size: 66px;
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      margin-bottom: 36px;
+    }
+    .right-headline .gold { color: #facc15; }
+    .right-sub {
+      font-size: 32px;
+      color: #94a3b8;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+  </style>
+  <div id="root" data-composition-id="s3-map" data-width="1920" data-height="1080">
+    <div class="map-bg" data-layout-ignore></div>
+    <div class="map-grid" data-layout-ignore></div>
+    <div class="map-glow" data-layout-ignore></div>
+
+    <!-- Route SVG -->
+    <svg class="route-svg" data-layout-ignore>
+      <defs>
+        <filter id="glow-path">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Glow route -->
+      <path id="route-glow" d="M 306 686 Q 480 660 620 580 Q 740 520 894 506"
+        fill="none" stroke="rgba(250,204,21,0.3)" stroke-width="12" stroke-linecap="round" filter="url(#glow-path)"/>
+      <!-- Main route -->
+      <path id="route-main" d="M 306 686 Q 480 660 620 580 Q 740 520 894 506"
+        fill="none" stroke="#facc15" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="0 2000"/>
+    </svg>
+
+    <!-- Origin pin -->
+    <div class="pin-origin">
+      <div class="pin-icon green">✈</div>
+      <div class="pin-label">Aeropuerto Benito Salas</div>
+    </div>
+
+    <!-- Destination pin -->
+    <div class="pin-dest">
+      <div class="pin-icon gold">🏨</div>
+      <div class="pin-label">Hotel Plaza Neiva</div>
+    </div>
+
+    <!-- Car on route -->
+    <div class="car-icon">🚖</div>
+
+    <!-- Info panel -->
+    <div class="info-panel">
+      <div class="info-panel-title">🗺️ Ruta en tiempo real</div>
+      <div class="info-row">
+        <span class="info-icon">📍</span>
+        <span class="info-text"><strong>Origen:</strong> Aeropuerto Benito Salas</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">🎯</span>
+        <span class="info-text"><strong>Destino:</strong> Hotel Plaza Neiva</span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">⏱</span>
+        <span class="info-text">Llegada estimada: <span class="green"><strong>4 min</strong></span></span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">📏</span>
+        <span class="info-text">Distancia: <strong>11.2 km</strong></span>
+      </div>
+      <div class="info-row">
+        <span class="info-icon">💰</span>
+        <span class="info-text">Tarifa fija: <strong style="color:#facc15;">$18.500 COP</strong></span>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span class="status-text">En camino · Destino confirmado · Sin sorpresas</span>
+    </div>
+
+    <!-- Right callout -->
+    <div class="right-callout">
+      <h2 class="right-headline">
+        La ruta lista.<br />Tú al <span class="gold">mando.</span>
+      </h2>
+      <p class="right-sub">
+        Sin vueltas innecesarias,<br />sin confusión en el camino.<br />Neiva entera en tu pantalla.
+      </p>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.info-panel', { opacity: 0, x: -30 });
+    gsap.set('.status-bar', { opacity: 0, y: 20 });
+    gsap.set('.pin-origin', { opacity: 0, scale: 0.5 });
+    gsap.set('.pin-dest', { opacity: 0, scale: 0.5 });
+    gsap.set('.car-icon', { opacity: 0 });
+    gsap.set('.right-callout', { opacity: 0, x: 40 });    const routeEl = document.getElementById('route-main');
+    const routeGlowEl = document.getElementById('route-glow');
+    gsap.set(routeEl, { attr: { 'stroke-dasharray': '0 2000' } });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.pin-origin', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }, 0.2);
+    tl.to('.info-panel', { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, 0.4);
+    tl.to(routeEl, { attr: { 'stroke-dasharray': '2000 0' }, duration: 1.8, ease: 'power2.inOut' }, 0.8);
+    tl.to(routeGlowEl, { attr: { 'stroke-dasharray': '2000 0' }, duration: 1.8, ease: 'power2.inOut' }, 0.8);
+    tl.to('.pin-dest', { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' }, 2.0);
+    tl.to('.car-icon', { opacity: 1, duration: 0.4, ease: 'power2.out' }, 2.3);
+    tl.to('.car-icon', { x: 560, y: -140, duration: 5.5, ease: 'power1.inOut' }, 2.5);
+    tl.to('.status-bar', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 2.8);
+    tl.to('.right-callout', { opacity: 1, x: 0, duration: 0.7, ease: 'power2.out' }, 3.0);
+
+    window.__timelines["s3-map"] = tl;
+  </script>
+</template>

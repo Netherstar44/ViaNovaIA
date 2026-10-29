@@ -1,0 +1,313 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .glow-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1600px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(250,204,21,0.09) 0%, rgba(34,197,94,0.04) 40%, transparent 70%);
+      filter: blur(22px);
+    }
+    .scene-label {
+      position: absolute;
+      left: 160px;
+      top: 70px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    /* Phone mockup frame */
+    .phone-frame {
+      position: absolute;
+      left: 200px;
+      top: 80px;
+      width: 520px;
+      height: 900px;
+      background: #0f172a;
+      border-radius: 44px;
+      border: 2px solid rgba(250,204,21,0.3);
+      box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 60px rgba(250,204,21,0.08);
+      overflow: hidden;
+      padding: 0;
+    }
+    .phone-statusbar {
+      height: 50px;
+      background: #0b1220;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      font-size: 22px;
+      color: #94a3b8;
+    }
+    .phone-statusbar .time { font-weight: 700; color: #fff; }
+    .phone-header {
+      background: #0b1220;
+      padding: 18px 24px 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .phone-header img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+    .phone-header-text { font-family: Poppins, sans-serif; }
+    .phone-header-text .driver-name { font-size: 24px; font-weight: 700; color: #fff; }
+    .phone-header-text .driver-sub { font-size: 20px; color: #64748b; }
+    /* Toggle */
+    .toggle-section {
+      padding: 28px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .toggle-label {
+      font-size: 22px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .toggle-pill {
+      width: 90px;
+      height: 48px;
+      border-radius: 999px;
+      background: #22c55e;
+      position: relative;
+      box-shadow: 0 0 20px rgba(34,197,94,0.4);
+    }
+    .toggle-pill::after {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 46px;
+      width: 36px;
+      height: 36px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .toggle-status {
+      font-family: Poppins, sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: #22c55e;
+    }
+    /* Notification card */
+    .notif-card {
+      margin: 0 16px;
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(250,204,21,0.5);
+      border-radius: 20px;
+      padding: 20px 22px;
+      box-shadow: 0 8px 40px rgba(250,204,21,0.15);
+    }
+    .notif-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .tourist-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #facc15, #f97316);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: #070b14;
+    }
+    .notif-tourist-info { flex: 1; }
+    .notif-tourist-name { font-size: 22px; font-weight: 700; color: #fff; }
+    .notif-tourist-badge {
+      font-size: 22px;
+      color: #22c55e;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .fare-badge {
+      font-family: Poppins, sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: #facc15;
+    }
+    .notif-route {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 14px;
+    }
+    .route-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 20px;
+    }
+    .route-dot { font-size: 18px; margin-top: 2px; }
+    .route-dot.green { color: #22c55e; }
+    .route-dot.gold { color: #facc15; }
+    .route-text { color: #e2e8f0; line-height: 1.3; }
+    .route-text small { font-size: 28px; color: #94a3b8; }
+    .btn-accept {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #facc15, #f59e0b);
+      color: #070b14;
+      font-family: Poppins, sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+    /* Right side callout */
+    .callout-panel {
+      position: absolute;
+      right: 160px;
+      top: 420px;
+      width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .callout-headline {
+      font-family: Poppins, sans-serif;
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+    .callout-headline .gold { color: #facc15; }
+    .callout-headline .green { color: #22c55e; }
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: rgba(15,23,42,0.7);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px 28px;
+    }
+    .feature-icon { font-size: 36px; }
+    .feature-text { font-size: 32px; font-weight: 600; color: #e2e8f0; }
+    .feature-text strong { color: #facc15; }
+  </style>
+  <div id="root" data-composition-id="s2-toggle" data-width="1920" data-height="1080">
+    <div class="glow-center" data-layout-ignore></div>
+
+    <div class="scene-label">Conéctate al instante</div>
+
+    <!-- Phone mockup -->
+    <div class="phone-frame" data-layout-ignore>
+      <div class="phone-statusbar">
+        <span class="time">9:41</span>
+        <span>●●●</span>
+      </div>
+      <div class="phone-header">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#facc15,#f97316);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#070b14;">C</div>
+        <div class="phone-header-text">
+          <div class="driver-name">Carlos Andrade</div>
+          <div class="driver-sub">Neiva, Huila · ⭐ 4.9</div>
+        </div>
+      </div>
+      <div class="toggle-section">
+        <div class="toggle-label">Estado del conductor</div>
+        <div class="toggle-row">
+          <div class="toggle-pill"></div>
+          <div class="toggle-status">🟢 Activo</div>
+        </div>
+      </div>
+      <div class="notif-card">
+        <div class="notif-header">
+          <div class="tourist-avatar">A</div>
+          <div class="notif-tourist-info">
+            <div class="notif-tourist-name">Alex Explorer</div>
+            <div class="notif-tourist-badge">✓ Turista verificado</div>
+          </div>
+          <div class="fare-badge">$18.500</div>
+        </div>
+        <div class="notif-route">
+          <div class="route-item">
+            <span class="route-dot green">●</span>
+            <div class="route-text">Aeropuerto Benito Salas<br /><small>Origen confirmado</small></div>
+          </div>
+          <div class="route-item">
+            <span class="route-dot gold">●</span>
+            <div class="route-text">Hotel Plaza Neiva<br /><small>Destino confirmado</small></div>
+          </div>
+        </div>
+        <div class="btn-accept">✓ Aceptar carrera</div>
+      </div>
+    </div>
+
+    <!-- Right callout -->
+    <div class="callout-panel">
+      <h2 class="callout-headline">
+        Actívate y recibe<br /><span class="green">carreras reales</span><br />al <span class="gold">instante</span>
+      </h2>
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="feature-icon">💰</span>
+          <span class="feature-text"><strong>Tarifa fija</strong> · Sin regateo · Sin intermediarios</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          <span class="feature-text">Turistas <strong>verificados</strong> · Llegando a tu ciudad</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🗺️</span>
+          <span class="feature-text">Origen y destino <strong>confirmados</strong> de antemano</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.scene-label', { opacity: 0 });
+    gsap.set('.phone-frame', { opacity: 0, x: -60 });
+    gsap.set('.notif-card', { opacity: 0, y: 30 });
+    gsap.set('.callout-panel', { opacity: 0, x: 50 });    gsap.set('.feature-item', { opacity: 0, x: 30 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.scene-label', { opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.1);
+    tl.to('.phone-frame', { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }, 0.2);
+    tl.to('.callout-panel', { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }, 0.5);
+    tl.to('.notif-card', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.3)' }, 1.2);
+    tl.to('.feature-item', { opacity: 1, x: 0, duration: 0.5, stagger: 0.15, ease: 'power2.out' }, 1.5);
+    tl.to('#root', { scale: 1.018, transformOrigin: 'center center', duration: 7.0, ease: 'sine.inOut' }, 2.0);
+
+    window.__timelines["s2-toggle"] = tl;
+  </script>
+</template>

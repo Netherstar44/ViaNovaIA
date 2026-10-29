@@ -1,0 +1,281 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .glow-gold {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%);
+      width: 1600px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(250,204,21,0.1) 0%, rgba(250,204,21,0.02) 50%, transparent 70%);
+      filter: blur(28px);
+    }
+    .scene-label {
+      position: absolute;
+      left: 160px;
+      top: 70px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    /* Profile card */
+    .profile-card {
+      position: absolute;
+      left: 160px;
+      top: 130px;
+      width: 680px;
+      background: rgba(11,18,32,0.92);
+      border: 1px solid rgba(250,204,21,0.35);
+      border-radius: 28px;
+      padding: 40px 44px;
+    }
+    .profile-top {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-bottom: 32px;
+    }
+    .profile-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #facc15, #f97316);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Poppins, sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      color: #070b14;
+      box-shadow: 0 0 30px rgba(250,204,21,0.35);
+      flex-shrink: 0;
+    }
+    .profile-info { flex: 1; }
+    .profile-name {
+      font-family: Poppins, sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .profile-sub {
+      font-size: 28px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34,197,94,0.15);
+      border: 1px solid rgba(34,197,94,0.4);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 28px;
+      color: #22c55e;
+      font-weight: 700;
+    }
+    /* Star rating */
+    .rating-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 32px;
+      padding: 24px 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .rating-number {
+      font-family: Poppins, sans-serif;
+      font-size: 80px;
+      font-weight: 900;
+      color: #facc15;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+    .rating-right { display: flex; flex-direction: column; gap: 6px; }
+    .stars { font-size: 34px; letter-spacing: 4px; }
+    .rating-count { font-size: 28px; color: #94a3b8; }
+    /* Reviews */
+    .reviews-title {
+      font-size: 28px;
+      color: #cbd5e1;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+    .review-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .review-item:last-child { border-bottom: none; }
+    .review-stars { font-size: 28px; color: #facc15; }
+    .review-text { font-size: 28px; color: #e2e8f0; font-style: italic; }
+    .review-author { font-size: 28px; color: #94a3b8; }
+    /* Network map right side */
+    .network-panel {
+      position: absolute;
+      right: 140px;
+      top: 130px;
+      width: 900px;
+    }
+    .network-headline {
+      font-family: Poppins, sans-serif;
+      font-size: 62px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      margin-bottom: 36px;
+    }
+    .network-headline .gold { color: #facc15; }
+    /* City drivers grid */
+    .drivers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .driver-city-card {
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px 22px;
+      text-align: center;
+    }
+    .driver-city-card.active {
+      border-color: rgba(250,204,21,0.4);
+      background: rgba(250,204,21,0.06);
+    }
+    .city-name {
+      font-family: Poppins, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 6px;
+    }
+    .city-drivers {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+    .city-drivers .count { color: #22c55e; font-weight: 700; }
+    .power-quote {
+      background: rgba(250,204,21,0.08);
+      border-left: 4px solid #facc15;
+      border-radius: 0 14px 14px 0;
+      padding: 20px 28px;
+      font-family: Poppins, sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #f1f5f9;
+      font-style: italic;
+      line-height: 1.4;
+    }
+    .power-quote .gold { color: #facc15; font-style: normal; }
+  </style>
+  <div id="root" data-composition-id="s5-rating" data-width="1920" data-height="1080">
+    <div class="glow-gold" data-layout-ignore></div>
+
+    <div class="scene-label">Tu reputación trabaja por ti</div>
+
+    <!-- Profile card -->
+    <div class="profile-card">
+      <div class="profile-top">
+        <div class="profile-avatar">C</div>
+        <div class="profile-info">
+          <div class="profile-name">Carlos Andrade</div>
+          <div class="profile-sub">Neiva, Huila · Toyota Corolla · NEI-247</div>
+          <div class="verified-badge">✓ Conductor Verificado ViaNovaIA</div>
+        </div>
+      </div>
+      <div class="rating-section">
+        <div class="rating-number">4.9</div>
+        <div class="rating-right">
+          <div class="stars">★★★★★</div>
+          <div class="rating-count">142 reseñas de turistas</div>
+        </div>
+      </div>
+      <div class="reviews-title">Reseñas recientes</div>
+      <div class="review-item">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Puntual, conoce la ciudad y muy amable."</div>
+        <div class="review-author">— Alex Explorer · Turista EE.UU.</div>
+      </div>
+      <div class="review-item">
+        <div class="review-stars">★★★★★</div>
+        <div class="review-text">"Mejor taxi del Huila. Regresaré por Carlos."</div>
+        <div class="review-author">— Sophie D. · Viajera Francia</div>
+      </div>
+    </div>
+
+    <!-- Network panel right -->
+    <div class="network-panel">
+      <h2 class="network-headline">
+        Los turistas<br />te buscan <span class="gold">a ti.</span><br />No a la plataforma.
+      </h2>
+      <div class="drivers-grid">
+        <div class="driver-city-card active">
+          <div class="city-name">Neiva</div>
+          <div class="city-drivers"><span class="count">38</span> conductores</div>
+        </div>
+        <div class="driver-city-card">
+          <div class="city-name">Cartagena</div>
+          <div class="city-drivers"><span class="count">61</span> conductores</div>
+        </div>
+        <div class="driver-city-card">
+          <div class="city-name">Santa Marta</div>
+          <div class="city-drivers"><span class="count">47</span> conductores</div>
+        </div>
+        <div class="driver-city-card">
+          <div class="city-name">Salento</div>
+          <div class="city-drivers"><span class="count">22</span> conductores</div>
+        </div>
+        <div class="driver-city-card">
+          <div class="city-name">San Agustín</div>
+          <div class="city-drivers"><span class="count">19</span> conductores</div>
+        </div>
+        <div class="driver-city-card">
+          <div class="city-name">Leticia</div>
+          <div class="city-drivers"><span class="count">14</span> conductores</div>
+        </div>
+      </div>
+      <div class="power-quote">
+        "Tu buena actitud construye tu <span class="gold">reputación digital.</span><br />Y tu reputación te trae más carreras."
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.scene-label', { opacity: 0 });
+    gsap.set('.profile-card', { opacity: 0, x: -40 });
+    gsap.set('.network-headline', { opacity: 0, y: 30 });
+    gsap.set('.driver-city-card', { opacity: 0, y: 20 });
+    gsap.set('.power-quote', { opacity: 0, x: 20 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.scene-label', { opacity: 1, duration: 0.4 }, 0.1);
+    tl.to('.profile-card', { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }, 0.2);
+    tl.to('.network-headline', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.5);
+    tl.to('.driver-city-card', { opacity: 1, y: 0, duration: 0.45, stagger: 0.1, ease: 'power2.out' }, 1.0);
+    tl.to('.power-quote', { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, 2.0);
+    tl.to('#root', { scale: 1.016, transformOrigin: 'center center', duration: 4.8, ease: 'sine.inOut' }, 2.2);
+
+    window.__timelines["s5-rating"] = tl;
+  </script>
+</template>

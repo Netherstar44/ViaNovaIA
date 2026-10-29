@@ -1,0 +1,306 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .glow-green {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 1400px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(34,197,94,0.1) 0%, rgba(250,204,21,0.04) 45%, transparent 70%);
+      filter: blur(28px);
+    }
+    .scene-label {
+      position: absolute;
+      left: 160px;
+      top: 70px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    /* Earnings panel */
+    .earnings-panel {
+      position: absolute;
+      left: 160px;
+      top: 100px;
+      width: 740px;
+      background: rgba(11,18,32,0.92);
+      border: 1px solid rgba(34,197,94,0.4);
+      border-radius: 28px;
+      padding: 36px 40px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 40px rgba(34,197,94,0.08);
+    }
+    .earnings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .earnings-title {
+      font-family: Poppins, sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: #e2e8f0;
+    }
+    .earnings-date {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+    .total-amount {
+      font-family: Poppins, sans-serif;
+      font-size: 88px;
+      font-weight: 900;
+      color: #22c55e;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .total-label {
+      font-size: 28px;
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+    .trips-row {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 32px;
+    }
+    .trip-chip {
+      flex: 1;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      border-radius: 14px;
+      padding: 16px 14px;
+      text-align: center;
+    }
+    .trip-chip .val {
+      font-family: Poppins, sans-serif;
+      font-size: 38px;
+      font-weight: 800;
+      color: #22c55e;
+      display: block;
+    }
+    .trip-chip .lbl {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+    /* Last trip breakdown */
+    .breakdown-title {
+      font-size: 28px;
+      color: #cbd5e1;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 28px;
+    }
+    .breakdown-item:last-child { border-bottom: none; }
+    .breakdown-label { color: #94a3b8; }
+    .breakdown-amount { color: #e2e8f0; font-weight: 700; }
+    .breakdown-amount.green { color: #22c55e; }
+    /* Withdraw panel */
+    .withdraw-panel {
+      position: absolute;
+      right: 140px;
+      top: 560px;
+      width: 780px;
+      background: rgba(11,18,32,0.92);
+      border: 1px solid rgba(250,204,21,0.4);
+      border-radius: 24px;
+      padding: 28px 36px;
+      box-shadow: 0 16px 60px rgba(0,0,0,0.6);
+    }
+    .withdraw-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .withdraw-title {
+      font-family: Poppins, sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+      color: #facc15;
+    }
+    .withdraw-available {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+    .withdraw-amount {
+      font-family: Poppins, sans-serif;
+      font-size: 48px;
+      font-weight: 900;
+      color: #facc15;
+      margin-bottom: 16px;
+    }
+    .btn-withdraw {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #facc15, #f59e0b);
+      color: #070b14;
+      font-family: Poppins, sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .withdraw-confirm {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 28px;
+      color: #22c55e;
+      font-weight: 600;
+    }
+    /* Right callout */
+    .right-callout {
+      position: absolute;
+      right: 140px;
+      top: 100px;
+      width: 780px;
+    }
+    .right-headline {
+      font-family: Poppins, sans-serif;
+      font-size: 58px;
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+    .right-headline .green { color: #22c55e; }
+    .right-headline .gold { color: #facc15; }
+    .right-sub {
+      font-size: 30px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  </style>
+  <div id="root" data-composition-id="s4-earnings" data-width="1920" data-height="1080">
+    <div class="glow-green" data-layout-ignore></div>
+
+    <div class="scene-label">Tus ganancias, tu control</div>
+
+    <!-- Earnings panel -->
+    <div class="earnings-panel">
+      <div class="earnings-header">
+        <span class="earnings-title">💰 Ganancias del Día</span>
+        <span class="earnings-date">Hoy · 29 Oct 2026</span>
+      </div>
+      <div class="total-amount" id="total-counter">$0</div>
+      <div class="total-label">Total acumulado hoy</div>
+      <div class="trips-row">
+        <div class="trip-chip">
+          <span class="val" id="trips-counter">0</span>
+          <span class="lbl">Viajes completados</span>
+        </div>
+        <div class="trip-chip">
+          <span class="val">4.9 ⭐</span>
+          <span class="lbl">Calificación</span>
+        </div>
+        <div class="trip-chip">
+          <span class="val">8h</span>
+          <span class="lbl">En línea hoy</span>
+        </div>
+      </div>
+      <div class="breakdown-title">Último viaje completado</div>
+      <div class="breakdown-item" data-layout-allow-occlusion>
+        <span class="breakdown-label">Alex Explorer → Hotel Plaza</span>
+        <span class="breakdown-amount green">+ $18.500</span>
+      </div>
+      <div class="breakdown-item" data-layout-allow-occlusion>
+        <span class="breakdown-label">Comisión plataforma</span>
+        <span class="breakdown-amount">$0 este mes</span>
+      </div>
+      <div class="breakdown-item" data-layout-allow-occlusion>
+        <span class="breakdown-label">Tu ganancia neta</span>
+        <span class="breakdown-amount green">$18.500</span>
+      </div>
+    </div>
+
+    <!-- Withdraw panel -->
+    <div class="withdraw-panel">
+      <div class="withdraw-header">
+        <span class="withdraw-title">💳 Solicitar Retiro</span>
+        <span class="withdraw-available">Disponible ahora</span>
+      </div>
+      <div class="withdraw-amount">$127.000 COP</div>
+      <div class="btn-withdraw">Retirar mis ganancias</div>
+      <div class="withdraw-confirm">
+        <span>✓</span>
+        <span>Retiro en proceso · Sin esperas</span>
+      </div>
+    </div>
+
+    <!-- Right callout -->
+    <div class="right-callout">
+      <h2 class="right-headline">
+        Cada carrera suma<br />directo a tu <span class="green">bolsillo.</span><br />Retira <span class="gold">cuando quieras.</span>
+      </h2>
+      <p class="right-sub">
+        Sin esperas de semanas.<br />Sin descuentos arbitrarios.<br />Sin intermediarios que se queden con lo tuyo.
+      </p>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.scene-label', { opacity: 0 });
+    gsap.set('.earnings-panel', { opacity: 0, x: -40 });
+    gsap.set('.withdraw-panel', { opacity: 0, y: 30 });
+    gsap.set('.right-callout', { opacity: 0, x: 50 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.scene-label', { opacity: 1, duration: 0.4 }, 0.1);
+    tl.to('.earnings-panel', { opacity: 1, x: 0, duration: 0.7, ease: 'power3.out' }, 0.2);
+    tl.to('.right-callout', { opacity: 1, x: 0, duration: 0.7, ease: 'power2.out' }, 0.5);
+
+    // Animate total counter
+    const totalObj = { val: 0 };
+    tl.to(totalObj, {
+      val: 127000,
+      duration: 2.2,
+      ease: 'power2.out',
+      onUpdate: () => {
+        const el = document.getElementById('total-counter');
+        if (el) el.textContent = '$' + Math.round(totalObj.val).toLocaleString('es-CO');
+      }
+    }, 0.8);
+
+    // Animate trips counter
+    const tripsObj = { val: 0 };
+    tl.to(tripsObj, {
+      val: 7,
+      duration: 1.5,
+      ease: 'power2.out',
+      onUpdate: () => {
+        const el = document.getElementById('trips-counter');
+        if (el) el.textContent = Math.round(tripsObj.val);
+      }
+    }, 0.8);
+
+    tl.to('.withdraw-panel', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.2)' }, 3.2);
+    tl.to('#root', { scale: 1.018, transformOrigin: 'center center', duration: 5.5, ease: 'sine.inOut' }, 3.5);
+
+    window.__timelines["s4-earnings"] = tl;
+  </script>
+</template>

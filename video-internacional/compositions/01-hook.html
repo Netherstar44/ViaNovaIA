@@ -1,0 +1,147 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 80px 140px;
+    }
+    .glow {
+      position: absolute;
+      left: -200px;
+      top: -200px;
+      width: 1200px;
+      height: 1000px;
+      background: radial-gradient(circle at 50% 50%, rgba(250, 204, 21, 0.16), rgba(250, 204, 21, 0.03) 45%, transparent 70%);
+      filter: blur(15px);
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.65) 100%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      color: #facc15;
+      font-family: Poppins, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .logo-box {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .logo-box img {
+      width: 140px;
+      height: auto;
+      filter: drop-shadow(0 8px 24px rgba(250, 204, 21, 0.25));
+    }
+    .logo-title {
+      font-family: Poppins, sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .logo-title .gold {
+      color: #facc15;
+    }
+    .accent-bar {
+      width: 140px;
+      height: 4px;
+      border-radius: 2px;
+      background: #facc15;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+      margin-bottom: 36px;
+    }
+    .hero-question {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 84px;
+      line-height: 1.14;
+      letter-spacing: -0.035em;
+      color: #ffffff;
+      max-width: 1600px;
+      margin-bottom: 40px;
+    }
+    .hero-question .gold {
+      color: #facc15;
+    }
+    .hero-sub {
+      font-size: 34px;
+      font-weight: 500;
+      color: #94a3b8;
+      letter-spacing: -0.01em;
+    }
+  </style>
+  <div id="root" data-composition-id="s1-hook" data-width="1920" data-height="1080">
+    <div class="glow" data-layout-ignore></div>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="top-bar">
+      <div class="pill-badge">★ Discover Colombia · AI Concierge</div>
+      <div class="logo-box">
+        <img src="assets/img/logo.png" alt="ViaNova" />
+        <div class="logo-title">VIANova <span class="gold">IA</span></div>
+      </div>
+    </div>
+
+    <div class="accent-bar"></div>
+
+    <h1 class="hero-question">
+      Want to explore Colombia beyond the tourist traps... with <span class="gold">zero language barriers</span>?
+    </h1>
+
+    <p class="hero-sub">
+      Smart Itineraries · 360° Previews · Fair Local Rides · Real Culture
+    </p>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.top-bar', { opacity: 1, y: 0 });
+    gsap.set('.accent-bar', { width: 140, opacity: 1 });
+    gsap.set('.hero-question', { opacity: 0.2, y: 15 });
+    gsap.set('.hero-sub', { opacity: 0, y: 20 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.hero-question', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.1);
+    tl.to('.hero-sub', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.6);
+    tl.to('#root', { scale: 1.025, transformOrigin: 'center center', duration: 4.5, ease: 'sine.inOut' }, 0.8);
+
+    window.__timelines["s1-hook"] = tl;
+  </script>
+</template>
+

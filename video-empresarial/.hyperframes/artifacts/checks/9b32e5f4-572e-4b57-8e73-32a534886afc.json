@@ -1,0 +1,130 @@
+{
+  "ok": false,
+  "strict": false,
+  "browserSkipped": true,
+  "lint": {
+    "ok": false,
+    "errorCount": 2,
+    "warningCount": 1,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "missing_timeline_registry",
+        "severity": "error",
+        "message": "Missing `window.__timelines` registration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-empresarial\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Register each composition timeline on `window.__timelines[compositionId]`."
+      },
+      {
+        "code": "svg_drawon_css_dasharray_conflict",
+        "severity": "error",
+        "message": "GSAP writes strokeDasharray on \".path-expenses\", but its CSS (\".path-expenses\") declares a multi-component stroke-dasharray. GSAP merges dash lists per component, so the CSS gap survives (e.g. \"641.4px, 10px\"). The draw-on hide only hides one gap's worth and the line stays visible the whole scene.",
+        "selector": ".path-expenses",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-empresarial\\compositions\\03-trend.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Remove the CSS stroke-dasharray from \".path-expenses\" (decorative dashes belong on a separate element), or set the full two-component value in GSAP: strokeDasharray: \"${len} ${len}\"."
+      },
+      {
+        "code": "overlapping_gsap_tweens",
+        "severity": "warning",
+        "message": "GSAP tweens overlap on \".spreadsheet-preview\" for scale between 3.80s and 3.90s.",
+        "selector": ".spreadsheet-preview",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-empresarial\\compositions\\05-excel.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Shorten the earlier tween, move the later tween, or add `overwrite: \"auto\"`."
+      }
+    ],
+    "filesScanned": 7
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 0,
+    "samples": [],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [],
+    "checked": 0,
+    "passed": 0
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "step": 0,
+    "samples": 0
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

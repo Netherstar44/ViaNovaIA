@@ -1,0 +1,218 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 60px 100px;
+    }
+
+    /* Map Background */
+    .map-bg {
+      position: absolute;
+      inset: 0;
+      background: url('assets/img/home-map-dark.png') center/cover no-repeat;
+      filter: brightness(0.65) contrast(1.1);
+    }
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 60% 50%, rgba(7, 11, 20, 0.4) 0%, rgba(7, 11, 20, 0.85) 100%);
+    }
+
+    /* SVG Route */
+    .route-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .route-path {
+      fill: none;
+      stroke: #facc15;
+      stroke-width: 6;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.7));
+    }
+    .map-pin {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #facc15;
+      border: 4px solid #070b14;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.8);
+    }
+    .pin-start { left: 520px; top: 320px; }
+    .pin-end { left: 980px; top: 580px; }
+
+    /* Taxi Overlay Card */
+    .taxi-card {
+      position: absolute;
+      left: 100px;
+      top: 120px;
+      width: 780px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(250, 204, 21, 0.4);
+      border-radius: 32px;
+      padding: 40px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      z-index: 2;
+    }
+    .taxi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.12);
+    }
+    .taxi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: rgba(250, 204, 21, 0.15);
+      color: #facc15;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .status-live {
+      color: #22c55e;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .route-details {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .route-stop {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 30px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    .stop-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+    .dot-a { background: #facc15; }
+    .dot-b { background: #22c55e; }
+
+    .price-box {
+      background: rgba(250, 204, 21, 0.08);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      border-radius: 20px;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .price-label {
+      font-size: 28px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .price-val {
+      font-family: Poppins, sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      color: #facc15;
+    }
+    .price-usd {
+      font-size: 28px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .safety-tag {
+      font-size: 28px;
+      color: #22c55e;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+  <div id="root" data-composition-id="s4-mobility" data-width="1920" data-height="1080">
+    <!-- Map Background -->
+    <div class="map-bg" data-layout-ignore>
+      <div class="map-overlay"></div>
+    </div>
+
+    <!-- Animated SVG Route -->
+    <svg class="route-svg" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path class="route-path" d="M 540 340 C 650 360, 720 450, 820 490 C 890 520, 930 550, 990 590" />
+    </svg>
+    <div class="map-pin pin-start" data-layout-ignore></div>
+    <div class="map-pin pin-end" data-layout-ignore></div>
+
+    <!-- Transparent Mobility Card -->
+    <div class="taxi-card">
+      <div class="taxi-header">
+        <div class="taxi-badge">🚕 Verified Local Taxi</div>
+        <div class="status-live">● Driver on the way</div>
+      </div>
+
+      <div class="route-details">
+        <div class="route-stop">
+          <div class="stop-dot dot-a"></div>
+          <div>Benito Salas Airport (NVA)</div>
+        </div>
+        <div class="route-stop">
+          <div class="stop-dot dot-b"></div>
+          <div>Hotel Plaza Neiva (City Center)</div>
+        </div>
+      </div>
+
+      <div class="price-box">
+        <div>
+          <div class="price-label">Upfront Fixed Fare</div>
+          <div class="price-val">$18,000 COP <span class="price-usd">(~$4.50 USD)</span></div>
+        </div>
+      </div>
+
+      <div class="safety-tag">
+        ✓ No haggling · Upfront pricing · Verified driver
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.taxi-card', { opacity: 0, x: -30, scale: 0.95 });
+    gsap.set('.route-path', { strokeDasharray: 1000, strokeDashoffset: 1000 });
+    gsap.set('.pin-start', { scale: 0 });
+    gsap.set('.pin-end', { scale: 0 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.taxi-card', { opacity: 1, x: 0, scale: 1, duration: 0.7, ease: 'back.out(1.2)' }, 0.2);
+
+    // Draw route & pins
+    tl.to('.pin-start', { scale: 1, duration: 0.4, ease: 'back.out(1.5)' }, 0.5);
+    tl.to('.route-path', { strokeDashoffset: 0, duration: 1.8, ease: 'power2.out' }, 0.7);
+    tl.to('.pin-end', { scale: 1, duration: 0.4, ease: 'back.out(1.5)' }, 2.0);
+
+    tl.to('#root', { scale: 1.025, transformOrigin: 'center center', duration: 5.5, ease: 'sine.inOut' }, 2.0);
+
+    window.__timelines["s4-mobility"] = tl;
+  </script>
+</template>
+

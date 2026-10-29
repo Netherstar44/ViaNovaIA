@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #070b14;
+        --navy: #0b1220;
+        --gold: #facc15;
+        --gold-bright: #ffbf00;
+        --green: #22c55e;
+        --slate: #64748b;
+        --white: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ground);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="48.5"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- Audio: Master Voiceover from ElevenLabs -->
+      <audio
+        id="audio-voiceover"
+        src="assets/audio/voiceover.mp3"
+        data-start="0"
+        data-duration="44.86"
+        data-volume="1"
+      ></audio>
+      <!-- Audio: Ambient Corporate Tech Instrumental -->
+      <audio
+        id="audio-music"
+        src="assets/audio/music.mp3"
+        data-start="0"
+        data-duration="48.5"
+        data-volume="0.14"
+        data-fade-in="1.2"
+        data-fade-out="2.2"
+      ></audio>
+
+      <!-- Scene 1: El Gancho B2B -->
+      <div
+        id="s1-hook"
+        class="clip"
+        data-composition-id="s1-hook"
+        data-composition-src="compositions/01-hook.html"
+        data-start="0"
+        data-duration="4.5"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 2: Dashboard en Tiempo Real -->
+      <div
+        id="s2-dashboard"
+        class="clip"
+        data-composition-id="s2-dashboard"
+        data-composition-src="compositions/02-dashboard.html"
+        data-start="4.5"
+        data-duration="9.5"
+        data-track-index="2"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 3: Tendencia Financiera y Margen Real -->
+      <div
+        id="s3-trend"
+        class="clip"
+        data-composition-id="s3-trend"
+        data-composition-src="compositions/03-trend.html"
+        data-start="14.0"
+        data-duration="7.5"
+        data-track-index="3"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 4: Catálogo y Alertas de Inventario -->
+      <div
+        id="s4-inventory"
+        class="clip"
+        data-composition-id="s4-inventory"
+        data-composition-src="compositions/04-inventory.html"
+        data-start="21.5"
+        data-duration="7.5"
+        data-track-index="4"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 5: Exportación Profesional a Excel -->
+      <div
+        id="s5-excel"
+        class="clip"
+        data-composition-id="s5-excel"
+        data-composition-src="compositions/05-excel.html"
+        data-start="29.0"
+        data-duration="9.0"
+        data-track-index="5"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 6: Multi-rol y Cierre Comercial (CTA) -->
+      <div
+        id="s6-closing"
+        class="clip"
+        data-composition-id="s6-closing"
+        data-composition-src="compositions/06-closing.html"
+        data-start="38.0"
+        data-duration="10.5"
+        data-track-index="6"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>
