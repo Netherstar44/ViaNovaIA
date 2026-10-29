@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Map, { Marker, NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '@/lib/maplibre-worker';
-import { OSM_MAP_STYLE } from '@/lib/map-style';
+import { useVectorMapStyle } from '@/lib/use-vector-map-style';
 import { isUsableCoordinatePair, isValidCoordinatePair, isValidLatLng } from '@/lib/geo';
 
 type ViewState = {
@@ -49,6 +49,7 @@ export default function TaxiMap({ isAvailable, activeRide, nearbyPassengers = []
 
   const [taxiPos, setTaxiPos] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<[number, number][]>([]);
+  const { mapStyle, handleMapError } = useVectorMapStyle();
 
   useEffect(() => {
     const fallback: [number, number] = [2.936, -75.289];
@@ -163,9 +164,9 @@ export default function TaxiMap({ isAvailable, activeRide, nearbyPassengers = []
       <Map
         {...viewState}
         onMove={(event) => setViewState(event.viewState)}
-        mapStyle={OSM_MAP_STYLE}
+        mapStyle={mapStyle}
         style={{ width: '100%', height: '100%' }}
-        onError={(event) => console.error('Taxi map error:', event)}
+        onError={handleMapError}
       >
         <NavigationControl position="top-right" />
 
@@ -210,7 +211,7 @@ export default function TaxiMap({ isAvailable, activeRide, nearbyPassengers = []
       </Map>
 
       {/* Badge de estado */}
-      <div className="absolute top-3 left-3 z-10 bg-background/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-border/50 text-xs font-medium shadow flex items-center gap-1.5">
+      <div className="absolute top-3 left-3 z-10 liquid-glass-chip liquid-glass-chip--light px-3 py-1.5 rounded-xl border border-border/50 text-xs font-medium flex items-center gap-1.5">
         {activeRide
           ? <><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> En viaje</>
           : isAvailable

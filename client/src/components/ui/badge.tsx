@@ -20,7 +20,7 @@ const badgeVariants = cva(
         destructive:
           // @replit shadow-xs instead of shadow, no hover because we use hover-elevate
           "border-transparent bg-destructive text-destructive-foreground shadow-xs",
-        outline: "text-foreground border-border bg-background/40 backdrop-blur-sm",
+        outline: "liquid-glass--inline text-foreground border-border",
       },
     },
     defaultVariants: {

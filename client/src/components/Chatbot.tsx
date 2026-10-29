@@ -3,7 +3,7 @@ import TranslatedText from "./TranslatedText";
 import { apiBase } from "@/lib/queryClient";
 import { authHeaders } from "@/lib/secureStorage";
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines, Route } from 'lucide-react';
+import { MessageCircle, X, Send, Image as ImageIcon, Loader2, Bot, Sparkles, MapPin, Hotel, UtensilsCrossed, Car, Ticket, CheckCircle2, Mic, MicOff, AudioLines, Route, RefreshCw, LogIn } from 'lucide-react';
 import TripPlannerPanel, { type TripDto, type TripRouteMessage } from './TripPlannerPanel';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import botLogo from '../assets/bot-logo.png';
-import aiSvgIcon from '../assets/iasvg.png';
+import GlassCanvas from '@/components/ui/GlassCanvas';
+import AiSparkIcon from '@/components/ui/AiSparkIcon';
 
 declare global {
   interface Window {
@@ -26,6 +26,81 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   image?: string;
+  /** Present on assistant messages that explain a failed request. */
+  action?: 'login' | 'retry';
+  retryText?: string;
+}
+
+type ChatFailureCode = 'auth' | 'rate' | 'server' | 'network' | 'empty' | 'unknown';
+
+class ChatRequestError extends Error {
+  code: ChatFailureCode;
+
+  constructor(code: ChatFailureCode, message = '') {
+    super(message);
+    this.name = 'ChatRequestError';
+    this.code = code;
+  }
+}
+
+/**
+ * Single entry point for /api/chat. The old code called res.json() directly,
+ * so an HTML error page (for example when Vite is running without Express)
+ * threw a SyntaxError and every failure looked like a generic network error.
+ * This helper reads the body once, tolerates non-JSON payloads and maps the
+ * status code to an actionable message.
+ */
+async function requestChat(payload: Record<string, unknown>): Promise<any> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase}/api/chat`, {
+      method: 'POST',
+      headers: await authHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new ChatRequestError('network');
+  }
+
+  const rawBody = await response.text().catch(() => '');
+  let data: any = null;
+  if (rawBody) {
+    try {
+      data = JSON.parse(rawBody);
+    } catch {
+      data = null;
+    }
+  }
+
+  if (response.status === 401 || response.status === 403) throw new ChatRequestError('auth', data?.message || '');
+  if (response.status === 429 || response.status === 423) throw new ChatRequestError('rate', data?.message || '');
+  if (response.status >= 500) throw new ChatRequestError('server', data?.message || '');
+  if (!response.ok) throw new ChatRequestError('unknown', data?.message || `HTTP ${response.status}`);
+  if (!data || typeof data.reply !== 'string' || !data.reply.trim()) throw new ChatRequestError('empty');
+
+  return data;
+}
+
+function chatFailureMessage(
+  error: unknown,
+  t: (key: string, defaultValue: string, options?: Record<string, unknown>) => string,
+): string {
+  const code = error instanceof ChatRequestError ? error.code : 'unknown';
+  switch (code) {
+    case 'auth':
+      return t('chatbot.error_auth', 'Tu sesión expiró o todavía no has iniciado sesión. Inicia sesión para que pueda planificar tu viaje.');
+    case 'rate':
+      return t('chatbot.error_rate', 'Estás enviando mensajes muy rápido. Espera unos segundos e inténtalo de nuevo.');
+    case 'server':
+      return t('chatbot.error_server', 'El asistente está teniendo un problema temporal. Intenta de nuevo en un momento.');
+    case 'network':
+      return t('chatbot.error_network', 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.');
+    case 'empty':
+      return t('chatbot.error_invalid_response', 'El servidor no devolvió una respuesta válida. Verifica que la app esté corriendo con «npm run dev».');
+    default:
+      return t('chatbot.error_processing', 'Hubo un error al procesar tu mensaje. Intenta nuevamente.');
+  }
 }
 
 export default function Chatbot() {
@@ -67,13 +142,45 @@ export default function Chatbot() {
     messagesRef.current = messages;
   }, [messages]);
 
+  // The hero's "Planificar con IA" pill opens the assistant without forcing
+  // the visitor to hunt for the floating button.
+  useEffect(() => {
+    const openChat = () => {
+      window.__vianovaChatRequested = false;
+      setIsOpen(true);
+    };
+    if (window.__vianovaChatRequested) {
+      window.__vianovaChatRequested = false;
+      setIsOpen(true);
+    }
+    window.addEventListener("vianova:open-chat", openChat);
+    return () => window.removeEventListener("vianova:open-chat", openChat);
+  }, []);
+
+  // The mobile dock hides itself while the assistant is open.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("vianova:chat-state", { detail: { open: isOpen } }),
+    );
+    return () => {
+      if (isOpen) {
+        window.dispatchEvent(
+          new CustomEvent("vianova:chat-state", { detail: { open: false } }),
+        );
+      }
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen || !user?.username || historyLoaded) return;
     setHistoryLoaded(true);
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`${apiBase}/api/chat/history?username=${encodeURIComponent(user.username)}`);
+        const res = await fetch(`${apiBase}/api/chat/history?username=${encodeURIComponent(user.username)}`, {
+          headers: await authHeaders(),
+          credentials: 'include',
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled || !Array.isArray(data) || data.length === 0) return;
@@ -352,23 +459,17 @@ export default function Chatbot() {
     setVoiceTranscript('Pensando...');
 
     try {
-      const res = await fetch(apiBase + '/api/chat', {
-        method: 'POST',
-        headers: await authHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          username: user?.username || 'anon',
-          name: user?.name || user?.username || 'Viajero',
-          message: newUserMsg.content,
-          role: user?.role || 'traveler',
-          location: sharedLocation,
-          destinationCity: destinationCity.trim() || undefined,
-          history: messagesRef.current.slice(-14).map(m => ({ role: m.role, content: m.content })),
-          language: i18n.language
-        })
+      const data = await requestChat({
+        username: user?.username || 'anon',
+        name: user?.name || user?.username || 'Viajero',
+        message: newUserMsg.content,
+        role: user?.role || 'traveler',
+        location: sharedLocation,
+        destinationCity: destinationCity.trim() || undefined,
+        history: messagesRef.current.slice(-14).map(m => ({ role: m.role, content: m.content })),
+        language: i18n.language
       });
-      const data = await res.json();
-      const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
+      const reply = data.reply;
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
 
       setVoiceTranscript('Generando voz...');
@@ -387,7 +488,7 @@ export default function Chatbot() {
       await playTTS(reply, onAudioReady);
 
     } catch (err) {
-      const errorMsg = 'Hubo un error al procesar tu mensaje. Intenta nuevamente.';
+      const errorMsg = chatFailureMessage(err, t);
       
       const onAudioReady = () => {
         setMessages(prev => [...prev, {
@@ -404,9 +505,9 @@ export default function Chatbot() {
     }
   };
 
-  const handleSend = async (overrideText?: string) => {
+  const handleSend = async (overrideText?: string, options: { appendUser?: boolean } = {}) => {
     const content = (overrideText ?? inputValue).trim();
-    if (!content) return;
+    if (!content || isLoading) return;
 
     const newUserMsg: Message = {
       id: Date.now().toString(),
@@ -414,29 +515,23 @@ export default function Chatbot() {
       content
     };
 
-    setMessages(prev => [...prev, newUserMsg]);
+    if (options.appendUser !== false) setMessages(prev => [...prev, newUserMsg]);
     if (!overrideText) setInputValue('');
     setSuggestions([]);
     setIsLoading(true);
 
     try {
-      const res = await fetch(apiBase + '/api/chat', {
-        method: 'POST',
-        headers: await authHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          username: user?.username || 'anon',
-          name: user?.name || user?.username || 'Viajero',
-          message: newUserMsg.content,
-          role: user?.role || 'traveler',
-          location: sharedLocation,
-          destinationCity: destinationCity.trim() || undefined,
-          history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
-          language: i18n.language
-        })
+      const data = await requestChat({
+        username: user?.username || 'anon',
+        name: user?.name || user?.username || 'Viajero',
+        message: newUserMsg.content,
+        role: user?.role || 'traveler',
+        location: sharedLocation,
+        destinationCity: destinationCity.trim() || undefined,
+        history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
+        language: i18n.language
       });
-      const data = await res.json();
-      const reply = data.reply || 'Lo siento, mi conexión ha fallado temporalmente.';
+      const reply = data.reply;
       const incomingRouteMessages: TripRouteMessage[] = Array.isArray(data.routeMessages)
         ? data.routeMessages
         : [];
@@ -459,14 +554,23 @@ export default function Chatbot() {
       });
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
     } catch (err) {
+      const failure = err instanceof ChatRequestError ? err : null;
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: t('chatbot.error_processing')
+        content: chatFailureMessage(err, t),
+        action: failure?.code === 'auth' ? 'login' : 'retry',
+        retryText: newUserMsg.content,
       }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const retryMessage = (message: Message) => {
+    if (isLoading || !message.retryText) return;
+    setMessages(prev => prev.filter(item => item.id !== message.id));
+    void handleSend(message.retryText, { appendUser: false });
   };
 
   const handlePlanTrip = () => {
@@ -521,21 +625,16 @@ export default function Chatbot() {
         setMessages(prev => [...prev, newUserMsg]);
         setIsLoading(true);
         
-        const res = await fetch(apiBase + '/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: user?.username || 'anon',
-            name: user?.name || user?.username || 'Viajero',
-            message: newUserMsg.content,
-            role: user?.role || 'traveler',
-            location: loc,
-            destinationCity: destinationCity.trim() || undefined,
-            history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
-            language: i18n.language
-          })
+        const data = await requestChat({
+          username: user?.username || 'anon',
+          name: user?.name || user?.username || 'Viajero',
+          message: newUserMsg.content,
+          role: user?.role || 'traveler',
+          location: loc,
+          destinationCity: destinationCity.trim() || undefined,
+          history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
+          language: i18n.language
         });
-        const data = await res.json();
         const reply = data.reply || t('chatbot.location_received');
         setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
         
@@ -552,7 +651,12 @@ export default function Chatbot() {
         }]);
       }
     } catch (err) {
-      console.error(err);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: chatFailureMessage(err, t),
+        action: err instanceof ChatRequestError && err.code === 'auth' ? 'login' : undefined,
+      }]);
     } finally {
       setIsLocating(false);
       setIsLoading(false);
@@ -574,22 +678,16 @@ export default function Chatbot() {
     setIsLoading(true);
     
     try {
-      const res = await fetch(apiBase + '/api/chat', {
-        method: 'POST',
-        headers: await authHeaders({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          username: user?.username || 'anon',
-          name: user?.name || user?.username || 'Viajero',
-          message: newUserMsg.content,
-          role: user?.role || 'traveler',
-          location: undefined,
-          destinationCity: destinationCity.trim() || undefined,
-          history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
-          language: i18n.language
-        })
+      const data = await requestChat({
+        username: user?.username || 'anon',
+        name: user?.name || user?.username || 'Viajero',
+        message: newUserMsg.content,
+        role: user?.role || 'traveler',
+        location: undefined,
+        destinationCity: destinationCity.trim() || undefined,
+        history: messages.slice(-14).map(m => ({ role: m.role, content: m.content })),
+        language: i18n.language
       });
-      const data = await res.json();
       setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 4) : []);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
@@ -597,7 +695,13 @@ export default function Chatbot() {
         content: data.reply || t('chatbot.location_received')
       }]);
     } catch (err) {
-      console.error(err);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: chatFailureMessage(err, t),
+        action: err instanceof ChatRequestError && err.code === 'auth' ? 'login' : 'retry',
+        retryText: newUserMsg.content,
+      }]);
     } finally {
       setIsLoading(false);
       setSharedLocation({lat: 0, lng: 0}); 
@@ -619,8 +723,13 @@ export default function Chatbot() {
 
       setIsLoading(true);
       try {
-        const res = await fetch(apiBase + '/api/upload', { method: 'POST', body: form });
-        const data = await res.json();
+        const res = await fetch(apiBase + '/api/upload', {
+          method: 'POST',
+          headers: await authHeaders(),
+          credentials: 'include',
+          body: form,
+        });
+        const data = await res.json().catch(() => null);
         if (!res.ok) throw new Error(data?.message || 'Error de carga');
 
         const newUserMsg: Message = {
@@ -677,7 +786,8 @@ export default function Chatbot() {
     try {
       const res = await fetch(apiBase + '/api/bookings/request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({
           travelerName: user?.name || user?.username || 'Viajero',
           travelerEmail: user?.email || '',
@@ -734,49 +844,26 @@ export default function Chatbot() {
   return (
     <>
       <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/60 transition-shadow"
-          >
-            <Button
-              id="chatbot-open-btn"
-              onClick={() => setIsOpen(true)}
-              className="h-16 w-16 rounded-full bg-primary text-primary-foreground border-2 border-primary/20 p-0 overflow-hidden"
-            >
-              <div className="w-full h-full bg-gradient-to-br from-primary via-primary/80 to-primary/50 rounded-full flex items-center justify-center p-[2px]">
-                <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center relative">
-                  <div className="h-10 w-10 relative z-10 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
-                </div>
-              </div>
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 40, scale: 0.95, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 30, scale: 0.95, filter: "blur(10px)" }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            data-lenis-prevent
             className="fixed bottom-6 right-6 z-50 w-[90vw] md:w-[400px] h-[600px] max-h-[85vh]"
           >
-            <div className="glass-panel chat-glass w-full h-full rounded-[2rem] flex flex-col overflow-hidden ring-1 ring-primary/20">
+            <div className="glass-panel chat-glass lg-surface lg-surface--chat w-full h-full rounded-[2rem] flex flex-col overflow-hidden ring-1 ring-primary/20">
+              <GlassCanvas variant="chat" />
               
               {/* HEADER */}
-              <div className="bg-gradient-to-r from-background/90 via-background/80 to-secondary/40 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
+              <div className="bg-gradient-to-r from-background/45 via-background/30 to-secondary/10 p-5 flex items-center justify-between border-b border-white/5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[50px] -mr-10 -mt-10 rounded-full" />
                 <div className="flex items-center gap-3 relative z-10">
                   <div className="relative">
                     <Avatar className="h-12 w-12 border-0 shadow-lg shadow-primary/50 ring-2 ring-primary/40 bg-gradient-to-br from-primary via-primary/80 to-primary/50 p-[2px]">
                       <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center">
-                        <div className="h-8 w-8 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
+                        <AiSparkIcon className="h-8 w-8 text-primary" />
                       </div>
                     </Avatar>
                     <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-background animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.6)]" />
@@ -795,6 +882,7 @@ export default function Chatbot() {
                     className={`h-9 w-9 rounded-full transition-colors ${isVoiceMode ? 'bg-primary/20 text-primary' : 'hover:bg-white/10 text-muted-foreground'}`}
                     onClick={toggleVoiceMode}
                     title="Modo Voz (Kokoro TTS)"
+                    aria-label={isVoiceMode ? "Desactivar modo de voz" : "Activar modo de voz"}
                   >
                     {isVoiceMode ? <AudioLines className="h-5 w-5 animate-pulse" /> : <Mic className="h-5 w-5" />}
                   </Button>
@@ -803,6 +891,7 @@ export default function Chatbot() {
                     size="icon" 
                     className="h-9 w-9 rounded-full hover:bg-white/10 transition-colors" 
                     onClick={() => setIsOpen(false)}
+                    aria-label="Cerrar el asistente"
                   >
                     <X className="h-5 w-5 text-muted-foreground" />
                   </Button>
@@ -810,7 +899,7 @@ export default function Chatbot() {
               </div>
 
               {/* MESSAGES AREA / VOICE OVERLAY */}
-              <div className="flex-1 overflow-hidden bg-background/40 relative">
+              <div className="flex-1 overflow-hidden bg-background/15 relative">
                 
                 <AnimatePresence mode="wait">
                   {isVoiceMode ? (
@@ -819,7 +908,7 @@ export default function Chatbot() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      className="absolute inset-0 z-20 bg-background/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6 text-center border-t border-white/5"
+                      className="glass-scrim glass-scrim--light absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center border-t border-white/5"
                     >
                       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 pointer-events-none" />
                       {/* Data Cards Overlay (if assistant sent booking cards recently) */}
@@ -903,7 +992,7 @@ export default function Chatbot() {
                                 {msg.role === 'assistant' && (
                                   <Avatar className="h-8 w-8 shrink-0 shadow-md shadow-primary/40 bg-gradient-to-br from-primary via-primary/80 to-primary/50 p-[2px]">
                                     <div className="w-full h-full bg-black/80 rounded-full flex items-center justify-center">
-                                      <div className="h-5 w-5 bg-primary" style={{ maskImage: `url(${aiSvgIcon})`, WebkitMaskImage: `url(${aiSvgIcon})`, maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center' }} />
+                                      <AiSparkIcon className="h-5 w-5 text-primary" />
                                     </div>
                                   </Avatar>
                                 )}
@@ -911,7 +1000,7 @@ export default function Chatbot() {
                                   className={`rounded-2xl p-4 text-sm max-w-[85%] shadow-sm leading-relaxed ${
                                     msg.role === 'user'
                                       ? 'bg-primary text-black font-medium rounded-br-sm'
-                                      : 'bg-card/85 backdrop-blur-xl text-foreground border border-border/60 rounded-bl-sm'
+                                      : 'liquid-glass--inline text-foreground border border-border/60 rounded-bl-sm'
                                   }`}
                                 >
                                   <div className="whitespace-pre-wrap tracking-wide">
@@ -923,6 +1012,29 @@ export default function Chatbot() {
                                       : <span><TranslatedText text={msg.content} /></span>
                                     }
                                   </div>
+                                  {msg.action && (
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                      {msg.action === 'login' ? (
+                                        <a
+                                          href="/login"
+                                          className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-black transition-colors hover:bg-primary/85"
+                                        >
+                                          <LogIn className="h-3.5 w-3.5" />
+                                          {t('chatbot.login_cta', 'Iniciar sesión')}
+                                        </a>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => retryMessage(msg)}
+                                          disabled={isLoading}
+                                          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-[11px] font-bold text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                                        >
+                                          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                                          {t('chatbot.retry', 'Reintentar')}
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                                   {msg.image && (
                                     <img 
                                       src={msg.image} 
@@ -1002,7 +1114,7 @@ export default function Chatbot() {
                                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                                   </div>
                                </Avatar>
-                               <div className="bg-card/85 backdrop-blur-xl border border-border/60 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2 shadow-sm">
+                               <div className="liquid-glass--inline border border-border/60 rounded-2xl rounded-bl-sm p-4 flex items-center gap-2">
                                  <div className="flex gap-1 items-center justify-center">
                                     <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
                                     <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -1027,7 +1139,7 @@ export default function Chatbot() {
 
               {/* FOOTER / INPUT */}
               {!isVoiceMode && (
-                <div className="p-4 bg-background/90 backdrop-blur-3xl border-t border-white/5 relative z-10 flex flex-col gap-3">
+                <div className="glass-bar p-4 border-t border-white/5 relative z-10 flex flex-col gap-3">
                   <div className="flex w-full items-center gap-2 rounded-xl border border-border/50 bg-secondary/40 px-3 py-2">
                     <MapPin className="h-4 w-4 shrink-0 text-primary" />
                     <label htmlFor="chatbot-destination" className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">

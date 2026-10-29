@@ -45,4 +45,10 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- Android 11+ package visibility: the 360 camera bridge checks whether
+         SGCam360 (com.shamim.cam) is installed before launching Photo Sphere. -->
+    <queries>
+        <package android:name="com.shamim.cam" />
+    </queries>
 </manifest>

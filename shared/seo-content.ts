@@ -1,5 +1,5 @@
 /**
- * Fuente única de verdad para el SEO de VIANova IA.
+ * Fuente única de verdad para el SEO de VIANova.
  *
  * La usan el cliente (metadatos por ruta), el generador de páginas estáticas
  * del build y el sitemap. Si cambias un dominio, un título o una URL, cámbialo
@@ -9,7 +9,7 @@
 /** Dominio canónico. El otro dominio debe declarar este como canonical. */
 export const SITE_URL = "https://via-nova-ia.vercel.app";
 export const SECONDARY_URL = "https://vianova.netherstar44.workers.dev";
-export const BRAND_NAME = "VIANova IA";
+export const BRAND_NAME = "VIANova";
 export const BRAND_SHORT = "VIANova";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 export const DEFAULT_LOCALE = "es_CO";
@@ -55,12 +55,12 @@ export type SeoPage = {
 export const seoPages: SeoPage[] = [
   {
     slug: "planificador-viajes-ia",
-    title: "Planificador de Viajes con IA | VIANova IA",
+    title: "Planificador de Viajes con IA | VIANova",
     description:
-      "Crea un itinerario personalizado con inteligencia artificial: hoteles, restaurantes, experiencias y transporte en un solo plan. Prueba VIANova IA gratis.",
+      "Crea un itinerario personalizado con inteligencia artificial: hoteles, restaurantes, experiencias y transporte en un solo plan. Prueba VIANova gratis.",
     h1: "Planificador de viajes con IA: tu itinerario completo en minutos",
     intro:
-      "VIANova IA convierte una idea suelta —«quiero conocer el Huila en cuatro días»— en un plan con alojamiento, comida, experiencias, mapa y transporte. No es una lista genérica: es un itinerario que puedes ajustar, reservar y compartir.",
+      "VIANova convierte una idea suelta —«quiero conocer el Huila en cuatro días»— en un plan con alojamiento, comida, experiencias, mapa y transporte. No es una lista genérica: es un itinerario que puedes ajustar, reservar y compartir.",
     keywords: [
       "planificador de viajes con IA",
       "itinerario con inteligencia artificial",
@@ -73,7 +73,7 @@ export const seoPages: SeoPage[] = [
         heading: "Qué hace un planificador de viajes con IA",
         paragraphs: [
           "Un planificador de viajes con inteligencia artificial combina tus preferencias (fechas, presupuesto, ritmo, intereses) con información de destinos y servicios para proponer una ruta coherente. En lugar de abrir veinte pestañas, describes el viaje una vez y recibes una propuesta editable.",
-          "En VIANova IA el plan resultante incluye días, paradas, tiempos estimados y una selección de servicios locales. Puedes pedir cambios en lenguaje natural: «menos museos», «con niños», «sin madrugar» o «presupuesto de 1.500.000 COP».",
+          "En VIANova el plan resultante incluye días, paradas, tiempos estimados y una selección de servicios locales. Puedes pedir cambios en lenguaje natural: «menos museos», «con niños», «sin madrugar» o «presupuesto de 1.500.000 COP».",
         ],
       },
       {
@@ -90,7 +90,7 @@ export const seoPages: SeoPage[] = [
         ],
       },
       {
-        heading: "Qué incluye un plan de VIANova IA",
+        heading: "Qué incluye un plan de VIANova",
         paragraphs: [
           "El objetivo es cubrir el viaje completo, no solo el vuelo. Por eso el plan integra alojamiento, gastronomía, experiencias y movilidad en una misma línea de tiempo.",
         ],
@@ -121,13 +121,13 @@ export const seoPages: SeoPage[] = [
         heading: "Planificador con IA frente a una agencia tradicional",
         paragraphs: [
           "Una agencia aporta experiencia y respaldo en viajes complejos; un planificador con IA aporta velocidad, comparación y control del presupuesto. No son excluyentes. Muchos viajeros usan la IA para diseñar el borrador y luego confirman con proveedores locales.",
-          "VIANova IA no cobra por crear el itinerario y no impone un paquete cerrado. La reserva se hace con cada proveedor, con sus condiciones visibles.",
+          "VIANova no cobra por crear el itinerario y no impone un paquete cerrado. La reserva se hace con cada proveedor, con sus condiciones visibles.",
         ],
       },
     ],
     faqs: [
       {
-        question: "¿VIANova IA es gratis?",
+        question: "¿VIANova es gratis?",
         answer:
           "Puedes explorar destinos y crear una propuesta de viaje sin costo. Algunas funciones de cuenta, reservas y servicios de proveedores pueden requerir iniciar sesión o tener condiciones propias.",
       },
@@ -245,7 +245,7 @@ export const seoPages: SeoPage[] = [
       {
         heading: "Cómo armar el itinerario con IA",
         paragraphs: [
-          "Si tienes claro el número de días y el presupuesto, un planificador con IA puede proponer una ruta realista en minutos. Luego revisa distancias, temporadas y disponibilidad. En VIANova IA puedes ajustar el plan y explorar proveedores locales en el mapa.",
+          "Si tienes claro el número de días y el presupuesto, un planificador con IA puede proponer una ruta realista en minutos. Luego revisa distancias, temporadas y disponibilidad. En VIANova puedes ajustar el plan y explorar proveedores locales en el mapa.",
           "La IA no reemplaza la verificación: confirma horarios, accesos y condiciones de cada parque o reserva antes de pagar.",
         ],
       },
@@ -383,7 +383,7 @@ export const seoPages: SeoPage[] = [
         heading: "Dónde dormir y comer",
         paragraphs: [
           "En Neiva hay hoteles de cadena y opciones boutique cerca del centro y del malecón. En Villavieja, la oferta es más pequeña y conviene reservar con antelación en temporada alta. En Rivera abundan fincas y alojamientos rurales.",
-          "Para comer, prueba el asado huilense en restaurantes de barrio, el tamal en desayuno y el bizcocho de achira como snack. En VIANova IA puedes explorar proveedores locales, ver reseñas y ubicarlos en el mapa.",
+          "Para comer, prueba el asado huilense en restaurantes de barrio, el tamal en desayuno y el bizcocho de achira como snack. En VIANova puedes explorar proveedores locales, ver reseñas y ubicarlos en el mapa.",
         ],
       },
     ],
@@ -499,9 +499,9 @@ export const seoPages: SeoPage[] = [
         ],
       },
       {
-        heading: "Cómo encaja VIANova IA",
+        heading: "Cómo encaja VIANova",
         paragraphs: [
-          "VIANova IA no es una agencia de viajes ni un metabuscador de hoteles: es un planificador que organiza tu viaje y te muestra proveedores locales. Puedes usarlo para decidir la zona, el número de noches y el presupuesto antes de comparar en Trivago, Airbnb o la web del hotel.",
+          "VIANova no es una agencia de viajes ni un metabuscador de hoteles: es un planificador que organiza tu viaje y te muestra proveedores locales. Puedes usarlo para decidir la zona, el número de noches y el presupuesto antes de comparar en Trivago, Airbnb o la web del hotel.",
           "Después de reservar, vuelve al plan para añadir restaurantes, experiencias y transporte. Así evitas reservar un alojamiento que está lejos de todo lo que quieres hacer.",
         ],
       },
@@ -528,9 +528,9 @@ export const seoPages: SeoPage[] = [
           "La plataforma ofrece pagos y comunicaciones dentro del sistema, además de políticas de cancelación y soporte. Revisa el perfil del anfitrión, las reseñas y las normas de la casa antes de reservar.",
       },
       {
-        question: "¿VIANova IA está afiliada a Trivago o Airbnb?",
+        question: "¿VIANova está afiliada a Trivago o Airbnb?",
         answer:
-          "No. VIANova IA es un planificador de viajes independiente. Trivago y Airbnb son marcas de sus respectivos titulares y se mencionan únicamente con fines comparativos.",
+          "No. VIANova es un planificador de viajes independiente. Trivago y Airbnb son marcas de sus respectivos titulares y se mencionan únicamente con fines comparativos.",
       },
     ],
     related: [
@@ -577,9 +577,9 @@ export type RouteSeo = {
 };
 
 const HOME_SEO: RouteSeo = {
-  title: "VIANova IA | Planificador de Viajes con IA en Colombia",
+  title: "VIANova | Planificador de Viajes con IA en Colombia",
   description:
-    "Planifica tu viaje con inteligencia artificial: itinerarios, hoteles, restaurantes, experiencias y taxi local en un solo lugar. Explora Colombia con VIANova IA.",
+    "Planifica tu viaje con inteligencia artificial: itinerarios, hoteles, restaurantes, experiencias y taxi local en un solo lugar. Explora Colombia con VIANova.",
   canonical: absoluteUrl("/"),
   robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
   ogType: "website",
@@ -600,7 +600,7 @@ const HOME_SEO: RouteSeo = {
 const PUBLIC_ROUTE_SEO: Record<string, RouteSeo> = {
   "/": HOME_SEO,
   "/explore": {
-    title: "Explorar Destinos, Hoteles y Experiencias | VIANova IA",
+    title: "Explorar Destinos, Hoteles y Experiencias | VIANova",
     description:
       "Explora alojamientos, restaurantes, experiencias y servicios locales con mapa, reseñas y filtros. Descubre qué hacer en Neiva, el Huila y Colombia.",
     canonical: absoluteUrl("/explore"),
@@ -610,9 +610,9 @@ const PUBLIC_ROUTE_SEO: Record<string, RouteSeo> = {
     keywords: ["explorar destinos", "hoteles", "restaurantes", "experiencias", "turismo local"],
   },
   "/privacy": {
-    title: "Política de Privacidad | VIANova IA",
+    title: "Política de Privacidad | VIANova",
     description:
-      "Cómo VIANova IA recopila, usa y protege tus datos personales. Consulta tus derechos y los canales de contacto.",
+      "Cómo VIANova recopila, usa y protege tus datos personales. Consulta tus derechos y los canales de contacto.",
     canonical: absoluteUrl("/privacy"),
     robots: "index, follow",
     ogType: "website",
@@ -634,52 +634,52 @@ for (const page of seoPages) {
 
 const PRIVATE_ROUTE_META: Record<string, { title: string; description: string }> = {
   "/login": {
-    title: "Iniciar sesión | VIANova IA",
-    description: "Accede a tu cuenta de VIANova IA para guardar itinerarios, reservar servicios y gestionar tus viajes.",
+    title: "Iniciar sesión | VIANova",
+    description: "Accede a tu cuenta de VIANova para guardar itinerarios, reservar servicios y gestionar tus viajes.",
   },
   "/select-role": {
-    title: "Elige tu rol | VIANova IA",
-    description: "Selecciona cómo quieres usar VIANova IA: viajero, hotel, restaurante, experiencia o transporte.",
+    title: "Elige tu rol | VIANova",
+    description: "Selecciona cómo quieres usar VIANova: viajero, hotel, restaurante, experiencia o transporte.",
   },
   "/dashboard": {
-    title: "Mi panel | VIANova IA",
-    description: "Resumen de tu actividad, reservas, compras y viajes en VIANova IA.",
+    title: "Mi panel | VIANova",
+    description: "Resumen de tu actividad, reservas, compras y viajes en VIANova.",
   },
   "/admin": {
-    title: "Administración | VIANova IA",
-    description: "Panel interno de administración de VIANova IA.",
+    title: "Administración | VIANova",
+    description: "Panel interno de administración de VIANova.",
   },
   "/settings": {
-    title: "Configuración de cuenta | VIANova IA",
-    description: "Gestiona tu perfil, seguridad y preferencias en VIANova IA.",
+    title: "Configuración de cuenta | VIANova",
+    description: "Gestiona tu perfil, seguridad y preferencias en VIANova.",
   },
   "/my-products": {
-    title: "Mis productos | VIANova IA",
-    description: "Gestiona los productos y servicios que publicas en VIANova IA.",
+    title: "Mis productos | VIANova",
+    description: "Gestiona los productos y servicios que publicas en VIANova.",
   },
   "/notifications": {
-    title: "Notificaciones | VIANova IA",
-    description: "Tus notificaciones y actividad reciente en VIANova IA.",
+    title: "Notificaciones | VIANova",
+    description: "Tus notificaciones y actividad reciente en VIANova.",
   },
   "/messages": {
-    title: "Mensajes | VIANova IA",
-    description: "Conversaciones con viajeros y proveedores en VIANova IA.",
+    title: "Mensajes | VIANova",
+    description: "Conversaciones con viajeros y proveedores en VIANova.",
   },
   "/social": {
-    title: "Comunidad | VIANova IA",
-    description: "Contenido y actividad de la comunidad de viajeros de VIANova IA.",
+    title: "Comunidad | VIANova",
+    description: "Contenido y actividad de la comunidad de viajeros de VIANova.",
   },
   "/products": {
-    title: "Gestión de productos | VIANova IA",
-    description: "Panel de productos y servicios para proveedores de VIANova IA.",
+    title: "Gestión de productos | VIANova",
+    description: "Panel de productos y servicios para proveedores de VIANova.",
   },
   "/request-ride": {
-    title: "Solicitar taxi | VIANova IA",
+    title: "Solicitar taxi | VIANova",
     description: "Solicita un taxi local y sigue el recorrido en el mapa.",
   },
   "/ride-history": {
-    title: "Historial de viajes | VIANova IA",
-    description: "Consulta tus viajes y recorridos anteriores en VIANova IA.",
+    title: "Historial de viajes | VIANova",
+    description: "Consulta tus viajes y recorridos anteriores en VIANova.",
   },
 };
 
@@ -703,7 +703,7 @@ export function getRouteSeo(pathname: string): RouteSeo {
   }
 
   return {
-    title: "Página no disponible | VIANova IA",
+    title: "Página no disponible | VIANova",
     description: "Esta sección es privada o no existe. Vuelve al inicio para explorar destinos y planificar tu viaje.",
     canonical: absoluteUrl(path),
     robots: "noindex, nofollow",

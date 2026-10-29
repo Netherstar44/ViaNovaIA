@@ -1,6 +1,5 @@
 import { LocationItem } from "@/data/mockData";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Star, Box, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -38,9 +37,9 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute top-3 right-3">
-           <Badge variant="secondary" className="backdrop-blur-md bg-black/70 text-white border-none font-semibold shadow-none rounded-full px-3 py-1">
+           <span className="liquid-glass-chip inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-[#1f1f1f]">
              {t(`categories.${item.category}`)}
-           </Badge>
+           </span>
         </div>
       </div>
       

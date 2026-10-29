@@ -1,7 +1,18 @@
 import type { StyleSpecification } from 'maplibre-gl';
 
 /**
- * Token-free OpenStreetMap raster basemap.
+ * Vector basemap with real terrain shading, labels and points of interest.
+ * OpenFreeMap serves it without an API key; the style already carries the
+ * OpenStreetMap attribution required by the tiles.
+ */
+export const VECTOR_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+/** Dark companion for dark palettes, kept for future themed maps. */
+export const VECTOR_MAP_STYLE_DARK_URL = 'https://tiles.openfreemap.org/styles/dark';
+
+/**
+ * Token-free OpenStreetMap raster basemap used as a resilient fallback when
+ * the vector style or its tiles cannot be reached.
  *
  * OSM's public tile server is fine for local development and small apps.
  * For high-traffic production use, replace this source with your own tile

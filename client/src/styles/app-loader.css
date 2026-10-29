@@ -1,0 +1,197 @@
+/* ── App boot experience ─────────────────────────────────────────────────────
+   Brand-first splash in the spirit of the Finora reference: one solid surface,
+   one soft halo, the mark and the wordmark. No slogans, routes, grain or
+   progress chrome. Motion lives in AppLoader.tsx so it can respect
+   prefers-reduced-motion without duplicating timelines in CSS. */
+
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  isolation: isolate;
+  color: var(--fg);
+  background: var(--bg);
+  transform-origin: 50% 50%;
+  will-change: opacity, transform;
+}
+
+/* The lazy-route fallback sits inside the page instead of covering it. */
+.app-loader--route {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* ── Stage ───────────────────────────────────────────────────────────────── */
+
+.app-loader__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(56vw, 204px);
+  padding: 0;
+}
+
+.app-loader__mark-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+/* The halo is a sibling of the mark so it can bloom behind it without
+   tinting the artwork itself. */
+.app-loader__halo-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 158%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.app-loader__halo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, var(--primary) 30%, transparent),
+    color-mix(in srgb, var(--primary) 9%, transparent) 44%,
+    transparent 70%
+  );
+}
+
+html.dark .app-loader__halo {
+  background: radial-gradient(
+    circle at 50% 50%,
+    color-mix(in srgb, var(--primary) 26%, transparent),
+    color-mix(in srgb, var(--primary) 8%, transparent) 46%,
+    transparent 72%
+  );
+}
+
+.app-loader__mark {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 12px 26px rgba(20, 16, 4, 0.14));
+}
+
+html.dark .app-loader__mark {
+  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.42));
+}
+
+/* ── Wordmark ────────────────────────────────────────────────────────────── */
+
+.app-loader__word {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 24px 0 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.72rem, 5.2vw, 2.28rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--fg);
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-loader__letter {
+  display: inline-block;
+  will-change: opacity, transform;
+}
+
+.app-loader__letter--accent {
+  color: var(--primary-ink);
+}
+
+/* ── Quiet route fallback ────────────────────────────────────────────────── */
+
+.app-loader--route .app-loader__stage {
+  width: min(30vw, 84px);
+}
+
+.app-loader--route .app-loader__word {
+  display: none;
+}
+
+.app-loader--route .app-loader__halo-slot {
+  width: 172%;
+}
+
+.app-loader--route .app-loader__mark {
+  filter: drop-shadow(0 8px 18px rgba(20, 16, 4, 0.1));
+}
+
+html.dark .app-loader--route .app-loader__mark {
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.36));
+}
+
+/* Fast chunks never flash the fallback: it fades in only if it survives a beat. */
+@media (prefers-reduced-motion: no-preference) {
+  .app-loader--route {
+    animation: app-loader-route-in 0.28s 0.12s both;
+  }
+}
+
+@keyframes app-loader-route-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Small screens ───────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .app-loader__stage {
+    width: min(58vw, 178px);
+  }
+
+  .app-loader__word {
+    margin-top: 21px;
+    font-size: clamp(1.6rem, 7.6vw, 2rem);
+  }
+
+  .app-loader--route .app-loader__stage {
+    width: min(34vw, 76px);
+  }
+}
+
+@media (max-height: 480px) {
+  .app-loader__stage {
+    width: min(34vh, 148px);
+  }
+
+  .app-loader__word {
+    margin-top: 16px;
+    font-size: 1.5rem;
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loader--route {
+    animation: none !important;
+  }
+
+  .app-loader__letter {
+    will-change: auto;
+  }
+}

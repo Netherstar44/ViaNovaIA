@@ -103,7 +103,7 @@ export default function ProviderCalendar({ services }: ProviderCalendarProps) {
     <div className="grid md:grid-cols-2 gap-6 mt-8">
       {/* Columna Izquierda: Calendario y Selección */}
       <div className="space-y-6">
-        <Card className="border-white/10 bg-card/50 backdrop-blur-2xl">
+        <Card className="border-white/10">
           <CardHeader>
             <CardTitle className="text-xl">Selecciona tu Servicio</CardTitle>
             <CardDescription>¿A qué servicio le vas a asignar disponibilidad?</CardDescription>
@@ -127,7 +127,7 @@ export default function ProviderCalendar({ services }: ProviderCalendarProps) {
         </Card>
 
         {selectedServiceId && (
-          <Card className="border-white/10 bg-card/50 backdrop-blur-2xl flex flex-col items-center">
+          <Card className="border-white/10 flex flex-col items-center">
              <CardHeader className="w-full">
               <CardTitle className="text-xl">Fecha de Disponibilidad</CardTitle>
              </CardHeader>
@@ -147,7 +147,7 @@ export default function ProviderCalendar({ services }: ProviderCalendarProps) {
       {/* Columna Derecha: Formulario y Lista de Slots */}
       {selectedServiceId && date && (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-          <Card className="border-white/10 bg-card/50 backdrop-blur-2xl">
+          <Card className="border-white/10">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary" />
@@ -196,7 +196,7 @@ export default function ProviderCalendar({ services }: ProviderCalendarProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-card/50 backdrop-blur-2xl">
+          <Card className="border-white/10">
             <CardHeader>
               <CardTitle className="text-lg">Horarios Registrados</CardTitle>
             </CardHeader>

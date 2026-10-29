@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("ViaNovaIA render error:", error, info.componentStack);
+    console.error("ViaNova render error:", error, info.componentStack);
   }
 
   private reload = () => {

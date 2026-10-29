@@ -98,7 +98,7 @@ export function ReviewForm({ rideId, authorUsername, targetUsername, authorRole,
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="bg-card/90 backdrop-blur-xl border border-border/50 rounded-2xl p-5 space-y-4"
+      className="glass-card border border-border/50 rounded-2xl p-5 space-y-4"
     >
       <div className="text-center space-y-1">
         <h4 className="text-lg font-bold">

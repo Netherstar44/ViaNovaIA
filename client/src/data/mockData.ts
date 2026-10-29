@@ -1,6 +1,6 @@
-import hotelImg from '@assets/generated_images/modern_luxury_hotel_exterior_with_pool.webp';
-import restaurantImg from '@assets/generated_images/cozy_italian_restaurant_interior.webp';
-import recreationImg from '@assets/generated_images/adventure_park_with_zip_lines.webp';
+const hotelImg = '/images/colombia/hotel-huila.webp';
+const restaurantImg = '/images/colombia/restaurante-colombia.webp';
+const recreationImg = '/images/colombia/neiva-jardin.webp';
 
 export interface LocationItem {
   id: string;

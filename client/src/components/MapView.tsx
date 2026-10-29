@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '@/lib/maplibre-worker';
-import { OSM_MAP_STYLE } from '@/lib/map-style';
+import { useVectorMapStyle } from '@/lib/use-vector-map-style';
 import { LocationItem } from '@/data/mockData';
 import { MapPin } from 'lucide-react';
 import type { SimulatedTaxi } from './TaxiOrderPanel';
@@ -70,6 +70,7 @@ export default function MapView({
   const [popupInfo, setPopupInfo] = useState<LocationItem | null>(null);
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(true);
+  const { mapStyle, handleMapError } = useVectorMapStyle();
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -137,9 +138,10 @@ export default function MapView({
       <Map
         {...viewState}
         onMove={(event) => setViewState(event.viewState)}
-        mapStyle={OSM_MAP_STYLE}
+        mapStyle={mapStyle}
+        attributionControl={{ compact: true }}
         style={{ width: '100%', height: '100%' }}
-        onError={(event) => console.error('Map error:', event)}
+        onError={handleMapError}
       >
         <NavigationControl position="top-right" />
 
@@ -224,14 +226,14 @@ export default function MapView({
       </Map>
 
       {locating && (
-        <div className="absolute top-3 left-3 z-10 rounded-full bg-background/85 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow backdrop-blur-md">
+        <div className="absolute top-3 left-3 z-10 liquid-glass-chip liquid-glass-chip--light rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground">
           Ubicándote…
         </div>
       )}
 
       {/* Overlays from original component */}
       {routeInfo && (
-        <div className="absolute z-10 bottom-3 left-3 bg-background/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-primary/30 shadow-lg flex items-center gap-4">
+        <div className="absolute z-10 bottom-3 left-3 liquid-glass-chip liquid-glass-chip--light px-4 py-2.5 rounded-xl border border-primary/30 flex items-center gap-4">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="w-3 h-0.5 bg-primary rounded-full" />
             <span className="font-semibold text-foreground">{routeInfo.distanceKm.toFixed(1)} km</span>

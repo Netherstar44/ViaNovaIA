@@ -5,8 +5,9 @@ import { useAuth } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, Loader2, Image as Img, Video, Package, ShoppingBag, CheckCircle2, Clock, XCircle, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Image as Img, Video, Package, ShoppingBag, CheckCircle2, Clock, XCircle, Eye, EyeOff, Globe2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PhotoSphereCapture } from "@/components/media/PhotoSphereCapture";
 
 interface Product {
   id: string;
@@ -77,7 +78,19 @@ function ProductForm({
   const [mediaType, setMediaType] = useState("image");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const mediaRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!mediaFile) {
+      setMediaPreview(null);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(mediaFile);
+    setMediaPreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [mediaFile]);
 
   const unitPrice = Number(price) || 0;
   const unitCost = Number(cost) || 0;
@@ -162,7 +175,7 @@ function ProductForm({
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      className="glass-scrim fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <motion.div
@@ -236,31 +249,112 @@ function ProductForm({
 
           {existing && (
             <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
-              <h3 className="text-sm font-semibold">Galería Inmersiva</h3>
-              
+              <div className="flex items-baseline justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Galería inmersiva</h3>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Fotos, video, 360° y modelos 3D del producto.</p>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {(existing.media?.length || 0)} medios
+                </span>
+              </div>
+
+              {/* 360 capture / import */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaType("360_image");
+                  setCaptureOpen(true);
+                }}
+                className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.12] via-primary/[0.04] to-transparent p-4 text-left transition-colors hover:border-primary/45"
+              >
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition-opacity group-hover:opacity-80"
+                />
+                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/30 bg-black/40 text-primary">
+                  <Globe2 className="h-5 w-5" />
+                </span>
+                <span className="relative min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-white">Panorama 360°</span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-primary">
+                      <Sparkles className="h-2.5 w-2.5" />
+                      Inmersivo
+                    </span>
+                  </span>
+                  <span className="mt-1 block text-[11.5px] leading-5 text-white/50">
+                    Captura un panorama guiado con la cámara o importa una foto equirectangular 2:1.
+                  </span>
+                </span>
+                <span className="relative shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/80 transition group-hover:border-primary/40 group-hover:text-white">
+                  Añadir
+                </span>
+              </button>
+
+              {mediaFile && mediaType === "360_image" && (
+                <div className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.06] p-3">
+                  <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black">
+                    <img src={mediaPreview || ""} alt="Panorama seleccionado" className="h-full w-full object-cover" />
+                    <span className="liquid-glass-chip absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#7d5e12]">
+                      360°
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-white">{mediaFile.name}</p>
+                    <p className="mt-0.5 text-[10.5px] text-muted-foreground">
+                      {(mediaFile.size / (1024 * 1024)).toFixed(1)} MB · listo para subir
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMediaFile(null)}
+                    className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
+                    aria-label="Quitar panorama"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <Button
+                    onClick={handleMediaUpload}
+                    disabled={uploadingMedia}
+                    size="sm"
+                    className="shrink-0 rounded-lg bg-primary px-4 font-bold text-black hover:bg-primary/85"
+                  >
+                    {uploadingMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                    <span className="ml-1.5">Subir</span>
+                  </Button>
+                </div>
+              )}
+
               <div className="flex flex-col gap-2 p-4 rounded-xl bg-secondary/10 border border-white/5">
                 <div className="flex gap-2">
-                  <select 
-                    value={mediaType} 
-                    onChange={(e) => setMediaType(e.target.value)}
+                  <select
+                    value={mediaType === "360_image" ? "image" : mediaType}
+                    onChange={(e) => {
+                      setMediaType(e.target.value);
+                      setMediaFile(null);
+                    }}
                     className="bg-background border border-white/10 rounded-lg px-2 py-1.5 text-sm outline-none"
                   >
-                    <option value="image">Imagen Normal</option>
+                    <option value="image">Imagen normal</option>
                     <option value="video">Video</option>
-                    <option value="360_image">Imagen 360°</option>
                     <option value="3d_model">Modelo 3D (.glb)</option>
                   </select>
-                  <input 
-                    type="file" 
-                    onChange={e => setMediaFile(e.target.files?.[0] || null)} 
-                    className="flex-1 text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary file:font-semibold" 
+                  <input
+                    ref={mediaRef}
+                    type="file"
+                    onChange={e => setMediaFile(e.target.files?.[0] || null)}
+                    className="flex-1 text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary file:font-semibold"
                     accept={mediaType === '3d_model' ? '.glb' : mediaType === 'video' ? 'video/*' : 'image/*'}
                   />
                 </div>
-                <Button 
-                  onClick={handleMediaUpload} 
-                  disabled={!mediaFile || uploadingMedia} 
-                  variant="outline" 
+                <p className="text-[10px] leading-4 text-muted-foreground">
+                  Para 360° usa la tarjeta de panorama: valida la proporción y lo previsualiza antes de subir.
+                </p>
+                <Button
+                  onClick={handleMediaUpload}
+                  disabled={!mediaFile || mediaType === "360_image" || uploadingMedia}
+                  variant="outline"
                   size="sm"
                   className="w-full border-primary/30 hover:bg-primary/10 mt-1"
                 >
@@ -271,26 +365,39 @@ function ProductForm({
 
               {existing.media && existing.media.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                  {existing.media.map(m => (
-                    <div key={m.id} className="relative group rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/40 flex items-center justify-center">
-                      {m.type === 'image' || m.type === 'image_360' ? (
-                        <img src={m.url} className="w-full h-full object-cover opacity-60" />
-                      ) : (
-                        <span className="text-xs font-bold text-muted-foreground uppercase">{m.type.replace('_', ' ')}</span>
-                      )}
-                      <div className="absolute top-1 right-1 p-1 bg-black/60 rounded cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteMedia(m.id)}>
-                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                  {existing.media.map(m => {
+                    const is360 = m.type === 'image_360' || m.type === '360_image';
+                    const isImage = m.type === 'image' || is360;
+                    return (
+                      <div key={m.id} className="relative group rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/40 flex items-center justify-center">
+                        {isImage ? (
+                          <img src={m.url} className="w-full h-full object-cover opacity-60" alt="" />
+                        ) : (
+                          <span className="text-xs font-bold text-muted-foreground uppercase">{m.type.replace('_', ' ')}</span>
+                        )}
+                        <div className="absolute top-1 right-1 p-1 bg-black/60 rounded cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleDeleteMedia(m.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        </div>
+                        <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[10px] uppercase font-bold text-primary">
+                          {is360 ? '360°' : (m.type === 'model_3d' || m.type === '3d_model') ? '3D' : m.type === 'vr_tour' ? 'VR' : m.type}
+                        </div>
                       </div>
-                      <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[10px] uppercase font-bold text-primary">
-                        {m.type === 'image_360' ? '360°' : (m.type === 'model_3d' || m.type === '3d_model') ? '3D' : m.type === 'vr_tour' ? 'VR' : m.type}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
         </div>
+
+        <PhotoSphereCapture
+          open={captureOpen}
+          onClose={() => setCaptureOpen(false)}
+          onConfirm={(file) => {
+            setMediaType("360_image");
+            setMediaFile(file);
+          }}
+        />
 
         <div className="px-6 pb-6 flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl">Cancelar</Button>

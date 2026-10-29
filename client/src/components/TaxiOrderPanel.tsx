@@ -139,7 +139,7 @@ export default function TaxiOrderPanel({
         if (data.routes && data.routes.length > 0) {
           const route = data.routes[0];
           const coords: [number, number][] = route.geometry.coordinates.map(
-            (c: [number, number]) => [c[1], c[0]] // GeoJSON is [lng, lat], Leaflet needs [lat, lng]
+            (c: [number, number]) => [c[1], c[0]] // GeoJSON is [lng, lat], UI state uses [lat, lng]
           );
           const km = route.distance / 1000;
           const min = Math.round(route.duration / 60);

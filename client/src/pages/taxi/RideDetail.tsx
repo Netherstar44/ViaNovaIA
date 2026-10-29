@@ -1,11 +1,9 @@
 import { apiBase } from "@/lib/queryClient";
-import "leaflet/dist/leaflet.css";
 // ─────────────────────────────────────────────────────────────────────────────
 // client/src/pages/taxi/RideDetail.tsx
-// Vista de detalle del viaje con mapa Leaflet — /taxi/ride/:id
+// Vista de detalle del viaje con mapa MapLibre — /taxi/ride/:id
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -14,17 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
+import RouteMap from "@/components/taxi/RouteMap";
 import type { Ride } from "@shared/taxi.schema";
-
-// Leaflet se importa dinámicamente para evitar SSR issues
-// Asegúrate de tener: npm install leaflet react-leaflet @types/leaflet
-// Y en index.html o index.css: import "leaflet/dist/leaflet.css"
 
 export default function RideDetail() {
   const { id } = useParams<{ id: string }>();
   const [_, setLocation] = useLocation();
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ride", id],
@@ -34,84 +27,6 @@ export default function RideDetail() {
   });
 
   const ride = data?.ride;
-
-  // ── Inicializar mapa Leaflet ────────────────────────────────────────────────
-  useEffect(() => {
-    if (!ride || !mapRef.current || mapInstanceRef.current) return;
-
-    // Import dinámico para compatibilidad con bundlers
-    import("leaflet").then((L) => {
-      // Fix default icon path (problema conocido de Leaflet + Webpack/Vite)
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      });
-
-      const originLat = parseFloat(ride.originLat);
-      const originLng = parseFloat(ride.originLng);
-      const destLat   = parseFloat(ride.destinationLat);
-      const destLng   = parseFloat(ride.destinationLng);
-
-      const map = L.map(mapRef.current!, {
-        center: [originLat, originLng],
-        zoom: 14,
-        zoomControl: true,
-      });
-
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-
-      // ── Marcador origen (verde) ────────────────────────────────────────────
-      const originIcon = L.divIcon({
-        html: `<div style="background:#22c55e;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(34,197,94,0.6)"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-        className: "",
-      });
-      L.marker([originLat, originLng], { icon: originIcon })
-        .addTo(map)
-        .bindPopup(`<b>🟢 Origen</b><br/>${ride.originAddress || "Punto de recogida"}`)
-        .openPopup();
-
-      // ── Marcador destino (rojo) ────────────────────────────────────────────
-      const destIcon = L.divIcon({
-        html: `<div style="background:#ef4444;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(239,68,68,0.6)"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-        className: "",
-      });
-      L.marker([destLat, destLng], { icon: destIcon })
-        .addTo(map)
-        .bindPopup(`<b>🔴 Destino</b><br/>${ride.destinationAddress}`);
-
-      // ── Línea de ruta estimada ─────────────────────────────────────────────
-      const polyline = L.polyline(
-        [[originLat, originLng], [destLat, destLng]],
-        {
-          color: "#c9a227",
-          weight: 4,
-          opacity: 0.8,
-          dashArray: "8, 6",
-        }
-      ).addTo(map);
-
-      // Ajustar el mapa para mostrar toda la ruta
-      map.fitBounds(polyline.getBounds(), { padding: [40, 40] });
-
-      mapInstanceRef.current = map;
-    });
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [ride]);
 
   const openGoogleMaps = () => {
     if (!ride) return;
@@ -130,6 +45,13 @@ export default function RideDetail() {
     accepted: "Yendo al origen", in_progress: "En curso",
     completed: "Completado", cancelled: "Cancelado",
   };
+
+  const originCoords: [number, number] | null = ride
+    ? [parseFloat(ride.originLat), parseFloat(ride.originLng)]
+    : null;
+  const destinationCoords: [number, number] | null = ride
+    ? [parseFloat(ride.destinationLat), parseFloat(ride.destinationLng)]
+    : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -195,9 +117,13 @@ export default function RideDetail() {
         )}
 
         {/* Mapa */}
-        <div className="rounded-2xl overflow-hidden border border-border/50 shadow-lg">
-          <div ref={mapRef} style={{ height: "420px", width: "100%", background: "#0a0a12" }} />
-        </div>
+        {ride ? (
+          <div className="h-[320px] overflow-hidden rounded-2xl border border-border/50 shadow-lg sm:h-[420px]">
+            <RouteMap origin={originCoords} destination={destinationCoords} fitPadding={48} />
+          </div>
+        ) : (
+          <Skeleton className="h-[320px] rounded-2xl sm:h-[420px]" />
+        )}
 
         {/* Leyenda + botón Google Maps */}
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -209,7 +135,7 @@ export default function RideDetail() {
               <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Destino
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-8 border-t-2 border-primary border-dashed inline-block" /> Ruta
+              <span className="w-8 border-t-2 border-primary inline-block" /> Ruta
             </span>
           </div>
           <Button

@@ -66,13 +66,13 @@ export function useSeo() {
     upsertMeta("property", "og:image", seo.image);
     upsertMeta("property", "og:image:width", "1200");
     upsertMeta("property", "og:image:height", "630");
-    upsertMeta("property", "og:image:alt", `${seo.title} — VIANova IA`);
+    upsertMeta("property", "og:image:alt", `${seo.title} — VIANova`);
 
     upsertMeta("name", "twitter:card", "summary_large_image");
     upsertMeta("name", "twitter:title", seo.title);
     upsertMeta("name", "twitter:description", seo.description);
     upsertMeta("name", "twitter:image", seo.image);
-    upsertMeta("name", "twitter:image:alt", `${seo.title} — VIANova IA`);
+    upsertMeta("name", "twitter:image:alt", `${seo.title} — VIANova`);
 
     const previous = document.getElementById("seo-route-jsonld");
     previous?.remove();

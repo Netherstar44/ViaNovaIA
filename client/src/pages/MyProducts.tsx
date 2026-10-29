@@ -853,11 +853,11 @@ export default function MyProducts() {
                     <img src={svc.imageUrl} alt={svc.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                      <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                      <span className="liquid-glass-chip px-2.5 py-1 text-[#1f1f1f] text-[10px] font-bold uppercase tracking-widest rounded-lg">
                         {CATEGORY_MAP[svc.category] || svc.category}
                       </span>
                       {svc.category === "recreation" && svc.price !== undefined && svc.price !== null && (
-                        <span className="px-2.5 py-1 bg-primary/90 backdrop-blur-md text-black text-xs font-bold rounded-lg shadow-lg">
+                        <span className="liquid-glass-chip liquid-glass-chip--tint px-2.5 py-1 text-xs font-bold rounded-lg">
                           {formatMoney(svc.price, svc.currency || "COP")}
                         </span>
                       )}
@@ -866,7 +866,7 @@ export default function MyProducts() {
                 ) : (
                   <div className="w-full h-48 shrink-0 bg-secondary/30 flex items-center justify-center relative">
                     <Package className="h-10 w-10 text-muted-foreground/30" />
-                    <span className="absolute bottom-4 left-4 px-2.5 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                    <span className="absolute bottom-4 left-4 liquid-glass-chip px-2.5 py-1 text-[#1f1f1f] text-[10px] font-bold uppercase tracking-widest rounded-lg">
                       {CATEGORY_MAP[svc.category] || svc.category}
                     </span>
                   </div>

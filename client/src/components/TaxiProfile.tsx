@@ -80,7 +80,7 @@ export default function TaxiProfile({ username, compact = false }: TaxiProfilePr
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card/90 backdrop-blur-xl border border-border/50 rounded-2xl overflow-hidden"
+      className="glass-card border border-border/50 rounded-2xl overflow-hidden"
     >
       {/* Header */}
       <div className="relative bg-gradient-to-br from-primary/10 via-yellow-500/5 to-transparent p-6 border-b border-border/30">

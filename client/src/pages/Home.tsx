@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 
 import TranslatedText from "@/components/TranslatedText";
+import GlassCanvas from "@/components/ui/GlassCanvas";
 import { Spinner } from "@/components/ui/spinner";
 import type { SimulatedTaxi } from "@/components/TaxiOrderPanel";
 
@@ -40,7 +41,6 @@ import type { SimulatedTaxi } from "@/components/TaxiOrderPanel";
 // una acción se cargan bajo demanda para no bloquear el primer render.
 const MapView = lazy(() => import("@/components/MapView"));
 const VRViewer = lazy(() => import("@/components/VRViewer"));
-const Chatbot = lazy(() => import("@/components/Chatbot"));
 const TaxiOrderPanel = lazy(() => import("@/components/TaxiOrderPanel"));
 
 function MapSkeleton() {
@@ -78,10 +78,31 @@ function priceRangeFor(value: unknown): "$" | "$$" | "$$$" | undefined {
   return "$$$";
 }
 
+/**
+ * Destinos reales de Colombia para la portada. Las fotos viven en
+ * /public/images/colombia y rotan cada 6 s con un crossfade lento.
+ */
 const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80",
-  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+  {
+    src: "/images/colombia/cocora-hero.webp",
+    alt: "Palmas de cera gigantes en el verde del Valle del Cocora.",
+  },
+  {
+    src: "/images/colombia/cartagena.webp",
+    alt: "Calle colonial de Cartagena con balcones de colores y flores.",
+  },
+  {
+    src: "/images/colombia/tayrona.webp",
+    alt: "Playa del Parque Nacional Tayrona entre piedras y selva.",
+  },
+  {
+    src: "/images/colombia/tatacoa.webp",
+    alt: "Formaciones de arena rojiza bajo un cielo abierto en la Tatacoa.",
+  },
+  {
+    src: "/images/colombia/guatape.webp",
+    alt: "Piedra del Peñol y embalse de Guatapé vistos desde el aire.",
+  },
 ];
 
 const HeroSection = ({ children }: { children?: React.ReactNode }) => {
@@ -98,9 +119,9 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
 
   return (
     <section className="relative h-[clamp(540px,78vh,680px)] w-full overflow-hidden bg-black">
-      {HERO_IMAGES.map((src, index) => (
+      {HERO_IMAGES.map((image, index) => (
         <motion.div
-          key={src}
+          key={image.src}
           initial={false}
           animate={{
             opacity: heroIndex === index ? 1 : 0,
@@ -111,11 +132,12 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
           aria-hidden={heroIndex !== index}
         >
           <img
-            src={src}
+            src={image.src}
             alt=""
             className="h-full w-full object-cover"
             loading={index === 0 ? "eager" : "lazy"}
             decoding="async"
+            fetchPriority={index === 0 ? "high" : "auto"}
           />
         </motion.div>
       ))}
@@ -143,6 +165,17 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
 
         {children}
       </div>
+
+      <p className="absolute bottom-3 right-4 z-20 text-[10px] font-medium text-white/55 sm:bottom-4 sm:right-6">
+        <a
+          href="https://commons.wikimedia.org/wiki/Category:Tourism_in_Colombia"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-white/30 underline-offset-2 transition-colors hover:text-white/85"
+        >
+          Fotografías: Wikimedia Commons · CC BY / CC BY-SA
+        </a>
+      </p>
     </section>
   );
 };
@@ -200,7 +233,7 @@ export default function Home() {
     
     const [destLat, destLng] = selectedItem.coordinates;
     
-    // A missing/legacy coordinate must never reach Leaflet or OSRM.
+    // A missing/legacy coordinate must never reach MapLibre or OSRM.
     if (!hasValidCoordinates(destLat, destLng)) {
       const q = encodeURIComponent(selectedItem.name);
       window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
@@ -233,7 +266,7 @@ export default function Home() {
       
       if (data.routes && data.routes[0]) {
         const route = data.routes[0];
-        // OSRM returns lng, lat - Leaflet uses lat, lng
+        // OSRM returns lng, lat - route state stores lat, lng
         const coords = route.geometry.coordinates.map((c: any) => [c[1], c[0]]);
         setRouteCoords(coords);
         setRouteInfo({
@@ -417,9 +450,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background pb-20 flex flex-col font-sans text-foreground">
       <Navbar />
-      <Suspense fallback={null}>
-        <Chatbot />
-      </Suspense>
 
       <AnimatePresence mode="wait">
         {viewMode === 'landing' ? (
@@ -440,7 +470,8 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-8 w-full max-w-5xl sm:mt-10 md:mt-12"
               >
-                <div className="glass-search hero-search mx-auto flex w-full max-w-[850px] items-center rounded-full p-1.5 shadow-2xl sm:p-2">
+                <div className="glass-search hero-search liquid-glass--refract liquid-glass--interactive lg-surface lg-surface--search mx-auto flex w-full max-w-[850px] items-center rounded-full p-1.5 sm:p-2">
+                  <GlassCanvas variant="search" />
                   <div className="hero-field group relative flex min-w-0 flex-[1.5] cursor-text flex-col justify-center rounded-full px-4 py-2 transition-colors sm:px-6">
                     <span className="hero-field-label truncate text-[10px] font-extrabold uppercase tracking-[0.12em] sm:text-[11px]">
                       {t('home.search_placeholder') || 'Destino'}
@@ -455,7 +486,7 @@ export default function Home() {
                     />
                   </div>
 
-                  <div className="hidden h-9 w-px bg-white/20 sm:block" />
+                  <div className="hidden h-9 w-px bg-black/10 sm:block" />
 
                   <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
                     <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
@@ -472,10 +503,10 @@ export default function Home() {
                       <option value="5">A menos de 5 km</option>
                       <option value="10">A menos de 10 km</option>
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-white/55 sm:right-6" />
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/45 sm:right-6" />
                   </div>
 
-                  <div className="hidden h-9 w-px bg-white/20 sm:block" />
+                  <div className="hidden h-9 w-px bg-black/10 sm:block" />
 
                   <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
                     <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
@@ -492,7 +523,7 @@ export default function Home() {
                       <option value="$$">Moderado ($$)</option>
                       <option value="$$$">Lujo ($$$)</option>
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-white/55 sm:right-6" />
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/45 sm:right-6" />
                   </div>
 
                   <button
@@ -507,7 +538,7 @@ export default function Home() {
             </HeroSection>
 
             {/* CATEGORIES & MAP / MAIN CONTENT */}
-            <main className="container mx-auto px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+            <main id="explorar" className="container mx-auto scroll-mt-28 px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
 
               <div className="mb-10 flex flex-col gap-6 sm:mb-12 md:flex-row">
                 <div className="w-full md:w-[65%]">
@@ -586,7 +617,7 @@ export default function Home() {
                 </div>
 
                 {/* Map Sidebar Column */}
-                <div className="group z-10 h-[420px] w-full overflow-hidden rounded-3xl border border-border/50 shadow-xl sm:h-[520px] md:sticky md:top-24 md:h-[calc(100vh-150px)] md:w-[35%]">
+                <div className="group relative z-10 h-[420px] w-full overflow-hidden rounded-3xl border border-border/50 shadow-xl sm:h-[520px] md:sticky md:top-24 md:h-[calc(100dvh-150px)] md:w-[35%]">
                   <Suspense fallback={<MapSkeleton />}>
                     <MapView
                       locations={mapLocations}
@@ -620,7 +651,7 @@ export default function Home() {
               <img src={selectedItem?.image} alt={selectedItem?.name} className="h-full w-full object-cover" />
 
               <div className="absolute left-4 top-5 z-20 sm:left-6 sm:top-6">
-                <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-5 shadow-lg transition-all hover:scale-105 sm:pr-6">
+                <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-5 transition-all hover:scale-105 sm:pr-6">
                   <ArrowLeft className="h-4 w-4" /> {t('home.back')}
                 </Button>
               </div>
@@ -630,7 +661,7 @@ export default function Home() {
 
               {/* Detail Panel */}
               <div className="flex w-full flex-col gap-6 md:w-[60%]">
-                <div className="glass-panel rounded-3xl p-5 sm:p-8">
+                <div className="glass-panel liquid-glass--refract rounded-3xl p-5 sm:p-8">
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Badge className="mb-3 bg-primary text-black font-bold uppercase tracking-widest text-xs hover:bg-primary/90">
@@ -639,7 +670,7 @@ export default function Home() {
                       <h1 className="text-balance text-3xl font-heading font-extrabold text-foreground sm:text-4xl md:text-5xl">{selectedItem?.name}</h1>
                     </div>
                     <div className="flex shrink-0 flex-col items-end">
-                      <div className="flex items-center gap-1 rounded-2xl border border-border/50 bg-secondary/80 px-3 py-2 backdrop-blur-md sm:px-4">
+                      <div className="liquid-glass-chip liquid-glass-chip--light flex items-center gap-1 rounded-2xl px-3 py-2 sm:px-4">
                         <Star className="h-4 w-4 fill-primary text-primary sm:h-5 sm:w-5" />
                         <span className="text-lg font-bold sm:text-xl">{selectedItem?.rating}</span>
                       </div>

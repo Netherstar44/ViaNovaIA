@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import GlassCanvas from "@/components/ui/GlassCanvas";
 import { Capacitor } from '@capacitor/core';
 import { apiBase } from "@/lib/queryClient";
 import logoPrincipal from "@/assets/Logo_principal-removebg-preview.png";
@@ -337,7 +338,8 @@ export default function Login() {
 
       {/* RIGHT SIDE — FORMS */}
       <div className="relative z-10 flex w-full items-center justify-center bg-background p-4 sm:p-8 lg:w-1/2 lg:border-l lg:border-border/60 lg:p-12">
-        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8">
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }} className="glass-panel lg-surface lg-surface--panel w-full max-w-md rounded-3xl p-6 sm:p-8">
+          <GlassCanvas variant="panel" />
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden flex flex-col items-center">
             <img src={logoPrincipal} alt="VIANova" className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-2xl mb-2" />

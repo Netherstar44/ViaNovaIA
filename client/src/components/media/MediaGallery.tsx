@@ -70,7 +70,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
                 ) : (
                   <ViewerPlaceholder label="Modelo 3D" />
                 )
-              ) : asset.type === '360_image' ? (
+              ) : asset.type === '360_image' || asset.type === 'image_360' ? (
                 activeIndex === index ? (
                   <Suspense fallback={<ViewerFallback />}>
                     <Viewer360 url={asset.url} />
@@ -110,7 +110,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
             </div>
             {asset.caption && (
               <div className="absolute bottom-10 left-0 right-0 z-10 flex justify-center pointer-events-none">
-                <div className="bg-black/60 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-medium shadow-md">
+                <div className="liquid-glass-chip px-4 py-1.5 rounded-lg text-xs font-medium text-[#1f1f1f]">
                   {asset.caption}
                 </div>
               </div>
@@ -123,13 +123,16 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
       <style dangerouslySetInnerHTML={{__html: `
         .swiper-button-next, .swiper-button-prev {
           color: #c9a227 !important;
-          background: rgba(0,0,0,0.4);
+          background: rgba(9, 10, 12, 0.44);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 6px 18px -8px rgba(0, 0, 0, 0.55);
           width: 40px !important;
           height: 40px !important;
           border-radius: 50%;
           opacity: 0;
           transition: all 0.3s ease;
-          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(18px) saturate(190%);
+          backdrop-filter: blur(18px) saturate(190%);
         }
         .swiper-button-next:after, .swiper-button-prev:after {
           font-size: 16px !important;

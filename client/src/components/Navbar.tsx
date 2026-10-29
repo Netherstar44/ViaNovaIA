@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import GlassCanvas from "@/components/ui/GlassCanvas";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
@@ -96,13 +97,14 @@ export default function Navbar() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className="glass-nav sticky top-0 z-50 w-full"
+      className="glass-nav lg-surface lg-surface--nav sticky top-0 z-50 w-full"
     >
-      <div className="container mx-auto flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
+      <GlassCanvas variant="nav" />
+      <div className="container mx-auto flex h-20 items-center justify-between gap-3 px-4 sm:px-6 lg:h-24">
         <div className="flex min-w-0 items-center gap-2">
           <button
             onClick={() => setLocation("/")}
-            className="group flex min-w-0 items-center gap-2 font-heading text-lg font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:text-xl"
+            className="group flex min-w-0 items-center gap-2.5 font-heading text-xl font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:text-2xl"
             aria-label="VIANova, ir al inicio"
           >
             <motion.div
@@ -113,7 +115,7 @@ export default function Navbar() {
               <img
                 src={logoSrc}
                 alt=""
-                className="h-11 w-11 object-contain drop-shadow-md sm:h-12 sm:w-12"
+                className="h-12 w-12 object-contain drop-shadow-md sm:h-14 sm:w-14 lg:h-16 lg:w-16"
               />
             </motion.div>
             <span className="truncate text-foreground notranslate max-[379px]:hidden"><span className="text-primary-ink">VIA</span>Nova</span>
@@ -121,7 +123,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="hidden items-center gap-1 lg:flex">
               <button
                 onClick={() => setLocation("/explore")}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all ${

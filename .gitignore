@@ -38,3 +38,9 @@ __pycache__/
 *.pyc
 
 .vercel
+
+# Temporal (no versionar)
+_capture/
+_capture-*/
+promo-video/
+

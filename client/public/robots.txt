@@ -1,48 +1,24 @@
-# VIANova IA — robots.txt
-# Dominio canónico: https://via-nova-ia.vercel.app
-
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /login
-Disallow: /select-role
-Disallow: /dashboard
-Disallow: /admin
-Disallow: /settings
-Disallow: /my-products
-Disallow: /notifications
-Disallow: /messages
-Disallow: /social
-Disallow: /products
-Disallow: /taxi-dashboard
-Disallow: /taxi/
-Disallow: /request-ride
-Disallow: /ride-history
-Disallow: /u/
 
-# Motores de búsqueda con IA: se permite leer el contenido público.
+# ViaNova — planificador de viajes con IA
+Sitemap: https://via-nova-ia.vercel.app/sitemap.xml
+Host: https://via-nova-ia.vercel.app
+
+# LLM / agent discovery
+# https://via-nova-ia.vercel.app/llms.txt
+
 User-agent: GPTBot
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ChatGPT-User
 Allow: /
 
 User-agent: Google-Extended
 Allow: /
 
-User-agent: PerplexityBot
-Allow: /
-
 User-agent: ClaudeBot
 Allow: /
 
-User-agent: Claude-SearchBot
+User-agent: PerplexityBot
 Allow: /
 
-User-agent: Bingbot
+User-agent: Applebot-Extended
 Allow: /
-
-Sitemap: https://via-nova-ia.vercel.app/sitemap.xml

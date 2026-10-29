@@ -15,12 +15,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm border border-destructive-border hover:bg-destructive/90",
         outline:
-          "border border-border bg-background/60 backdrop-blur-sm shadow-xs hover:bg-secondary/70 hover:border-primary/30 active:shadow-none",
+          "liquid-glass--inline border border-border hover:bg-secondary/70 hover:border-primary/30",
         secondary:
           "border border-secondary-border bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost: "border border-transparent hover:bg-secondary/60 hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        glass: "relative overflow-hidden bg-white/10 backdrop-blur-xl border border-white/20 text-white shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:bg-white/20 hover:border-white/30 transition-all duration-300 before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/30 before:to-transparent before:opacity-0 hover:before:opacity-100 active:scale-[0.98]",
+        glass: "liquid-glass liquid-glass--clear liquid-glass--interactive relative overflow-hidden border border-white/20 text-white hover:border-white/30 transition-all duration-300 active:scale-[0.98]",
       },
       size: {
         // @replit changed sizes

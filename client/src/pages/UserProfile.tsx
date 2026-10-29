@@ -325,7 +325,7 @@ export default function UserProfile() {
       </main>
 
       {reportOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setReportOpen(false)}>
+        <div className="glass-scrim fixed inset-0 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && setReportOpen(false)}>
           <div className="bg-card border border-border/50 rounded-2xl w-full max-w-md p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg">Reportar a @{profile.username}</h2>

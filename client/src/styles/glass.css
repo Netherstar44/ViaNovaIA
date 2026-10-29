@@ -1,101 +1,934 @@
 /*
-  Liquid Glass design tokens + utilities.
-  Premium frosted glass with refraction, inner highlight and subtle noise.
+  ViaNova Liquid Glass
+  --------------------
+  A web translation of the iOS 26 Liquid Glass material.
+
+  The optical stack has four layers:
+
+    1. a real GPU backdrop refraction (`backdrop-filter: url(#…)`), installed
+       per element by `liquid-glass.tsx` in Chromium;
+    2. a saturated, bright frosted blur as the cross-browser fallback;
+    3. a low-alpha, almost colourless body so the backdrop stays visible;
+    4. a crisp specular rim and a soft moving highlight.
+
+  The material is intentionally *not* a grey veil. There is no black tint and
+  no soft-light grain: both desaturate the backdrop and are the usual reason a
+  CSS glass pane looks like smoked plastic instead of glass.
+
+  Everything lives in `@layer components` so Tailwind utilities still own
+  radius, padding and layout on each element.
 */
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.16);
-  --glass-bg-strong: rgba(255, 255, 255, 0.24);
-  --glass-border: rgba(255, 255, 255, 0.32);
-  --glass-border-strong: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.18);
-  --glass-shadow-hover: 0 16px 48px 0 rgba(15, 23, 42, 0.24);
-  --glass-blur: blur(18px) saturate(160%);
-  --glass-radius: 20px;
-  --glass-highlight: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0) 45%
-  );
-  --glass-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --lg-blur: 22px;
+  --lg-saturate: 190%;
+  --lg-brightness: 1.06;
+  --lg-contrast: 1.02;
+
+  /* Body: a whisper of white, never a grey film. */
+  --lg-body: rgba(255, 255, 255, 0.16);
+  --lg-body-strong: rgba(255, 255, 255, 0.26);
+  --lg-tint: rgba(255, 249, 235, 0.05);
+
+  --lg-border: rgba(255, 255, 255, 0.62);
+  --lg-border-strong: rgba(255, 255, 255, 0.78);
+  --lg-rim-top: rgba(255, 255, 255, 0.95);
+  --lg-rim-bottom: rgba(94, 84, 56, 0.1);
+  --lg-edge-a: rgba(255, 255, 255, 0.62);
+  --lg-edge-b: rgba(255, 255, 255, 0.34);
+  --lg-glow: rgba(255, 255, 255, 0.16);
+  --lg-sheen: rgba(255, 255, 255, 0.34);
+  --lg-sheen-opacity: 0.58;
+  --lg-blend: normal;
+
+  --lg-shadow:
+    0 28px 70px -34px rgba(38, 32, 8, 0.4),
+    0 4px 16px -10px rgba(38, 32, 8, 0.2);
+  --lg-shadow-hover:
+    0 38px 100px -38px rgba(38, 32, 8, 0.46),
+    0 8px 24px -12px rgba(38, 32, 8, 0.24);
+
+  --lg-mx: 20%;
+  --lg-my: -4%;
+
+  /* Refraction defaults; individual components can override. */
+  --lg-refract-scale: 1;
+  --lg-refract-blur: 0;
+  --lg-refract-bezel: 0;
 }
 
-.dark {
-  --glass-bg: rgba(15, 23, 42, 0.32);
-  --glass-bg-strong: rgba(15, 23, 42, 0.48);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-strong: rgba(255, 255, 255, 0.24);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-  --glass-shadow-hover: 0 16px 48px 0 rgba(0, 0, 0, 0.55);
+.dark,
+.sunset,
+.ocean,
+.forest {
+  --lg-blur: 24px;
+  --lg-saturate: 175%;
+  --lg-brightness: 1.03;
+  --lg-contrast: 1.02;
+
+  /* Dark glass is a low-alpha white lift, not a black plate. */
+  --lg-body: rgba(255, 255, 255, 0.065);
+  --lg-body-strong: rgba(255, 255, 255, 0.11);
+  --lg-tint: rgba(255, 255, 255, 0.018);
+
+  --lg-border: rgba(255, 255, 255, 0.17);
+  --lg-border-strong: rgba(255, 255, 255, 0.26);
+  --lg-rim-top: rgba(255, 255, 255, 0.4);
+  --lg-rim-bottom: rgba(0, 0, 0, 0.32);
+  --lg-edge-a: rgba(190, 220, 255, 0.18);
+  --lg-edge-b: rgba(255, 220, 180, 0.12);
+  --lg-glow: rgba(255, 255, 255, 0.05);
+  --lg-sheen: rgba(255, 255, 255, 0.18);
+  --lg-sheen-opacity: 0.42;
+  --lg-blend: screen;
+
+  --lg-shadow:
+    0 32px 90px -34px rgba(0, 0, 0, 0.82),
+    0 4px 20px -12px rgba(0, 0, 0, 0.48);
+  --lg-shadow-hover:
+    0 44px 120px -40px rgba(0, 0, 0, 0.88),
+    0 10px 30px -14px rgba(0, 0, 0, 0.56);
 }
 
-.liquid-glass {
+/* Acentos por tema para que el vidrio no se vea genérico al cambiar de paleta. */
+.sunset {
+  --lg-edge-a: rgba(255, 190, 130, 0.22);
+  --lg-edge-b: rgba(255, 150, 80, 0.16);
+  --lg-rim-top: rgba(255, 220, 180, 0.48);
+  --lg-glow: rgba(255, 150, 80, 0.08);
+}
+.ocean {
+  --lg-edge-a: rgba(150, 220, 255, 0.24);
+  --lg-edge-b: rgba(100, 180, 255, 0.16);
+  --lg-rim-top: rgba(200, 235, 255, 0.5);
+  --lg-glow: rgba(56, 189, 248, 0.1);
+}
+.forest {
+  --lg-edge-a: rgba(160, 240, 190, 0.22);
+  --lg-edge-b: rgba(80, 200, 120, 0.15);
+  --lg-rim-top: rgba(200, 255, 220, 0.48);
+  --lg-glow: rgba(74, 222, 128, 0.1);
+}
+
+@layer components {
+  /* ── Base material ─────────────────────────────────────────────────── */
+
+  .liquid-glass,
+  .glass-panel,
+  .glass-card,
+  .glass-popover,
+  .glass-pill,
+  .glass-nav,
+  .glass-search,
+  .chat-glass {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--lg-body);
+    background-image:
+      linear-gradient(142deg, var(--lg-sheen) 0%, rgba(255, 255, 255, 0) 30%),
+      linear-gradient(180deg, var(--lg-tint) 0%, transparent 66%);
+    border: 1px solid var(--lg-border);
+    border-radius: var(--lg-radius, 18px);
+    box-shadow:
+      inset 0 1px 0 var(--lg-rim-top),
+      inset 0 -1px 0 var(--lg-rim-bottom),
+      inset 1px 0 0 var(--lg-edge-a),
+      inset -1px 0 0 var(--lg-edge-b),
+      inset 0 0 0 1px rgba(94, 84, 56, 0.06),
+      inset 0 0 30px var(--lg-glow),
+      var(--lg-shadow);
+    -webkit-backdrop-filter:
+      blur(var(--lg-blur)) saturate(var(--lg-saturate))
+      brightness(var(--lg-brightness)) contrast(var(--lg-contrast));
+    backdrop-filter:
+      blur(var(--lg-blur)) saturate(var(--lg-saturate))
+      brightness(var(--lg-brightness)) contrast(var(--lg-contrast));
+    transition:
+      transform 260ms cubic-bezier(0.23, 1, 0.32, 1),
+      box-shadow 260ms cubic-bezier(0.23, 1, 0.32, 1),
+      background-color 260ms ease,
+      border-color 260ms ease;
+  }
+
+  /* Specular pool. It follows the pointer through --lg-mx / --lg-my. No
+     grain: a noise layer with soft-light is exactly what turns glass grey. */
+  .liquid-glass::after,
+  .glass-panel::after,
+  .glass-card::after,
+  .glass-popover::after,
+  .glass-pill::after,
+  .glass-nav::after,
+  .glass-search::after,
+  .chat-glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background-image:
+      radial-gradient(
+        115% 95% at var(--lg-mx) var(--lg-my),
+        var(--lg-sheen),
+        transparent 56%
+      ),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 22%);
+    mix-blend-mode: var(--lg-blend);
+    opacity: var(--lg-sheen-opacity);
+    pointer-events: none;
+    transition: opacity 300ms ease;
+  }
+
+  .liquid-glass > *,
+  .glass-panel > *,
+  .glass-card > *,
+  .glass-popover > *,
+  .glass-pill > *,
+  .glass-nav > *,
+  .glass-search > *,
+  .chat-glass > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Variants ──────────────────────────────────────────────────────── */
+
+  .liquid-glass--strong {
+    background-color: var(--lg-body-strong);
+    border-color: var(--lg-border-strong);
+    --lg-blur: 28px;
+  }
+
+  /* Clear: floating controls over media. A bright iOS pane with dark ink,
+     regardless of the page palette, because it always sits on photography. */
+  .liquid-glass--clear {
+    background-color: rgba(255, 255, 255, 0.5);
+    background-image:
+      linear-gradient(142deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 38%);
+    border-color: rgba(255, 255, 255, 0.72);
+    --lg-blur: 20px;
+    --lg-saturate: 170%;
+    --lg-brightness: 1.05;
+    --lg-sheen: rgba(255, 255, 255, 0.5);
+    --lg-sheen-opacity: 0.6;
+    --lg-blend: normal;
+    color: #1f1f1f;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(70, 60, 30, 0.12),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+      0 18px 46px -24px rgba(20, 16, 4, 0.45);
+  }
+
+  /* Smoked: dark editorial surfaces and photography. The body stays a
+     transparent white lift so colours still come through. */
+  .liquid-glass--ink {
+    --lg-body: rgba(255, 255, 255, 0.055);
+    --lg-body-strong: rgba(255, 255, 255, 0.09);
+    --lg-tint: rgba(255, 255, 255, 0.012);
+    --lg-border: rgba(255, 255, 255, 0.15);
+    --lg-border-strong: rgba(255, 255, 255, 0.22);
+    --lg-rim-top: rgba(255, 255, 255, 0.34);
+    --lg-rim-bottom: rgba(0, 0, 0, 0.4);
+    --lg-edge-a: rgba(190, 220, 255, 0.12);
+    --lg-edge-b: rgba(255, 220, 180, 0.09);
+    --lg-sheen: rgba(255, 255, 255, 0.16);
+    --lg-sheen-opacity: 0.36;
+    --lg-blend: screen;
+    --lg-shadow:
+      0 28px 80px -28px rgba(0, 0, 0, 0.82),
+      0 4px 18px -10px rgba(0, 0, 0, 0.48);
+    color: #fff;
+  }
+
+  .liquid-glass--tint {
+    background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--lg-border));
+  }
+
+  /* Inline: content inside another glass surface. Apple's glass cannot sample
+     another glass, so this is tint + rim without a second blur. */
+  .liquid-glass--inline,
+  .glass-inline {
+    position: relative;
+    isolation: isolate;
+    background-color: color-mix(in srgb, var(--card) 68%, transparent);
+    border: 1px solid var(--glass-border-soft, rgba(80, 72, 50, 0.12));
+    box-shadow:
+      inset 0 1px 0 var(--lg-rim-top),
+      inset 0 -1px 0 var(--lg-rim-bottom);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* The composer lives inside the chat sheet. Apple's glass never samples
+     another glass layer, so this is an inline tint with a rim rather than a
+     second grey blur stacked on the sheet. */
+  .liquid-glass--bar,
+  .glass-bar {
+    background-color: color-mix(in srgb, var(--card) 46%, transparent);
+    border: 0;
+    border-top: 1px solid var(--lg-border);
+    box-shadow: inset 0 1px 0 var(--lg-rim-top);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* ── Refraction opt-in ─────────────────────────────────────────────── */
+
+  /* Big photographic panes get a slightly stronger lens. The engine reads
+     these variables and leaves the CSS fallback untouched. */
+  .liquid-glass--refract {
+    --lg-refract-scale: 1.18;
+    --lg-refract-blur: 22;
+  }
+
+  .hero-search {
+    --lg-refract-scale: 1.24;
+    --lg-refract-bezel: 14;
+  }
+
+  /* ── Interaction ───────────────────────────────────────────────────── */
+
+  @media (hover: hover) {
+    .liquid-glass--hover:hover {
+      transform: translateY(-2px);
+      border-color: var(--glass-border-strong, var(--lg-border-strong));
+      box-shadow:
+        inset 0 1px 0 var(--lg-rim-top),
+        inset 0 -1px 0 var(--lg-rim-bottom),
+        inset 1px 0 0 var(--lg-edge-a),
+        inset -1px 0 0 var(--lg-edge-b),
+        inset 0 0 36px var(--lg-glow),
+        var(--lg-shadow-hover);
+    }
+  }
+
+  .liquid-glass--hover:active {
+    transform: translateY(0) scale(0.995);
+  }
+
+  .liquid-glass--interactive::after {
+    opacity: calc(var(--lg-sheen-opacity) + 0.1);
+  }
+
+  /* ── Named surfaces ────────────────────────────────────────────────── */
+
+  .glass-panel {
+    background-color: var(--lg-body-strong);
+    border-color: var(--lg-border-strong);
+    --lg-blur: 26px;
+    --lg-shadow:
+      0 34px 90px -32px rgba(38, 32, 8, 0.42),
+      0 6px 22px -12px rgba(38, 32, 8, 0.24);
+  }
+
+  .glass-card {
+    background-color: color-mix(in srgb, var(--card) 20%, transparent);
+    border-color: var(--glass-border-soft, var(--lg-border));
+    --lg-blur: 20px;
+  }
+
+  .glass-popover {
+    background-color: var(--lg-body-strong);
+    border-color: var(--lg-border-strong);
+    --lg-blur: 30px;
+  }
+
+  .glass-pill {
+    background-color: var(--lg-body);
+    border-color: var(--glass-border-soft, var(--lg-border));
+    --lg-blur: 16px;
+    --lg-sheen-opacity: 0.5;
+  }
+
+  .glass-nav {
+    background-color: color-mix(in srgb, var(--card) 44%, transparent);
+    border: 0;
+    border-bottom: 1px solid var(--glass-border-soft, rgba(80, 72, 50, 0.1));
+    border-radius: 0;
+    --lg-blur: 26px;
+    box-shadow:
+      inset 0 1px 0 var(--lg-rim-top),
+      0 18px 44px -34px rgba(38, 32, 8, 0.35);
+  }
+
+  .glass-nav::after {
+    opacity: calc(var(--lg-sheen-opacity) * 0.45);
+  }
+
+  /* Mobile navigation is a full-bleed app bar: no top corners, ever. */
+  @media (max-width: 767px) {
+    .glass-nav,
+    .glass-nav::after {
+      border-radius: 0 !important;
+      border-top-left-radius: 0 !important;
+      border-top-right-radius: 0 !important;
+    }
+  }
+
+  .glass-nav--ink {
+    --lg-body-strong: rgba(255, 255, 255, 0.08);
+    --lg-border: rgba(255, 255, 255, 0.13);
+    --lg-rim-top: rgba(255, 255, 255, 0.22);
+    --lg-sheen: rgba(255, 255, 255, 0.12);
+    --lg-sheen-opacity: 0.34;
+    --lg-blend: screen;
+    color: #fff;
+  }
+
+  /* Editorial pages keep a warm light surface in every palette, so their nav
+     must stay bright even when the app is in dark mode. */
+  .glass-nav--light {
+    background-color: rgba(255, 255, 255, 0.62);
+    --lg-body-strong: rgba(255, 255, 255, 0.62);
+    --lg-tint: rgba(255, 255, 255, 0.12);
+    --lg-border: rgba(255, 255, 255, 0.8);
+    --lg-border-strong: rgba(255, 255, 255, 0.9);
+    --lg-rim-top: rgba(255, 255, 255, 0.98);
+    --lg-rim-bottom: rgba(70, 60, 30, 0.1);
+    --lg-edge-a: rgba(255, 255, 255, 0.7);
+    --lg-edge-b: rgba(255, 255, 255, 0.5);
+    --lg-sheen: rgba(255, 255, 255, 0.42);
+    --lg-sheen-opacity: 0.34;
+    --lg-blend: normal;
+    border-bottom-color: rgba(80, 72, 50, 0.12);
+    box-shadow:
+      inset 0 1px 0 var(--lg-rim-top),
+      0 18px 44px -34px rgba(38, 32, 8, 0.35);
+    color: #1f1e1a;
+  }
+
+  .glass-search {
+    background-color: var(--lg-body-strong);
+    --lg-blur: 28px;
+  }
+
+  /* Chat needs a calm reading base; the optical stack still runs underneath. */
+  .chat-glass {
+    background-color: color-mix(in srgb, var(--card) 76%, transparent);
+    background-image: linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--card) 70%, transparent),
+      color-mix(in srgb, var(--card) 82%, transparent)
+    );
+    --lg-blur: 36px;
+    --lg-saturate: 165%;
+  }
+
+  /* ── Media chrome ──────────────────────────────────────────────────── */
+
+  /* A light iOS chip that reads on photography in every palette. */
+  .liquid-glass-chip {
+    background-color: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    color: #1f1f1f;
+    --lg-blur: 18px;
+    --lg-saturate: 185%;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(70, 60, 30, 0.08),
+      0 8px 20px -12px rgba(20, 16, 4, 0.42);
+    -webkit-backdrop-filter: blur(18px) saturate(185%) brightness(1.05);
+    backdrop-filter: blur(18px) saturate(185%) brightness(1.05);
+    transition:
+      background-color 220ms ease,
+      border-color 220ms ease,
+      transform 220ms ease;
+  }
+
+  .liquid-glass-chip--light {
+    background-color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.86);
+    color: #1f1f1f;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 8px 20px -12px rgba(20, 16, 4, 0.35);
+  }
+
+  .liquid-glass-chip--tint {
+    background-color: color-mix(in srgb, var(--primary) 88%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 60%, #fff);
+    color: var(--primary-fg);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 6px 18px -8px color-mix(in srgb, var(--primary) 55%, transparent);
+  }
+
+  /* Rare dark context that genuinely needs a smoked chip. */
+  .liquid-glass-chip--dark {
+    background-color: rgba(18, 19, 23, 0.42);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      0 8px 20px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ── Full-screen scrims ────────────────────────────────────────────── */
+
+  /* Scrims are dimmers, not glass objects: they stay a plain frosted blur. */
+  .glass-scrim {
+    background-color: rgba(8, 8, 10, 0.52);
+    -webkit-backdrop-filter: blur(12px) saturate(125%);
+    backdrop-filter: blur(12px) saturate(125%);
+  }
+
+  .glass-scrim--deep {
+    background-color: rgba(6, 6, 8, 0.76);
+  }
+
+  .glass-scrim--light {
+    background-color: color-mix(in srgb, var(--bg) 72%, transparent);
+  }
+
+  /* ── Legacy aliases kept for compatibility ─────────────────────────── */
+
+  .glass-ultra-thin {
+    background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(1.05);
+    backdrop-filter: blur(36px) saturate(200%) brightness(1.05);
+  }
+
+  .glass-thin {
+    background-color: var(--lg-body);
+    border: 1px solid var(--glass-border-soft, var(--lg-border));
+    -webkit-backdrop-filter: blur(22px) saturate(170%) brightness(1.04);
+    backdrop-filter: blur(22px) saturate(170%) brightness(1.04);
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .liquid-glass,
+    .glass-panel,
+    .glass-card,
+    .glass-popover,
+    .glass-pill,
+    .glass-nav,
+    .glass-search,
+    .chat-glass {
+      background-color: color-mix(in srgb, var(--card) 88%, transparent);
+    }
+
+    .liquid-glass-chip {
+      background-color: rgba(255, 255, 255, 0.94);
+    }
+  }
+
+  html[data-liquid-glass="fallback"] .liquid-glass::after,
+  html[data-liquid-glass="fallback"] .glass-panel::after,
+  html[data-liquid-glass="fallback"] .glass-card::after,
+  html[data-liquid-glass="fallback"] .glass-nav::after,
+  html[data-liquid-glass="fallback"] .glass-search::after {
+    opacity: calc(var(--lg-sheen-opacity) * 0.72);
+  }
+
+  html[data-liquid-glass="fallback"] .liquid-glass-chip {
+    background-color: rgba(255, 255, 255, 0.78);
+  }
+
+  @media (max-width: 640px) {
+    :root {
+      --lg-blur: 16px;
+    }
+
+    .hero-search {
+      --lg-refract-scale: 1.1;
+      --lg-refract-bezel: 10;
+    }
+  }
+
+  /* Apple's accessibility adaptation: more frost, fewer optical effects. */
+  @media (prefers-reduced-transparency: reduce) {
+    .liquid-glass,
+    .glass-panel,
+    .glass-card,
+    .glass-popover,
+    .glass-pill,
+    .glass-nav,
+    .glass-search,
+    .chat-glass {
+      background-color: color-mix(in srgb, var(--card) 92%, transparent);
+      --lg-blur: 30px;
+    }
+
+    .liquid-glass--clear {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  @media (prefers-contrast: more) {
+    .liquid-glass,
+    .glass-panel,
+    .glass-card,
+    .glass-popover,
+    .glass-pill,
+    .glass-nav,
+    .glass-search,
+    .liquid-glass-chip {
+      border-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .dark .liquid-glass,
+    .dark .glass-panel,
+    .dark .glass-card,
+    .dark .glass-popover,
+    .dark .glass-nav,
+    .dark .glass-search,
+    .dark .liquid-glass-chip {
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-glass,
+    .glass-panel,
+    .glass-card,
+    .glass-popover,
+    .glass-pill,
+    .glass-nav,
+    .glass-search,
+    .chat-glass {
+      transition: background-color 200ms ease, border-color 200ms ease,
+        box-shadow 200ms ease;
+    }
+
+    .liquid-glass--hover:hover,
+    .liquid-glass--hover:active {
+      transform: none;
+    }
+
+    .liquid-glass::after,
+    .glass-panel::after,
+    .glass-card::after,
+    .glass-popover::after,
+    .glass-nav::after,
+    .glass-search::after,
+    .chat-glass::after {
+      transition: none;
+    }
+  }
+}
+
+/* -- WebGL liquid-glass surfaces --------------------------------------
+   The shared engine paints the optical stack into each surface's own 2D
+   canvas. CSS keeps the rim, shadow and fallback material; the tint layer
+   restores text contrast without hiding the refraction. */
+
+.lg-surface {
   position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--glass-radius);
-  box-shadow: var(--glass-shadow);
-  overflow: hidden;
   isolation: isolate;
-  transition:
-    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1),
-    background 200ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-/* Inner refraction highlight */
-.liquid-glass::before {
-  content: "";
+.lg-canvas-host {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -2 !important;
+  display: none !important;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.lg-canvas {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: var(--glass-highlight);
-  pointer-events: none;
-  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-/* Subtle noise texture for depth */
-.liquid-glass::after {
-  content: "";
+.lg-tint {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background-image: var(--glass-noise);
-  background-size: 120px 120px;
-  mix-blend-mode: overlay;
-  opacity: 0.35;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.liquid-glass > * {
-  position: relative;
+  display: block;
   z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--lg-canvas-tint, transparent);
 }
 
-.liquid-glass--strong {
-  background: var(--glass-bg-strong);
-  border-color: var(--glass-border-strong);
+html:not([data-glass-engine="webgl"]) .lg-canvas-host {
+  display: none !important;
 }
 
-.liquid-glass--hover:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--glass-shadow-hover);
+html[data-glass-engine="webgl"]
+  .lg-surface[data-glass-ready="true"]
+  > .lg-canvas-host {
+  display: block !important;
+}
+
+/* The legacy SVG engine writes inline backdrop-filter values. These
+   declarations must beat both those inline styles and Tailwind utilities.
+   They only apply once the WebGL frame has actually been painted, so a
+   failed surface keeps its CSS material instead of turning transparent. */
+html[data-glass-engine="webgl"] .lg-surface[data-glass-ready="true"] {
+  background-color: transparent !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.lg-surface--nav {
+  --lg-canvas-tint: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 28%, transparent),
+    color-mix(in srgb, var(--card) 16%, transparent)
+  );
+}
+
+/* The hero search keeps dark ink in every palette, so its tint stays light. */
+.lg-surface--search {
+  --lg-canvas-tint: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34),
+    rgba(255, 255, 255, 0.16)
+  );
+}
+
+.lg-surface--panel {
+  --lg-canvas-tint: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--card) 46%, transparent),
+    color-mix(in srgb, var(--card) 34%, transparent)
+  );
+}
+
+.lg-surface--popover {
+  --lg-canvas-tint: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--card) 58%, transparent),
+    color-mix(in srgb, var(--card) 46%, transparent)
+  );
+}
+
+.lg-surface--chat {
+  --lg-canvas-tint: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--card) 48%, transparent),
+    color-mix(in srgb, var(--card) 62%, transparent)
+  );
+}
+
+.lg-surface--dock {
+  --lg-canvas-tint: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--card) 30%, transparent),
+    color-mix(in srgb, var(--card) 46%, transparent)
+  );
+}
+
+.lg-surface--orb {
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  background-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 20px 44px -18px rgba(20, 14, 2, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(60, 40, 0, 0.24);
+  -webkit-backdrop-filter: blur(18px) saturate(1.7) brightness(1.06);
+  backdrop-filter: blur(18px) saturate(1.7) brightness(1.06);
+  --lg-canvas-tint: radial-gradient(
+    circle at 32% 26%,
+    rgba(255, 236, 190, 0.4),
+    rgba(255, 183, 77, 0.18) 48%,
+    rgba(20, 14, 4, 0.2)
+  );
+}
+
+html[data-glass-engine="webgl"] .lg-surface--orb[data-glass-ready="true"] {
+  background: transparent !important;
+}
+
+.lg-orb__core {
+  position: absolute;
+  inset: 6px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at 34% 26%,
+    #fff3c4 0%,
+    #ffd35a 28%,
+    #ffbf00 55%,
+    #d98a00 82%,
+    #8a4d00 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -6px 14px rgba(92, 45, 0, 0.36),
+    0 2px 6px rgba(60, 35, 0, 0.28);
+  transition: transform 240ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (hover: hover) {
+  .lg-surface--orb:hover .lg-orb__core {
+    transform: scale(1.05);
+  }
+}
+
+.lg-orb__icon {
+  color: #2a1a00;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.38));
+}
+
+/* -- Mobile app dock --------------------------------------------------- */
+
+.mobile-dock-spacer {
+  display: none;
+}
+
+.mobile-dock {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-dock-spacer {
+    display: block;
+    height: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-dock {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    display: block;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+
+  .mobile-dock__pill {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: min(100%, 440px);
+    height: 64px;
+    margin: 0 auto;
+    padding: 4px;
+    border: 1px solid color-mix(in srgb, var(--lg-border) 86%, transparent);
+    border-radius: 24px;
+    background-color: color-mix(in srgb, var(--card) 36%, transparent);
+    box-shadow:
+      0 22px 48px -20px rgba(20, 14, 2, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    -webkit-backdrop-filter: blur(22px) saturate(1.7) brightness(1.05);
+    backdrop-filter: blur(22px) saturate(1.7) brightness(1.05);
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+  }
+
+  .mobile-dock__cell {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .mobile-dock__tab {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-radius: 20px;
+    color: color-mix(in srgb, var(--muted-foreground) 90%, transparent);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transform-origin: center center;
+  }
+
+  .mobile-dock__tab[data-active="true"] {
+    color: var(--primary-ink);
+  }
+
+  .mobile-dock__tab:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .mobile-dock__icon {
+    display: flex;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-dock__tab--ai .mobile-dock__icon {
+    color: var(--primary-ink);
+    filter: drop-shadow(
+      0 0 7px color-mix(in srgb, var(--primary) 42%, transparent)
+    );
+  }
+
+  .mobile-dock__label {
+    font-size: 9.5px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .lg-dock-indicator {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    z-index: 0;
+    border-radius: 20px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0.62)
+    );
+    box-shadow:
+      0 6px 14px -8px rgba(30, 24, 6, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    pointer-events: none;
+    transform-origin: center center;
+  }
+
+  .dark .lg-dock-indicator,
+  .sunset .lg-dock-indicator,
+  .ocean .lg-dock-indicator,
+  .forest .lg-dock-indicator {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.08)
+    );
+    box-shadow:
+      0 6px 14px -8px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  html[data-glass-engine="webgl"]
+    .lg-surface[data-glass-ready="true"]
+    .lg-dock-indicator {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-transparency: reduce) {
+  .mobile-dock__pill {
+    background-color: color-mix(in srgb, var(--card) 92%, transparent);
+    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(30px);
+  }
+
+  html[data-glass-engine="webgl"]
+    .mobile-dock__pill[data-glass-ready="true"] {
+    background-color: transparent !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liquid-glass {
-    transition: background 200ms ease, box-shadow 200ms ease;
-  }
-  .liquid-glass--hover:hover {
-    transform: none;
-  }
-}
-
-@media (hover: none) {
-  .liquid-glass--hover:hover {
-    transform: none;
+  .lg-orb__core {
+    transition: none;
   }
 }

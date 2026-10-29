@@ -110,7 +110,7 @@ export default function ProviderDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'No se pudo guardar el servicio');
-      toast({ title: 'Servicio publicado', description: 'Tu servicio ahora es visible en ViaNova IA.' });
+      toast({ title: 'Servicio publicado', description: 'Tu servicio ahora es visible en ViaNova.' });
       setServices(prev => [data.service, ...prev]);
     } catch (e: any) {
       toast({ title: 'Error', description: e.message || 'No se pudo guardar el servicio', variant: 'destructive' });
@@ -141,7 +141,7 @@ export default function ProviderDashboard() {
               <h1 className="text-4xl font-heading font-extrabold tracking-tight text-foreground mb-1 drop-shadow-md">
                 {getRoleTitle()}
               </h1>
-              <p className="text-lg text-muted-foreground font-medium">Administra tu presencia en ViaNova IA</p>
+              <p className="text-lg text-muted-foreground font-medium">Administra tu presencia en ViaNova</p>
             </div>
           </div>
           <Button onClick={handleSave} className="h-14 px-8 rounded-xl bg-primary text-black font-bold shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] transition-all flex gap-3 text-lg items-center">
@@ -204,7 +204,7 @@ export default function ProviderDashboard() {
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors" />
                             <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center text-white">
                                <Camera className="w-10 h-10 mb-2" />
-                               <span className="font-semibold px-4 py-2 bg-black/50 rounded-full backdrop-blur">Cambiar Imagen</span>
+                               <span className="liquid-glass-chip font-semibold px-4 py-2 rounded-full">Cambiar Imagen</span>
                             </div>
                           </>
                         ) : (

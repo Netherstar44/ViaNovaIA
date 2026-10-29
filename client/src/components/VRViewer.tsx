@@ -45,7 +45,7 @@ export default function VRViewer({ mode, onClose }: VRViewerProps) {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-xl bg-black/90">
       <div className="absolute left-3 right-12 top-3 z-10 flex flex-wrap items-center gap-2 sm:left-4 sm:right-14 sm:top-4">
-        <div className="flex items-center rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-md">
+        <div className="liquid-glass-chip flex items-center rounded-full px-3 py-1 text-xs text-[#1f1f1f]">
           {mode === 'product' ? 'Modo Producto' : 'Modo Interior 360°'}
         </div>
         <Button
@@ -84,14 +84,14 @@ export default function VRViewer({ mode, onClose }: VRViewerProps) {
 
       {mode === 'interior' && (
         <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center">
-          <span className="rounded-full bg-black/35 px-4 py-2 text-sm font-semibold text-white/80 backdrop-blur-sm">
+          <span className="liquid-glass-chip rounded-full px-4 py-2 text-sm font-semibold text-[#1f1f1f]/85">
             Vista 360°
           </span>
         </div>
       )}
 
       <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-10">
-        <div className="rounded-lg bg-white/10 p-3 text-center text-sm text-white backdrop-blur-md">
+        <div className="liquid-glass-chip rounded-lg p-3 text-center text-sm text-[#1f1f1f]">
           {mode === 'product'
             ? "Arrastra para rotar el producto. Haz clic para interactuar."
             : "Arrastra para mirar alrededor del interior."}

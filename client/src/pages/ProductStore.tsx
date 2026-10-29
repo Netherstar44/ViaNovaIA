@@ -153,7 +153,7 @@ function ProductModal({ product, onClose }: { product: Product; onClose: () => v
   return (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-0 sm:p-6"
+      className="glass-scrim glass-scrim--deep fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-6"
     >
       <button onClick={onClose} aria-label="Cerrar producto" className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
         <X className="h-6 w-6" />
@@ -436,10 +436,10 @@ export default function ProductStore() {
                   
                   {product.stock === 0 && <div className="absolute inset-0 bg-black/50" />}
                   {/* Badge */}
-                  <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-semibold text-white shadow-none">
+                  <div className="liquid-glass-chip absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold text-[#1f1f1f]">
                     {product.role_category}
                   </div>
-                  <div className={`absolute top-3 left-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase backdrop-blur-md ${
+                  <div className={`liquid-glass-chip absolute top-3 left-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
                     product.stock === 0
                       ? "bg-red-500/80 text-white"
                       : product.stock === -1

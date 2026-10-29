@@ -1,5 +1,4 @@
 import { apiBase } from "@/lib/queryClient";
-import "leaflet/dist/leaflet.css";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
+import RouteMap from "@/components/taxi/RouteMap";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import type { Ride } from "@shared/taxi.schema";
@@ -117,8 +117,6 @@ export default function RequestRide() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
 
   // Form state
   const [originText, setOriginText] = useState("");
@@ -240,43 +238,6 @@ export default function RequestRide() {
   // ── Fare calculation ────────────────────────────────────────────────────
   const distanceKm = originCoords && destCoords ? haversineKm(originCoords, destCoords) : 0;
   const fare = distanceKm > 0 ? Math.round((FARE_BASE + FARE_PER_KM * distanceKm) / 100) * 100 : 0;
-
-  // ── Map rendering ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!mapRef.current || createdRideId) return;
-    import("leaflet").then((L) => {
-      // Cleanup previous
-      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
-
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      });
-
-      const center = originCoords || [4.711, -74.0721]; // Bogotá default
-      const map = L.map(mapRef.current!, { center, zoom: 13, zoomControl: true });
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>', maxZoom: 19,
-      }).addTo(map);
-
-      if (originCoords) {
-        const oi = L.divIcon({ html: `<div style="background:#22c55e;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(34,197,94,0.6)"></div>`, iconSize: [14, 14], iconAnchor: [7, 7], className: "" });
-        L.marker(originCoords, { icon: oi }).addTo(map).bindPopup("🟢 Tu ubicación");
-      }
-      if (destCoords) {
-        const di = L.divIcon({ html: `<div style="background:#ef4444;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(239,68,68,0.6)"></div>`, iconSize: [14, 14], iconAnchor: [7, 7], className: "" });
-        L.marker(destCoords, { icon: di }).addTo(map).bindPopup("🔴 Destino");
-      }
-      if (originCoords && destCoords) {
-        const poly = L.polyline([originCoords, destCoords], { color: "#c9a227", weight: 4, opacity: 0.8, dashArray: "8, 6" }).addTo(map);
-        map.fitBounds(poly.getBounds(), { padding: [40, 40] });
-      }
-      mapInstanceRef.current = map;
-    });
-    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; } };
-  }, [originCoords, destCoords, createdRideId]);
 
   // ── Create ride mutation ────────────────────────────────────────────────
   const createMutation = useMutation({
@@ -556,7 +517,9 @@ export default function RequestRide() {
             {/* Right: Map */}
             <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
               <div className="rounded-2xl border border-border/50 overflow-hidden shadow-lg sticky top-20">
-                <div ref={mapRef} style={{ height: "520px", width: "100%", background: "#0a0a12" }} />
+                <div className="h-[360px] sm:h-[520px]">
+                  <RouteMap origin={originCoords} destination={destCoords} fitPadding={48} />
+                </div>
                 {/* Legend */}
                 <div className="bg-card border-t border-border/40 px-4 py-2.5 flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Origen</span>
