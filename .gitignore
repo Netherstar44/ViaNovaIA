@@ -51,3 +51,7 @@ video-vianova/.env
 !video-vianova/assets/**/*.png
 !video-vianova/boards/**/*.png
 
+
+# Assets de marca usados por el bundle (el patron *.png los excluia)
+!client/src/assets/**/*.png
+
