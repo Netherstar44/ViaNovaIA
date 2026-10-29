@@ -16,6 +16,7 @@ import {
   type TripPlan,
 } from "../trips.js";
 import { ensureAnalyticsSchema, getDashboardAnalytics, VALID_ROLES } from "../analytics.js";
+import { buildAnalyticsWorkbook, getAccountAnalytics } from "../analytics-export.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { z } from "zod";
@@ -321,6 +322,93 @@ export async function registerRoutes(app: Express): Promise<Express> {
       const days = req.query.days ? parseInt(String(req.query.days)) : 30;
       const dashboard = await getDashboardAnalytics({ username, role, days });
       res.json(dashboard);
+    } catch (err: any) {
+      if (err?.status) return res.status(err.status).json({ message: err.message });
+      next(err);
+    }
+  });
+
+  // ── ANALYTICS: resumen general de la cuenta (todos los roles) ──────────────
+  const resolveAnalyticsUsername = async (req: any, res: any): Promise<string | null> => {
+    const requested = req.query.username ? String(req.query.username) : req.user.username;
+    if (requested !== req.user.username) {
+      const viewer = await storage.getUserByUsername(req.user.username);
+      if (!viewer || viewer.role !== "admin") {
+        res.status(403).json({ message: "No puedes consultar analíticas de otra cuenta" });
+        return null;
+      }
+    }
+    return requested;
+  };
+
+  const parseAnalyticsRoles = (value: unknown): string[] => {
+    const raw = Array.isArray(value) ? value.join(",") : String(value || "");
+    return Array.from(new Set(raw.split(",").map((role) => role.trim()).filter(Boolean)));
+  };
+
+  app.get("/api/analytics/overview", requireAuth, async (req: any, res, next) => {
+    try {
+      const username = await resolveAnalyticsUsername(req, res);
+      if (!username) return;
+      const roles = parseAnalyticsRoles(req.query.roles);
+      const invalid = roles.filter((role) => !VALID_ROLES.includes(role));
+      if (invalid.length) {
+        return res.status(400).json({ message: `Roles no válidos: ${invalid.join(", ")}` });
+      }
+      const days = req.query.days ? parseInt(String(req.query.days)) : 30;
+      const data = await getAccountAnalytics({ username, roles, days });
+      if (roles.length) {
+        const available = new Set(data.reports.map((report) => report.role));
+        const missing = roles.filter((role) => !available.has(role));
+        if (missing.length) {
+          return res.status(403).json({ message: `No tienes acceso a los roles: ${missing.join(", ")}` });
+        }
+      }
+      res.set("Cache-Control", "no-store");
+      res.json(data);
+    } catch (err: any) {
+      if (err?.status) return res.status(err.status).json({ message: err.message });
+      next(err);
+    }
+  });
+
+  // ── ANALYTICS: libro Excel con hoja General + una hoja por rol ─────────────
+  app.get("/api/analytics/export", requireAuth, async (req: any, res, next) => {
+    try {
+      const username = await resolveAnalyticsUsername(req, res);
+      if (!username) return;
+      const roles = parseAnalyticsRoles(req.query.roles);
+      const invalid = roles.filter((role) => !VALID_ROLES.includes(role));
+      if (invalid.length) {
+        return res.status(400).json({ message: `Roles no válidos: ${invalid.join(", ")}` });
+      }
+      const days = req.query.days ? parseInt(String(req.query.days)) : 30;
+      const data = await getAccountAnalytics({ username, roles, days });
+      if (roles.length) {
+        const available = new Set(data.reports.map((report) => report.role));
+        const missing = roles.filter((role) => !available.has(role));
+        if (missing.length) {
+          return res.status(403).json({ message: `No tienes acceso a los roles: ${missing.join(", ")}` });
+        }
+      }
+
+      const workbook = await buildAnalyticsWorkbook(data);
+      const baseName = (data.user.name || data.user.businessNames[0] || username)
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replace(/\s+/g, "-")
+        .slice(0, 60) || "cuenta";
+      const stamp = new Date().toISOString().slice(0, 10);
+      const filename = `VIANova-${baseName}-${data.days}d-${stamp}.xlsx`;
+      const asciiName = filename
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z0-9._-]+/g, "-");
+
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
+      res.setHeader("Content-Length", String(workbook.length));
+      res.set("Cache-Control", "no-store");
+      return res.end(workbook);
     } catch (err: any) {
       if (err?.status) return res.status(err.status).json({ message: err.message });
       next(err);

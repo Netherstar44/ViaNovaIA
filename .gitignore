@@ -36,11 +36,18 @@ scripts/diagnose-*
 scripts/test-cloudinary*.mjs
 __pycache__/
 *.pyc
-
 .vercel
 
 # Temporal (no versionar)
 _capture/
 _capture-*/
 promo-video/
+
+# Hyperframes artifacts and secrets
+video-vianova/.hyperframes/artifacts/
+video-vianova/.env
+
+# Hyperframes assets (logos, qr, stills, cover)
+!video-vianova/assets/**/*.png
+!video-vianova/boards/**/*.png
 

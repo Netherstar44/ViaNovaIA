@@ -1,0 +1,566 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0b0b0c;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .bg {
+      position: absolute;
+      inset: -40px;
+      background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: blur(16px) brightness(0.34) saturate(0.75);
+      transform: scale(1.06);
+    }
+    .bg-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 11, 12, 0.96) 0%, rgba(11, 11, 12, 0.72) 38%, rgba(11, 11, 12, 0.48) 100%);
+    }
+    .ghost-tabs {
+      position: absolute;
+      left: 96px;
+      top: 170px;
+      width: 520px;
+      height: 560px;
+      opacity: 0.32;
+      filter: blur(3px);
+    }
+    .ghost-tab {
+      position: absolute;
+      width: 420px;
+      height: 118px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+    .ghost-tab::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      width: 54px;
+      height: 8px;
+      border-radius: 8px;
+      background: rgba(255, 191, 0, 0.5);
+    }
+    .ghost-tab::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 42px;
+      width: 210px;
+      height: 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 22px 0 rgba(255, 255, 255, 0.09);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 62% 46%, transparent 44%, rgba(0, 0, 0, 0.5) 100%);
+    }
+    .panel {
+      position: absolute;
+      right: 108px;
+      top: 126px;
+      width: 1168px;
+      height: 812px;
+      border-radius: 28px;
+      border: 1px solid rgba(255, 191, 0, 0.26);
+      background: linear-gradient(158deg, rgba(30, 28, 24, 0.9), rgba(12, 12, 13, 0.96) 62%);
+      box-shadow: 0 48px 120px rgba(0, 0, 0, 0.66), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(28px) saturate(135%);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 28px;
+      background: radial-gradient(600px 280px at 10% 0%, rgba(255, 191, 0, 0.11), transparent 70%);
+      pointer-events: none;
+    }
+    .panel-head {
+      position: relative;
+      height: 104px;
+      padding: 0 34px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 48%, #a86a00 100%);
+      box-shadow: 0 0 0 1px rgba(255, 222, 120, 0.55), 0 0 28px rgba(255, 191, 0, 0.38);
+      flex: 0 0 auto;
+    }
+    .avatar svg {
+      width: 28px;
+      height: 28px;
+    }
+    .head-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .head-copy strong {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .head-copy span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .head-copy .live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5ee08b;
+      box-shadow: 0 0 10px rgba(94, 224, 139, 0.75);
+    }
+    .head-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      color: rgba(255, 255, 255, 0.58);
+    }
+    .head-actions svg {
+      width: 23px;
+      height: 23px;
+    }
+    .messages {
+      position: relative;
+      height: 570px;
+      padding: 34px 36px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      overflow: hidden;
+    }
+    .msg {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 860px;
+    }
+    .msg.user {
+      margin-left: auto;
+      justify-content: flex-end;
+    }
+    .msg .mini-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+      box-shadow: 0 0 16px rgba(255, 191, 0, 0.28);
+    }
+    .msg .mini-avatar svg {
+      width: 18px;
+      height: 18px;
+    }
+    .bubble {
+      padding: 20px 26px;
+      border-radius: 22px;
+      font-size: 26px;
+      line-height: 1.34;
+      letter-spacing: -0.012em;
+    }
+    .msg.ai .bubble {
+      color: rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-top-left-radius: 6px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    }
+    .msg.user .bubble {
+      color: #0b0b0c;
+      background: #ffbf00;
+      border-top-right-radius: 6px;
+      box-shadow: 0 18px 44px rgba(255, 191, 0, 0.2);
+      font-weight: 600;
+    }
+    .stream-caret {
+      display: inline-block;
+      width: 3px;
+      height: 26px;
+      margin-left: 6px;
+      vertical-align: -5px;
+      background: #ffbf00;
+      box-shadow: 0 0 10px rgba(255, 191, 0, 0.7);
+    }
+    .plan-row {
+      display: flex;
+      gap: 14px;
+      margin-left: 50px;
+      margin-top: 2px;
+    }
+    .day-card {
+      width: 214px;
+      padding: 16px 18px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 191, 0, 0.2);
+      background: rgba(255, 255, 255, 0.045);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .day-card .day {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #ffbf00;
+    }
+    .day-card .place {
+      margin-top: 7px;
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .day-card .note {
+      margin-top: 4px;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .mini-map {
+      position: absolute;
+      right: 34px;
+      bottom: 122px;
+      width: 352px;
+      height: 208px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 191, 0, 0.24);
+      background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 22px 54px rgba(0, 0, 0, 0.35);
+    }
+    .mini-map::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(11, 11, 12, 0.18), rgba(11, 11, 12, 0.72));
+    }
+    .mini-map .label {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      z-index: 2;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .mini-map svg {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+    .inputbar {
+      position: absolute;
+      left: 34px;
+      right: 34px;
+      bottom: 26px;
+      height: 78px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.055);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 16px 0 22px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .inputbar .placeholder {
+      flex: 1;
+      font-size: 21px;
+      color: rgba(255, 255, 255, 0.36);
+    }
+    .inputbar .icon {
+      width: 22px;
+      height: 22px;
+      color: rgba(255, 255, 255, 0.45);
+    }
+    .send {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+      box-shadow: 0 0 24px rgba(255, 191, 0, 0.32);
+    }
+    .send svg {
+      width: 22px;
+      height: 22px;
+      color: #0b0b0c;
+      transform: translateX(1px);
+    }
+    .panel-foot {
+      position: absolute;
+      left: 34px;
+      right: 34px;
+      bottom: 8px;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      color: rgba(255, 255, 255, 0.22);
+    }
+    .cursor {
+      position: absolute;
+      left: 1516px;
+      top: 748px;
+      width: 30px;
+      height: 38px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+      z-index: 6;
+    }
+    .ripple {
+      position: absolute;
+      left: 1538px;
+      top: 780px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 191, 0, 0.55);
+      box-shadow: 0 0 24px rgba(255, 191, 0, 0.28);
+      z-index: 5;
+    }
+    .orb {
+      position: absolute;
+      right: 42px;
+      bottom: 34px;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 28%, #ffe89a, #ffbf00 48%, #a86a00 100%);
+      box-shadow: 0 0 0 1px rgba(255, 230, 150, 0.6), 0 0 42px rgba(255, 191, 0, 0.42), 0 20px 60px rgba(0, 0, 0, 0.55);
+      z-index: 2;
+    }
+    .orb::after {
+      content: "";
+      position: absolute;
+      inset: -18px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 191, 0, 0.22);
+    }
+    .headline {
+      position: absolute;
+      left: 96px;
+      bottom: 126px;
+      width: 540px;
+      z-index: 4;
+    }
+    .headline .rule {
+      width: 92px;
+      height: 3px;
+      border-radius: 3px;
+      background: #ffbf00;
+      box-shadow: 0 0 18px rgba(255, 191, 0, 0.5);
+      margin-bottom: 28px;
+    }
+    .headline h2 {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 64px;
+      line-height: 1.03;
+      letter-spacing: -0.035em;
+      color: #ffffff;
+    }
+    .headline h2 .gold {
+      color: #ffbf00;
+    }
+  </style>
+  <div id="root" data-composition-id="s2-chat" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-ignore></div>
+    <div class="bg-shade" data-layout-ignore></div>
+    <div class="ghost-tabs" data-layout-ignore>
+      <div class="ghost-tab" style="left: 0; top: 0"></div>
+      <div class="ghost-tab" style="left: 46px; top: 150px"></div>
+      <div class="ghost-tab" style="left: 12px; top: 300px"></div>
+    </div>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="headline">
+      <div class="rule"></div>
+      <h2>Solo tienes que <span class="gold">decirlo.</span></h2>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="avatar">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2.6 14.4 9.6 21.4 12 14.4 14.4 12 21.4 9.6 14.4 2.6 12 9.6 9.6 12 2.6Z" fill="#0B0B0C" />
+          </svg>
+        </div>
+        <div class="head-copy">
+          <strong>VIANova AI</strong>
+          <span><i class="live"></i>Asistente de viaje</span>
+        </div>
+        <div class="head-actions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="messages">
+        <div class="msg user">
+          <div class="bubble">Quiero conocer el Huila en 3 días.</div>
+        </div>
+
+        <div class="msg ai">
+          <div class="mini-avatar">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2.6 14.4 9.6 21.4 12 14.4 14.4 12 21.4 9.6 14.4 2.6 12 9.6 9.6 12 2.6Z" fill="#0B0B0C" />
+            </svg>
+          </div>
+          <div class="bubble">Perfecto. Te armo un plan de 3 días con hoteles, sabores y experiencias locales.<span class="stream-caret"></span></div>
+        </div>
+
+        <div class="plan-row">
+          <div class="day-card">
+            <div class="day">Día 1</div>
+            <div class="place">Neiva</div>
+            <div class="note">Centro y sabor local</div>
+          </div>
+          <div class="day-card">
+            <div class="day">Día 2</div>
+            <div class="place">Tatacoa</div>
+            <div class="note">Desierto y 360°</div>
+          </div>
+          <div class="day-card">
+            <div class="day">Día 3</div>
+            <div class="place">Combeima</div>
+            <div class="note">Naturaleza y café</div>
+          </div>
+        </div>
+
+        <div class="mini-map" data-layout-ignore>
+          <svg viewBox="0 0 352 208" fill="none" aria-hidden="true">
+            <path d="M30 164 C 78 142, 98 112, 138 104 C 184 94, 206 62, 258 54 C 292 48, 314 58, 328 70" stroke="#FFBF00" stroke-width="3" stroke-linecap="round" filter="drop-shadow(0 0 7px rgba(255,191,0,.7))" />
+            <circle cx="30" cy="164" r="5" fill="#FFBF00" />
+            <circle cx="138" cy="104" r="5" fill="#FFBF00" />
+            <circle cx="258" cy="54" r="5" fill="#FFBF00" />
+          </svg>
+          <div class="label">Ruta sugerida · 3 días</div>
+        </div>
+      </div>
+
+      <div class="inputbar">
+        <div class="placeholder">Escribe tu mensaje...</div>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+          <path d="m3 16 5-5 4 4 3-3 6 6"></path>
+          <circle cx="9" cy="9" r="1.4"></circle>
+        </svg>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path>
+        </svg>
+        <div class="send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 3 10.5 13.5M21 3l-6.6 18-3.9-7.5L3 9.6 21 3Z"></path>
+          </svg>
+        </div>
+      </div>
+      <div class="panel-foot" data-layout-ignore>VIANOVA CONTEXT-AWARE AI</div>
+    </div>
+
+    <svg class="cursor" viewBox="0 0 30 38" aria-hidden="true">
+      <path d="M3 2 26 18 15.8 20.2 11.6 31.6 3 2Z" fill="#FFFFFF" stroke="#0B0B0C" stroke-width="1.6" />
+    </svg>
+    <div class="ripple" data-layout-ignore></div>
+    <div class="orb" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.panel', { opacity: 0, y: 35, scale: 0.95 });
+    gsap.set('.headline', { opacity: 0, y: 25 });
+    gsap.set('.ghost-tabs', { opacity: 0, x: -20 });
+    gsap.set('.msg.user', { opacity: 0, scale: 0.88, y: 15, transformOrigin: 'right bottom' });
+    gsap.set('.msg.ai', { opacity: 0, y: 15 });
+    gsap.set('.plan-row', { opacity: 0, y: 18 });
+    gsap.set('.day-card', { opacity: 0, y: 16 });
+    gsap.set('.mini-map', { opacity: 0, scale: 0.92 });
+    gsap.set('.cursor', { opacity: 0, x: 60, y: 50 });
+    gsap.set('.ripple', { opacity: 0, scale: 0.2 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.0s - 0.8s: Ghost tabs enter and collapse
+    tl.to('.ghost-tabs', { opacity: 0.35, x: 0, duration: 0.6, ease: 'power2.out' }, 0.1);
+    tl.to('.ghost-tabs', { opacity: 0, x: 40, scale: 0.9, duration: 0.6, ease: 'power2.in' }, 0.8);
+
+    // 0.3s - 1.2s: Chat panel springs in
+    tl.to('.panel', { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: 'power3.out' }, 0.3);
+
+    // 0.6s: Headline enters
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 0.6);
+
+    // 1.0s: Cursor enters towards send button
+    tl.to('.cursor', { opacity: 1, x: 0, y: 0, duration: 0.8, ease: 'power2.out' }, 1.0);
+
+    // 1.8s: Click action and ripple
+    tl.to('.cursor', { scale: 0.85, duration: 0.1, yoyo: true, repeat: 1 }, 1.8);
+    tl.to('.ripple', { opacity: 0.7, scale: 1.6, duration: 0.4, ease: 'power2.out' }, 1.8);
+    tl.to('.ripple', { opacity: 0, duration: 0.3 }, 2.0);
+
+    // 2.0s: User message sends and pops in
+    tl.to('.msg.user', { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.5)' }, 2.0);
+
+    // 2.8s: AI response streams in
+    tl.to('.msg.ai', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 2.8);
+
+    // 3.8s: Cascade of 3 day cards
+    tl.to('.plan-row', { opacity: 1, y: 0, duration: 0.3 }, 3.8);
+    tl.to('.day-card', { opacity: 1, y: 0, duration: 0.5, stagger: 0.2, ease: 'power2.out' }, 3.9);
+
+    // 4.6s: Mini-map reveals
+    tl.to('.mini-map', { opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out' }, 4.6);
+
+    // Push camera
+    tl.to('#root', { scale: 1.035, transformOrigin: 'center center', duration: 6.5, ease: 'none' }, 0);
+
+    window.__timelines["s2-chat"] = tl;
+  </script>
+</template>

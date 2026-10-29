@@ -277,7 +277,15 @@ export async function getDashboardAnalytics(options: { username?: string; role?:
   } catch {
     dbRoles = [];
   }
-  const roleOptions = Array.from(new Set([...(dbRoles || []).map((r: any) => r.role), user.role].filter(Boolean))) as string[];
+  // Every account can see its own consumer activity, even if it has never
+  // explicitly added the traveler role. This also keeps the traveler sheet of
+  // account-wide reports from silently falling back to the active business role.
+  const roleOptions = Array.from(new Set([
+    ...(dbRoles || []).map((r: any) => r.role),
+    user.role,
+    "traveler",
+    ...(user.role === "admin" ? ["admin"] : []),
+  ].filter(Boolean))) as string[];
 
   let activeRole = role && VALID_ROLES.includes(role) ? role : (user.role as string) || "traveler";
   const isAdmin = activeRole === "admin" && user.role === "admin";

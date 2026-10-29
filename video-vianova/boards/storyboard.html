@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ViaNovaIA · Storyboard · El hilo dorado</title>
+    <style>
+      :root {
+        --paper: #f3f0e9;
+        --card: #ffffff;
+        --ink: #141413;
+        --muted: #6f6b63;
+        --line: #ded9ce;
+        --gold: #ffbf00;
+        --gold-ink: #8a6200;
+      }
+      * { box-sizing: border-box; }
+      html { background: var(--paper); }
+      body {
+        margin: 0;
+        padding: 56px 48px 80px;
+        color: var(--ink);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 1460px; margin: 0 auto; }
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 32px;
+        align-items: end;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--line);
+      }
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .eyebrow i {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: var(--gold); display: inline-block;
+      }
+      h1 {
+        margin: 14px 0 0;
+        font-size: clamp(42px, 6vw, 76px);
+        line-height: 0.96;
+        letter-spacing: -0.045em;
+        font-weight: 800;
+      }
+      h1 span { color: var(--gold-ink); }
+      .lede {
+        max-width: 720px;
+        margin: 16px 0 0;
+        font-size: 17px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .meta {
+        min-width: 220px;
+        display: grid;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .meta div {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .meta b { color: var(--ink); font-weight: 650; }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #fff3c9;
+        color: #6d4d00;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .status i {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--gold); box-shadow: 0 0 0 3px #ffe9a3;
+      }
+      .act {
+        margin: 44px 0 18px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 30px 28px;
+      }
+      .frame {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(20, 20, 19, 0.05);
+      }
+      .frame.wide { grid-column: 1 / -1; }
+      .frame img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        background: #0b0b0c;
+        border-bottom: 1px solid var(--line);
+      }
+      .copy { padding: 18px 20px 20px; }
+      .title {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 750;
+        letter-spacing: -0.015em;
+      }
+      .title em {
+        font-style: normal;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--gold-ink);
+      }
+      .time {
+        margin-top: 4px;
+        font-size: 12.5px;
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+      .words {
+        margin: 12px 0 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #4f4b44;
+      }
+      .frame .tag {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: #f4f1ea;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      footer {
+        margin-top: 52px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      footer b { color: var(--ink); }
+      @media (max-width: 900px) {
+        body { padding: 32px 20px 56px; }
+        header { grid-template-columns: 1fr; }
+        .meta { min-width: 0; }
+        .board { grid-template-columns: 1fr; }
+        footer { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <div class="eyebrow"><i></i>ViaNovaIA · El hilo dorado</div>
+          <h1>Storyboard<span>.</span></h1>
+          <p class="lede">
+            Ocho frames para aprobar antes de animar. La historia: una conversación que se
+            convierte en un viaje real por el Huila. El hilo dorado conecta la pregunta, el chat,
+            el mapa, la reserva, la voz, el taxi, la comunidad y el negocio.
+          </p>
+        </div>
+        <div class="meta">
+          <div><span>Formato</span><b>16:9 · 1920×1080</b></div>
+          <div><span>Duración</span><b>46 s · 30 fps</b></div>
+          <div><span>Voz</span><b>Español colombiano</b></div>
+          <div><span>Stills</span><b>2 · 7 · 14 · 20 · 25 · 30 · 36 · 43 s</b></div>
+          <div class="status"><i></i>Aprobación pendiente</div>
+        </div>
+      </header>
+
+      <section class="act">Acto 1 · La conversación</section>
+      <div class="board">
+        <div class="frame">
+          <img src="stills/frame-00-at-2s.png" alt="Frame 1: La pregunta" />
+          <div class="copy">
+            <div class="title"><em>01</em> La pregunta</div>
+            <div class="time">0.0 – 4.0 s</div>
+            <p class="words">El logo se lee (0.6–1.8 s); la pregunta completa se lee (1.8–3.9 s). El caret se estira y se vuelve la carretera del logo.</p>
+            <span class="tag">Negro · oro · grano</span>
+          </div>
+        </div>
+
+        <div class="frame">
+          <img src="stills/frame-01-at-7s.png" alt="Frame 2: La conversación" />
+          <div class="copy">
+            <div class="title"><em>02</em> La conversación</div>
+            <div class="time">4.0 – 10.0 s</div>
+            <p class="words">El mensaje del usuario se lee (4.8–6.6 s); la respuesta y el plan de tres días se leen (7.0–9.8 s). El panel ocupa ~60% del frame.</p>
+            <span class="tag">Chat · cristal líquido</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="act">Acto 2 · El viaje</section>
+      <div class="board">
+        <div class="frame">
+          <img src="stills/frame-02-at-14s.png" alt="Frame 3: El descubrimiento" />
+          <div class="copy">
+            <div class="title"><em>03</em> El descubrimiento</div>
+            <div class="time">10.0 – 17.0 s</div>
+            <p class="words">“Lugares reales. En un solo mapa.” (10.6–12.4 s); Hotel Plaza Neiva (12.4–14.2 s); Tatacoa 360° (14.2–16.8 s).</p>
+            <span class="tag">Mapa · pins · tarjetas</span>
+          </div>
+        </div>
+
+        <div class="frame">
+          <img src="stills/frame-03-at-20s.png" alt="Frame 4: La reserva" />
+          <div class="copy">
+            <div class="title"><em>04</em> La reserva</div>
+            <div class="time">17.0 – 22.5 s</div>
+            <p class="words">La disponibilidad se lee (17.6–19.2 s); el botón de reserva (19.2–20.6 s); la confirmación (20.6–22.3 s).</p>
+            <span class="tag">Solicitud · sin pago</span>
+          </div>
+        </div>
+
+        <div class="frame wide">
+          <img src="stills/frame-04-at-25s.png" alt="Frame 5: La voz" />
+          <div class="copy">
+            <div class="title"><em>05</em> La voz</div>
+            <div class="time">22.5 – 27.0 s</div>
+            <p class="words">La transcripción se lee (24.3–26.8 s): “Agrega una cena típica cerca del hotel.” La tarjeta entra al itinerario.</p>
+            <span class="tag">12 barras · español</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="act">Acto 3 · La vida local</section>
+      <div class="board">
+        <div class="frame">
+          <img src="stills/frame-05-at-30s.png" alt="Frame 6: Movimiento y comunidad" />
+          <div class="copy">
+            <div class="title"><em>06</em> Movimiento y comunidad</div>
+            <div class="time">27.0 – 33.0 s</div>
+            <p class="words">“Muévete. Comparte. Vive.” (27.4–29.2 s); el estado del taxi (29.2–31.2 s); la publicación (31.2–32.8 s).</p>
+            <span class="tag">Taxi · ViaSocial</span>
+          </div>
+        </div>
+
+        <div class="frame">
+          <img src="stills/frame-06-at-36s.png" alt="Frame 7: El negocio" />
+          <div class="copy">
+            <div class="title"><em>07</em> El negocio</div>
+            <div class="time">33.0 – 39.0 s</div>
+            <p class="words">“Tu negocio, en el mapa.” (33.6–35.4 s); KPIs y gráfico (35.4–37.2 s); “Nuevo pedido” (37.2–38.8 s).</p>
+            <span class="tag">Dashboard · vista demo</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="act">Acto 4 · El cierre</section>
+      <div class="board">
+        <div class="frame wide">
+          <img src="stills/frame-07-at-43s.png" alt="Frame 8: El cierre" />
+          <div class="copy">
+            <div class="title"><em>08</em> El cierre</div>
+            <div class="time">39.0 – 46.0 s</div>
+            <p class="words">Logo y tagline (39.6–42.0 s); URL (42.0–44.0 s); QR y plataformas (44.0–45.8 s). Hold de 2.5 s.</p>
+            <span class="tag">Logo · URL · QR</span>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <div><b>Para aprobar:</b> layout, copy, jerarquía y el hilo dorado. Después de tu “sí”, animo, grabo la VO y mezclo.</div>
+        <div><b>Entregables:</b> MP4 1920×1080 · SRT español · portada 1280×720 · 3 stills · corte 9:16 opcional.</div>
+      </footer>
+    </div>
+  </body>
+</html>

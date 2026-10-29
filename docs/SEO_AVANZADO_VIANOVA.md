@@ -137,7 +137,7 @@ Comprobar en el navegador:
 - `/login` responde `200` con `X-Robots-Tag: noindex, nofollow` en ambos dominios.
 - En Vercel, el rewrite catch-all debe apuntar a `/`, no a `/index.html`: con `cleanUrls: true`, `/index.html` responde `308` y el rewrite devuelve `404` en rutas profundas.
 
-Pendiente de acción manual: pulsar **Verificar** en Google Search Console, enviar el sitemap y solicitar indexación. La etiqueta `google-site-verification=YG7IZrSM9mL6VVBcMZn3w4bjMzKqU10vgEH-lkLXtFM` ya está inyectada en el HTML de ambos dominios. Para Bing falta el código.
+Pendiente de acción manual: pulsar **Verificar** en Google Search Console y Bing Webmaster Tools, enviar el sitemap y solicitar indexación. Las etiquetas `google-site-verification=YG7IZrSM9mL6VVBcMZn3w4bjMzKqU10vgEH-lkLXtFM` y `msvalidate.01=28459F182F4433434EF7E43823CB0289` ya están inyectadas en el HTML de ambos dominios.
 
 ### Google Search Console
 

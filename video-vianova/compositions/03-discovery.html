@@ -1,0 +1,530 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0b0b0c;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .map {
+      position: absolute;
+      inset: -30px;
+      background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.62) saturate(0.88) contrast(1.06);
+      transform: scale(1.04);
+    }
+    .map-shade {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(11, 11, 12, 0.92) 0%, rgba(11, 11, 12, 0.48) 42%, rgba(11, 11, 12, 0.7) 100%),
+        linear-gradient(180deg, rgba(11, 11, 12, 0.55) 0%, transparent 24%, transparent 72%, rgba(11, 11, 12, 0.72) 100%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 48% 46%, transparent 42%, rgba(0, 0, 0, 0.46) 100%);
+    }
+    .route {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+    }
+    .route path {
+      fill: none;
+      stroke: #ffbf00;
+      stroke-width: 3;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 10px rgba(255, 191, 0, 0.62));
+    }
+    .topbar {
+      position: absolute;
+      left: 96px;
+      top: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar .logo-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: #0b0b0c;
+      border: 1px solid rgba(255, 191, 0, 0.3);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+    .topbar .logo-box img {
+      width: 38px;
+      height: auto;
+      mix-blend-mode: screen;
+    }
+    .topbar .wordmark {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 27px;
+      letter-spacing: -0.04em;
+    }
+    .topbar .wordmark span {
+      color: #ffbf00;
+    }
+    .topbar .crumb {
+      margin-left: 14px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 191, 0, 0.22);
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+    }
+    .topbar .crumb b {
+      color: #ffbf00;
+      font-weight: 600;
+    }
+    .headline {
+      position: absolute;
+      left: 96px;
+      top: 154px;
+      width: 760px;
+    }
+    .headline .rule {
+      width: 92px;
+      height: 3px;
+      border-radius: 3px;
+      background: #ffbf00;
+      box-shadow: 0 0 18px rgba(255, 191, 0, 0.5);
+      margin-bottom: 26px;
+    }
+    .headline h2 {
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 70px;
+      line-height: 1.02;
+      letter-spacing: -0.038em;
+      color: #ffffff;
+    }
+    .headline h2 .gold {
+      color: #ffbf00;
+    }
+    .pin {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 3;
+    }
+    .pin .dot {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+      box-shadow: 0 0 0 1px rgba(255, 229, 150, 0.6), 0 0 26px rgba(255, 191, 0, 0.44), 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+    .pin .dot svg {
+      width: 20px;
+      height: 20px;
+      color: #0b0b0c;
+    }
+    .pin .dot::after {
+      content: "";
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 191, 0, 0.26);
+    }
+    .pin .tag {
+      padding: 11px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 14, 15, 0.72);
+      backdrop-filter: blur(16px) saturate(130%);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
+    }
+    .pin .tag strong {
+      display: block;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .pin .tag span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.46);
+    }
+    .pin.p1 {
+      left: 376px;
+      top: 320px;
+    }
+    .pin.p2 {
+      left: 560px;
+      top: 560px;
+    }
+    .pin.p3 {
+      left: 812px;
+      top: 340px;
+    }
+    .pin.p4 {
+      left: 906px;
+      top: 690px;
+    }
+    .pin.p3 .dot {
+      width: 52px;
+      height: 52px;
+    }
+    .pin.p3 .dot::before {
+      content: "360°";
+      position: absolute;
+      right: -18px;
+      top: -16px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ffbf00;
+      color: #0b0b0c;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      box-shadow: 0 0 18px rgba(255, 191, 0, 0.5);
+    }
+    .rail {
+      position: absolute;
+      right: 88px;
+      top: 94px;
+      width: 388px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 4;
+    }
+    .card {
+      border-radius: 22px;
+      border: 1px solid rgba(255, 191, 0, 0.22);
+      background: linear-gradient(158deg, rgba(28, 27, 24, 0.92), rgba(12, 12, 13, 0.96));
+      box-shadow: 0 34px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(24px) saturate(130%);
+      overflow: hidden;
+    }
+    .card .photo {
+      position: relative;
+      height: 186px;
+      background-size: cover;
+      background-position: center;
+    }
+    .card .photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 42%, rgba(12, 12, 13, 0.78) 100%);
+    }
+    .card .chip {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      z-index: 2;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(11, 11, 12, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(12px);
+    }
+    .card .body {
+      padding: 18px 20px 20px;
+    }
+    .card .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .card h3 {
+      font-family: Poppins, sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .card .rating {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffbf00;
+      white-space: nowrap;
+    }
+    .card p {
+      margin-top: 7px;
+      font-size: 15px;
+      line-height: 1.42;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .card .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .card .btn {
+      flex: 1;
+      height: 38px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.055);
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.82);
+      white-space: nowrap;
+    }
+    .card .btn.gold {
+      background: #ffbf00;
+      border-color: #ffbf00;
+      color: #0b0b0c;
+      box-shadow: 0 0 20px rgba(255, 191, 0, 0.24);
+    }
+    .card.compact {
+      display: flex;
+      height: 172px;
+    }
+    .card.compact .thumb {
+      position: relative;
+      width: 132px;
+      flex: 0 0 132px;
+      background-size: cover;
+      background-position: center;
+    }
+    .card.compact .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 45%, rgba(12, 12, 13, 0.85) 100%);
+    }
+    .card.compact .body {
+      flex: 1;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .card.compact h3 {
+      font-size: 22px;
+    }
+    .card.compact p {
+      font-size: 13px;
+      margin-top: 5px;
+    }
+    .badge-360 {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      z-index: 2;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffbf00;
+      color: #0b0b0c;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      box-shadow: 0 0 22px rgba(255, 191, 0, 0.5);
+    }
+    .taxi-chip {
+      position: absolute;
+      left: 1000px;
+      top: 760px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 191, 0, 0.24);
+      background: rgba(14, 14, 15, 0.78);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      z-index: 3;
+    }
+    .taxi-chip svg {
+      width: 22px;
+      height: 22px;
+      color: #ffbf00;
+    }
+    .taxi-chip strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .taxi-chip span {
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.48);
+    }
+  </style>
+  <div id="root" data-composition-id="s3-discovery" data-width="1920" data-height="1080">
+    <div class="map" data-layout-ignore></div>
+    <div class="map-shade" data-layout-ignore></div>
+    <svg class="route" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path d="M 398 342 C 470 390, 500 470, 582 582 C 680 690, 780 470, 838 366 C 890 300, 940 540, 928 712" />
+    </svg>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="topbar">
+      <div class="logo-box"><img src="assets/img/logo.png" alt="ViaNova" /></div>
+      <div class="wordmark">VIANova <span>IA</span></div>
+      <div class="crumb"><b>Explorar</b> · Neiva, Huila</div>
+    </div>
+
+    <div class="headline">
+      <div class="rule"></div>
+      <h2>Lugares <span class="gold">reales.</span><br />En un solo mapa.</h2>
+    </div>
+
+    <div class="pin p1">
+      <div class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"></path>
+          <circle cx="12" cy="10" r="2.6"></circle>
+        </svg>
+      </div>
+      <div class="tag"><strong>Hotel Plaza Neiva</strong><span>Alojamiento</span></div>
+    </div>
+    <div class="pin p2">
+      <div class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"></path>
+          <circle cx="12" cy="10" r="2.6"></circle>
+        </svg>
+      </div>
+      <div class="tag"><strong>Asadero El Huilense</strong><span>Gastronomía</span></div>
+    </div>
+    <div class="pin p3">
+      <div class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8"></circle>
+          <path d="M4 12h16M12 4c2.5 2.2 3.8 5 3.8 8s-1.3 5.8-3.8 8c-2.5-2.2-3.8-5-3.8-8S9.5 6.2 12 4Z"></path>
+        </svg>
+      </div>
+      <div class="tag"><strong>Tatacoa 360°</strong><span>Experiencia</span></div>
+    </div>
+    <div class="pin p4">
+      <div class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 16h14l-1.4-5.2A2 2 0 0 0 15.7 9H8.3a2 2 0 0 0-1.9 1.8L5 16Z"></path>
+          <path d="M4 16v3h2v-3M18 16v3h2v-3"></path>
+          <circle cx="7.5" cy="16" r="1.2"></circle>
+          <circle cx="16.5" cy="16" r="1.2"></circle>
+        </svg>
+      </div>
+      <div class="tag"><strong>Taxi local</strong><span>Movilidad · 4 min</span></div>
+    </div>
+
+    <div class="taxi-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 16h14l-1.4-5.2A2 2 0 0 0 15.7 9H8.3a2 2 0 0 0-1.9 1.8L5 16Z"></path>
+        <path d="M4 16v3h2v-3M18 16v3h2v-3"></path>
+        <circle cx="7.5" cy="16" r="1.2"></circle>
+        <circle cx="16.5" cy="16" r="1.2"></circle>
+      </svg>
+      <div><strong>Viaje solicitado</strong><span>Conductor local en camino</span></div>
+    </div>
+
+    <div class="rail">
+      <div class="card">
+        <div class="photo" style="background-image: url('assets/img/hotel-plaza.jpg')">
+          <div class="chip">Alojamiento</div>
+        </div>
+        <div class="body">
+          <div class="row"><h3>Hotel Plaza Neiva</h3><div class="rating">★ 4.8</div></div>
+          <p>Hotel boutique frente al Parque Santander, en el corazón de Neiva.</p>
+          <div class="actions">
+            <div class="btn gold">Ver Modelo 3D</div>
+            <div class="btn">Explorar Tour Virtual</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card compact">
+        <div class="thumb" style="background-image: url('assets/img/asadero.jpg')"></div>
+        <div class="body">
+          <div class="row"><h3>Asadero El Huilense</h3><div class="rating">★ 4.7</div></div>
+          <p>Asado, tamal y bizcocho de achira en el centro.</p>
+          <div class="actions"><div class="btn gold">Ver Modelo 3D</div></div>
+        </div>
+      </div>
+
+      <div class="card compact">
+        <div class="thumb" style="background-image: url('assets/img/tatacoa.jpg')">
+          <div class="badge-360">360°</div>
+        </div>
+        <div class="body">
+          <div class="row"><h3>Tatacoa 360°</h3><div class="rating">★ 4.9</div></div>
+          <p>Tour virtual y modelo 3D del desierto.</p>
+          <div class="actions"><div class="btn gold">Explorar Tour Virtual</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.topbar', { opacity: 0, y: -18 });
+    gsap.set('.headline', { opacity: 0, y: 24 });
+    gsap.set('.pin', { opacity: 0, scale: 0.25, y: -35, transformOrigin: 'bottom center' });
+    gsap.set('.route', { opacity: 0, scaleX: 0.6, transformOrigin: 'left center' });
+    gsap.set('.rail .card', { opacity: 0, x: 90 });
+    gsap.set('.taxi-chip', { opacity: 0, y: 28 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s: Topbar & Headline appear
+    tl.to('.topbar', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.2);
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, 0.4);
+
+    // 0.8s: Pins drop with spring
+    tl.to('.pin', { opacity: 1, scale: 1, y: 0, duration: 0.6, stagger: 0.24, ease: 'back.out(1.8)' }, 0.8);
+
+    // 1.8s: Route draws
+    tl.to('.route', { opacity: 1, scaleX: 1, duration: 1.4, ease: 'power2.out' }, 1.8);
+
+    // 2.2s: Cards slide in
+    tl.to('.rail .card', { opacity: 1, x: 0, duration: 0.8, stagger: 0.26, ease: 'power3.out' }, 2.2);
+
+    // 3.4s: Taxi chip pops in
+    tl.to('.taxi-chip', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out(1.5)' }, 3.4);
+
+    // 4.4s: Buttons pulse / highlight
+    tl.to('.btn.gold', { scale: 1.05, duration: 0.35, yoyo: true, repeat: 1, ease: 'power1.inOut' }, 4.4);
+
+    // Gentle camera drift
+    tl.to('#root', { scale: 1.03, transformOrigin: '40% 40%', duration: 7.0, ease: 'none' }, 0);
+
+    window.__timelines["s3-discovery"] = tl;
+  </script>
+</template>

@@ -1,0 +1,512 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0b0b0c;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .bg {
+      position: absolute;
+      inset: -40px;
+      background-image: url("assets/img/map-neiva.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: blur(18px) brightness(0.3) saturate(0.7);
+      transform: scale(1.06);
+    }
+    .bg-shade {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 44%, rgba(11, 11, 12, 0.35) 0%, rgba(11, 11, 12, 0.88) 72%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(0, 0, 0, 0.54) 100%);
+    }
+    .headline {
+      position: absolute;
+      left: 96px;
+      top: 64px;
+      z-index: 4;
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 52px;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+    .headline .gold {
+      color: #ffbf00;
+    }
+    .panel {
+      position: absolute;
+      left: 250px;
+      top: 164px;
+      width: 1420px;
+      height: 822px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 191, 0, 0.26);
+      background: linear-gradient(158deg, rgba(30, 28, 24, 0.92), rgba(12, 12, 13, 0.97) 62%);
+      box-shadow: 0 52px 130px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(30px) saturate(135%);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 30px;
+      background: radial-gradient(760px 320px at 8% 0%, rgba(255, 191, 0, 0.12), transparent 70%);
+      pointer-events: none;
+    }
+    .panel-head {
+      position: relative;
+      height: 96px;
+      padding: 0 34px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 48%, #a86a00 100%);
+      box-shadow: 0 0 0 1px rgba(255, 222, 120, 0.55), 0 0 28px rgba(255, 191, 0, 0.38);
+      flex: 0 0 auto;
+    }
+    .avatar svg {
+      width: 27px;
+      height: 27px;
+    }
+    .head-copy strong {
+      display: block;
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .head-copy span {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.52);
+    }
+    .head-copy .live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5ee08b;
+      box-shadow: 0 0 10px rgba(94, 224, 139, 0.75);
+    }
+    .head-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 22px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+    .head-actions svg {
+      width: 22px;
+      height: 22px;
+    }
+    .messages {
+      position: relative;
+      height: 520px;
+      padding: 28px 36px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      overflow: hidden;
+    }
+    .msg {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 1000px;
+    }
+    .msg.user {
+      margin-left: auto;
+      justify-content: flex-end;
+    }
+    .msg .mini-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: radial-gradient(circle at 35% 28%, #ffe58a, #ffbf00 52%, #a86a00 100%);
+      box-shadow: 0 0 16px rgba(255, 191, 0, 0.28);
+    }
+    .msg .mini-avatar svg {
+      width: 18px;
+      height: 18px;
+    }
+    .bubble {
+      padding: 18px 24px;
+      border-radius: 20px;
+      font-size: 25px;
+      line-height: 1.32;
+      letter-spacing: -0.012em;
+    }
+    .msg.ai .bubble {
+      color: rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-top-left-radius: 6px;
+    }
+    .msg.user .bubble {
+      color: #0b0b0c;
+      background: #ffbf00;
+      border-top-right-radius: 6px;
+      font-weight: 600;
+      box-shadow: 0 18px 44px rgba(255, 191, 0, 0.18);
+    }
+    .cards {
+      display: flex;
+      gap: 18px;
+      margin-left: 50px;
+      margin-top: 2px;
+    }
+    .res-card {
+      width: 600px;
+      height: 222px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 191, 0, 0.22);
+      background: rgba(255, 255, 255, 0.045);
+      display: flex;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .res-card .photo {
+      width: 168px;
+      flex: 0 0 168px;
+      background-size: cover;
+      background-position: center;
+    }
+    .res-card .body {
+      flex: 1;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .res-card .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .res-card h3 {
+      font-family: Poppins, sans-serif;
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.12;
+    }
+    .res-card .sent {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 191, 0, 0.14);
+      border: 1px solid rgba(255, 191, 0, 0.28);
+      color: #ffbf00;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .res-card .sent svg {
+      width: 13px;
+      height: 13px;
+    }
+    .res-card .dates {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.66);
+    }
+    .res-card .meta {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.42);
+    }
+    .res-card .price {
+      margin-top: auto;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .res-card .price span {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.42);
+    }
+    .success {
+      position: absolute;
+      left: 34px;
+      right: 34px;
+      bottom: 104px;
+      height: 76px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 191, 0, 0.4);
+      background: linear-gradient(90deg, rgba(255, 191, 0, 0.16), rgba(255, 191, 0, 0.05));
+      box-shadow: 0 0 40px rgba(255, 191, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 22px;
+      z-index: 3;
+    }
+    .success .check {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+      box-shadow: 0 0 24px rgba(255, 191, 0, 0.5);
+      flex: 0 0 auto;
+    }
+    .success .check svg {
+      width: 20px;
+      height: 20px;
+      color: #0b0b0c;
+    }
+    .success strong {
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .inputbar {
+      position: absolute;
+      left: 34px;
+      right: 34px;
+      bottom: 24px;
+      height: 64px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 14px 0 20px;
+    }
+    .inputbar .placeholder {
+      flex: 1;
+      font-size: 19px;
+      color: rgba(255, 255, 255, 0.34);
+    }
+    .inputbar .icon {
+      width: 20px;
+      height: 20px;
+      color: rgba(255, 255, 255, 0.42);
+    }
+    .inputbar .send {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #ffbf00;
+      box-shadow: 0 0 20px rgba(255, 191, 0, 0.28);
+    }
+    .inputbar .send svg {
+      width: 19px;
+      height: 19px;
+      color: #0b0b0c;
+      transform: translateX(1px);
+    }
+    .cursor {
+      position: absolute;
+      left: 1260px;
+      top: 820px;
+      width: 28px;
+      height: 36px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+      z-index: 6;
+    }
+    .ripple {
+      position: absolute;
+      left: 1282px;
+      top: 850px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 191, 0, 0.55);
+      box-shadow: 0 0 22px rgba(255, 191, 0, 0.28);
+      z-index: 5;
+    }
+  </style>
+  <div id="root" data-composition-id="s4-booking" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-ignore></div>
+    <div class="bg-shade" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+    <div class="vignette" data-layout-ignore></div>
+
+    <div class="headline">Una conversación. <span class="gold">Todo tu viaje.</span></div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="avatar">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2.6 14.4 9.6 21.4 12 14.4 14.4 12 21.4 9.6 14.4 2.6 12 9.6 9.6 12 2.6Z" fill="#0B0B0C" />
+          </svg>
+        </div>
+        <div class="head-copy">
+          <strong>VIANova AI</strong>
+          <span><i class="live"></i>Asistente de viaje</span>
+        </div>
+        <div class="head-actions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path>
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="messages">
+        <div class="msg user"><div class="bubble">¿Y el viernes hay habitación?</div></div>
+        <div class="msg ai">
+          <div class="mini-avatar">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2.6 14.4 9.6 21.4 12 14.4 14.4 12 21.4 9.6 14.4 2.6 12 9.6 9.6 12 2.6Z" fill="#0B0B0C" />
+            </svg>
+          </div>
+          <div class="bubble">Sí. Te muestro opciones para el viernes 30.</div>
+        </div>
+
+        <div class="cards">
+          <div class="res-card">
+            <div class="photo" style="background-image: url('assets/img/hotel-plaza.jpg')"></div>
+            <div class="body">
+              <div class="top">
+                <h3>Hotel Plaza Neiva</h3>
+                <div class="sent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"></path></svg>
+                  Enviada
+                </div>
+              </div>
+              <div class="dates">Vie 30 oct — Dom 1 nov</div>
+              <div class="meta">2 huéspedes · 2 noches</div>
+              <div class="price">$420.000 <span>/ noche</span></div>
+            </div>
+          </div>
+
+          <div class="res-card">
+            <div class="photo" style="background-image: url('assets/img/hotel-cabin.jpg')"></div>
+            <div class="body">
+              <div class="top">
+                <h3>Hotel Boutique Tatacoa</h3>
+                <div class="sent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"></path></svg>
+                  Enviada
+                </div>
+              </div>
+              <div class="dates">Vie 30 oct — Dom 1 nov</div>
+              <div class="meta">2 huéspedes · 2 noches</div>
+              <div class="price">$380.000 <span>/ noche</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="success">
+        <div class="check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"></path></svg>
+        </div>
+        <strong>¡Solicitudes enviadas a todos los proveedores!</strong>
+      </div>
+
+      <div class="inputbar">
+        <div class="placeholder">Escribe tu mensaje...</div>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+          <path d="m3 16 5-5 4 4 3-3 6 6"></path>
+          <circle cx="9" cy="9" r="1.4"></circle>
+        </svg>
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path>
+        </svg>
+        <div class="send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 3 10.5 13.5M21 3l-6.6 18-3.9-7.5L3 9.6 21 3Z"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <svg class="cursor" viewBox="0 0 30 38" aria-hidden="true">
+      <path d="M3 2 26 18 15.8 20.2 11.6 31.6 3 2Z" fill="#FFFFFF" stroke="#0B0B0C" stroke-width="1.6" />
+    </svg>
+    <div class="ripple" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.panel', { opacity: 0, scale: 0.94 });
+    gsap.set('.headline', { opacity: 0, y: 22 });
+    gsap.set('.msg.user', { opacity: 0, scale: 0.88, y: 16 });
+    gsap.set('.msg.ai', { opacity: 0, y: 16 });
+    gsap.set('.res-card', { opacity: 0, y: 18 });
+    gsap.set('.success', { opacity: 0, scale: 0.92, y: 12 });
+    gsap.set('.cursor', { opacity: 0, x: 50, y: 60 });
+    gsap.set('.ripple', { opacity: 0, scale: 0.2 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.1s - 0.7s: Panel & Headline enter
+    tl.to('.panel', { opacity: 1, scale: 1, duration: 0.7, ease: 'power3.out' }, 0.1);
+    tl.to('.headline', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 0.3);
+
+    // 0.5s: User question
+    tl.to('.msg.user', { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.5)' }, 0.5);
+
+    // 1.2s: AI response
+    tl.to('.msg.ai', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 1.2);
+
+    // 1.8s: Booking cards slide in
+    tl.to('.res-card', { opacity: 1, y: 0, duration: 0.5, stagger: 0.25, ease: 'power2.out' }, 1.8);
+
+    // 2.5s: Cursor enters
+    tl.to('.cursor', { opacity: 1, x: 0, y: 0, duration: 0.7, ease: 'power2.out' }, 2.5);
+
+    // 3.2s: Click action and ripple
+    tl.to('.cursor', { scale: 0.85, duration: 0.1, yoyo: true, repeat: 1 }, 3.2);
+    tl.to('.ripple', { opacity: 0.8, scale: 1.8, duration: 0.4, ease: 'power2.out' }, 3.2);
+    tl.to('.ripple', { opacity: 0, duration: 0.3 }, 3.4);
+
+    // 3.4s: Success banner appears
+    tl.to('.success', { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.6)' }, 3.4);
+
+    // Push camera
+    tl.to('#root', { scale: 1.03, transformOrigin: 'center center', duration: 5.5, ease: 'none' }, 0);
+
+    window.__timelines["s4-booking"] = tl;
+  </script>
+</template>
