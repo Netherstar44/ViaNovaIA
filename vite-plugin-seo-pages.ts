@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
 import {
@@ -383,20 +383,34 @@ export function seoPagesPlugin(): Plugin {
       outDir = config.build.outDir;
     },
     closeBundle() {
-      const indexPath = path.join(outDir, "index.html");
-      const template = readFileSync(indexPath, "utf8");
-
-      for (const page of seoPages) {
-        writeFileSync(path.join(outDir, `${page.slug}.html`), renderPage(template, page), "utf8");
-      }
-
-      writeFileSync(path.join(outDir, "sitemap.xml"), renderSitemap(), "utf8");
-
-      const verification = verificationTags();
-      if (verification) {
-        const home = template.replace("</head>", `  ${verification}\n</head>`);
-        writeFileSync(indexPath, home, "utf8");
-      }
+      // Fire-and-forget async generation; Vite awaits the returned promise.
+      return generateSeoPages(outDir);
     },
   };
+}
+
+export async function generateSeoPages(outDir: string): Promise<void> {
+  const indexPath = path.join(outDir, "index.html");
+  let waited = 0;
+  while (!existsSync(indexPath) && waited < 10000) {
+    await new Promise((r) => setTimeout(r, 200));
+    waited += 200;
+  }
+  if (!existsSync(indexPath)) {
+    console.warn(`[vianova-seo-pages] ${indexPath} not found, skipping.`);
+    return;
+  }
+  const template = readFileSync(indexPath, "utf8");
+
+  for (const page of seoPages) {
+    writeFileSync(path.join(outDir, `${page.slug}.html`), renderPage(template, page), "utf8");
+  }
+
+  writeFileSync(path.join(outDir, "sitemap.xml"), renderSitemap(), "utf8");
+
+  const verification = verificationTags();
+  if (verification) {
+    const home = template.replace("</head>", `  ${verification}\n</head>`);
+    writeFileSync(indexPath, home, "utf8");
+  }
 }

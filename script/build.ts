@@ -1,6 +1,8 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
+import { generateSeoPages } from "./../vite-plugin-seo-pages";
 import { rm, readFile } from "fs/promises";
+import path from "node:path";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -37,6 +39,8 @@ async function buildAll() {
 
   console.log("building client...");
   await viteBuild();
+  console.log("generating SEO pages...");
+  await generateSeoPages(path.resolve(import.meta.dirname, "..", "dist", "public"));
 
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
