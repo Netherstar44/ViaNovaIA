@@ -645,6 +645,10 @@ const PRIVATE_ROUTE_META: Record<string, { title: string; description: string }>
     title: "Mi panel | VIANova",
     description: "Resumen de tu actividad, reservas, compras y viajes en VIANova.",
   },
+  "/payments": {
+    title: "Pagos | VIANova",
+    description: "Revisa, vincula métodos de pago y completa el pago de tus rutas y servicios en VIANova.",
+  },
   "/admin": {
     title: "Administración | VIANova",
     description: "Panel interno de administración de VIANova.",
