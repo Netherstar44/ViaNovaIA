@@ -98,6 +98,11 @@ async function ensureSocialSchema(sql: any) {
   await sql`
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS bio text,
+      ADD COLUMN IF NOT EXISTS banner_url text,
+      ADD COLUMN IF NOT EXISTS contact_email text,
+      ADD COLUMN IF NOT EXISTS contact_phone text,
+      ADD COLUMN IF NOT EXISTS contact_website text,
+      ADD COLUMN IF NOT EXISTS contact_visibility text DEFAULT 'private',
       ADD COLUMN IF NOT EXISTS terms_accepted_at timestamp,
       ADD COLUMN IF NOT EXISTS two_factor_enabled text DEFAULT 'false',
       ADD COLUMN IF NOT EXISTS premium_plan text DEFAULT 'free',
@@ -521,7 +526,18 @@ router.get("/users/:username/profile", optionalAuth, async (req: any, res) => {
     const viewer = cleanText(req.user?.username, 80);
 
     const [profile] = await sql`
-      SELECT username, name, avatar_url AS "avatarUrl", bio, role, created_at AS "createdAt"
+      SELECT
+        username,
+        name,
+        avatar_url AS "avatarUrl",
+        banner_url AS "bannerUrl",
+        bio,
+        role,
+        created_at AS "createdAt",
+        contact_email AS "contactEmail",
+        contact_phone AS "contactPhone",
+        contact_website AS "contactWebsite",
+        contact_visibility AS "contactVisibility"
       FROM users WHERE username = ${username} AND deleted_at IS NULL LIMIT 1
     `;
     if (!profile) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -533,9 +549,27 @@ router.get("/users/:username/profile", optionalAuth, async (req: any, res) => {
     const [following] = await sql`SELECT COUNT(*)::int AS c FROM social_followers WHERE follower_id = ${uid}`;
     const state = await relationshipState(sql, viewerId, uid);
 
+    const isOwner = Boolean(viewer && viewer === username);
+    const visibility = String(profile.contactVisibility || "private").toLowerCase();
+    const canViewContact =
+      !state.isBlocked &&
+      !state.isBlockedBy &&
+      (isOwner || visibility === "public" || (visibility === "followers" && state.isFollowing));
+    const contact = canViewContact
+      ? {
+          email: profile.contactEmail || null,
+          phone: profile.contactPhone || null,
+          website: profile.contactWebsite || null,
+        }
+      : null;
+    const hasContact = Boolean(contact && (contact.email || contact.phone || contact.website));
+    const { contactEmail: _contactEmail, contactPhone: _contactPhone, contactWebsite: _contactWebsite, ...publicProfile } = profile;
+
     res.json({
       profile: {
-        ...profile,
+        ...publicProfile,
+        contactVisibility: visibility,
+        contact: hasContact ? contact : null,
         postsCount: Number(postsCount?.c || 0),
         followers: Number(followers?.c || 0),
         following: Number(following?.c || 0),

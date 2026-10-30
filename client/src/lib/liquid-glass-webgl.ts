@@ -91,10 +91,14 @@ type Surface = {
   ambientA: [number, number, number];
   ambientB: [number, number, number];
   ambientC: [number, number, number];
+  baseCache: string;
+  baseCacheAt: number;
   indicator: [number, number, number, number, number] | null;
   dirty: boolean;
   sceneDirty: boolean;
   visible: boolean;
+  /** Stays in the same viewport spot while the page scrolls (fixed/sticky). */
+  anchored: boolean;
   ready: boolean;
   rectDirty: boolean;
   lastRender: number;
@@ -109,7 +113,6 @@ const MAX_GL_HEIGHT = 1280;
 const MAX_SURFACE_PIXELS = 1_100_000;
 const MAX_DPR = 2;
 const MAX_DPR_MOBILE = 1.5;
-const SCROLL_INTERVAL = 1000 / 20;
 const BURST_INTERVAL = 1000 / 20;
 const BURST_MS = 1200;
 const CONTENT_DEBOUNCE = 100;
@@ -362,6 +365,22 @@ const isDarkTheme = () => {
   );
 };
 
+/**
+ * A fixed/sticky surface keeps sampling new content while the page scrolls.
+ * A surface that travels with the document does not: its backdrop moves by the
+ * same delta, so repainting it on every scroll frame is wasted work and reads
+ * as lag. This is what kept the hero search refracted one frame behind.
+ */
+const isViewportAnchored = (element: HTMLElement): boolean => {
+  let node: HTMLElement | null = element;
+  while (node && node !== document.body) {
+    const position = window.getComputedStyle(node).position;
+    if (position === "fixed" || position === "sticky") return true;
+    node = node.parentElement;
+  }
+  return false;
+};
+
 const fitDpr = (
   cssW: number,
   cssH: number,
@@ -430,8 +449,6 @@ class LiquidGlassRenderer {
   private lastFrameAt = 0;
   private burstUntil = 0;
   private lastVideoTick = 0;
-  private lastScrollPaint = 0;
-  private scrollTimer = 0;
   private themeTimer = 0;
   private contentTimer = 0;
   private resizeTimer = 0;
@@ -537,10 +554,13 @@ class LiquidGlassRenderer {
       ambientA: [0.1, 0.1, 0.1],
       ambientB: [0.1, 0.1, 0.1],
       ambientC: [0.1, 0.1, 0.1],
+      baseCache: "",
+      baseCacheAt: 0,
       indicator: null,
       dirty: true,
       sceneDirty: true,
       visible: true,
+      anchored: false,
       ready: false,
       rectDirty: true,
       lastRender: 0,
@@ -928,13 +948,11 @@ class LiquidGlassRenderer {
     this.bodyObserver?.disconnect();
     this.bodyObserver = null;
 
-    if (this.scrollTimer) window.clearTimeout(this.scrollTimer);
     if (this.themeTimer) window.clearTimeout(this.themeTimer);
     if (this.contentTimer) window.clearTimeout(this.contentTimer);
     if (this.resizeTimer) window.clearTimeout(this.resizeTimer);
     if (this.viewportTimer) window.clearTimeout(this.viewportTimer);
     if (this.burstTimer) window.clearTimeout(this.burstTimer);
-    this.scrollTimer = 0;
     this.themeTimer = 0;
     this.contentTimer = 0;
     this.resizeTimer = 0;
@@ -995,8 +1013,10 @@ class LiquidGlassRenderer {
     this.burstUntil = Math.max(this.burstUntil, now + 160);
     for (const surface of this.surfaces) {
       if (!surface.visible) continue;
+      surface.rectDirty = true;
       surface.sceneDirty = true;
       surface.dirty = true;
+      surface.baseCacheAt = 0;
     }
     this.requestFrame();
 
@@ -1014,29 +1034,34 @@ class LiquidGlassRenderer {
   };
 
   private onScroll = (): void => {
-    const now = performance.now();
-    const elapsed = now - this.lastScrollPaint;
-    if (elapsed >= SCROLL_INTERVAL) {
-      this.lastScrollPaint = now;
-      this.markVisibleDirty();
-      return;
-    }
-    if (this.scrollTimer) return;
-    this.scrollTimer = window.setTimeout(() => {
-      this.scrollTimer = 0;
-      this.lastScrollPaint = performance.now();
-      this.markVisibleDirty();
-    }, SCROLL_INTERVAL - elapsed);
-  };
-
-  private markVisibleDirty(): void {
+    // No throttle: scroll events are already coalesced by requestAnimationFrame
+    // below, so a fixed navbar tracks the page at display refresh rate.
+    let dirty = false;
     for (const surface of this.surfaces) {
-      surface.rectDirty = true;
-      if (!surface.visible) continue;
+      if (!surface.visible || !surface.anchored) continue;
+      // Re-measure only when the surface actually changed viewport position
+      // (e.g. a sticky element switching between stuck and travelling).
+      const rect = surface.el.getBoundingClientRect();
+      if (
+        Math.abs(rect.left - surface.padRect.left) > 2 ||
+        Math.abs(rect.top - surface.padRect.top) > 2
+      ) {
+        surface.rectDirty = true;
+      }
       surface.sceneDirty = true;
       surface.dirty = true;
+      dirty = true;
     }
-    this.burstUntil = Math.max(this.burstUntil, performance.now() + 160);
+    if (dirty) this.requestFrame();
+  };
+
+  private markAllDirty(): void {
+    for (const surface of this.surfaces) {
+      surface.rectDirty = true;
+      surface.sceneDirty = true;
+      surface.dirty = true;
+      surface.baseCacheAt = 0;
+    }
     this.requestFrame();
   }
 
@@ -1044,10 +1069,6 @@ class LiquidGlassRenderer {
     if (this.resizeTimer) return;
     this.resizeTimer = window.setTimeout(() => {
       this.resizeTimer = 0;
-      if (this.scrollTimer) {
-        window.clearTimeout(this.scrollTimer);
-        this.scrollTimer = 0;
-      }
       for (const surface of this.surfaces) {
         if (surface.el.clientWidth < 2 || surface.el.clientHeight < 2) {
           this.markNotReady(surface);
@@ -1175,14 +1196,6 @@ class LiquidGlassRenderer {
       this.markAllDirty();
     }, 80);
   };
-
-  private markAllDirty(): void {
-    for (const surface of this.surfaces) {
-      surface.sceneDirty = true;
-      surface.dirty = true;
-    }
-    this.requestFrame();
-  }
 
   private requestFrame(): void {
     if (this.raf || !this.gl || this.contextLost || this.failed || document.hidden)
@@ -1333,6 +1346,7 @@ class LiquidGlassRenderer {
     surface.padRect.height = cssH;
     surface.radius = radius;
     surface.rectDirty = false;
+    if (reallocate) surface.anchored = isViewportAnchored(el);
 
     if (cssW < 2 || cssH < 2) {
       surface.cssW = cssW;
@@ -1505,7 +1519,7 @@ class LiquidGlassRenderer {
     ctx.setTransform(surface.dpr, 0, 0, surface.dpr, 0, 0);
     ctx.clearRect(0, 0, cw, ch);
 
-    const base = surface.opts.base ?? this.sampleBase(surface);
+    const base = surface.opts.base ?? this.cachedBase(surface);
     ctx.fillStyle = base;
     ctx.fillRect(0, 0, cw, ch);
 
@@ -1615,6 +1629,23 @@ class LiquidGlassRenderer {
   ): void {
     const rect = surface.padRect;
     if (surface.el.contains(media) || this.blockedMedia.has(media)) return;
+    if (media.closest('[aria-hidden="true"]')) return;
+
+    // Geometry is cheap and rejects most of the document's images before the
+    // far more expensive computed-style/opacity reads. This matters while a
+    // fixed navbar repaints on every scroll frame.
+    const ir = media.getBoundingClientRect();
+    if (ir.width < 4 || ir.height < 4) return;
+    const right = rect.left + rect.width;
+    const bottom = rect.top + rect.height;
+    if (
+      ir.right <= rect.left ||
+      ir.left >= right ||
+      ir.bottom <= rect.top ||
+      ir.top >= bottom
+    ) {
+      return;
+    }
 
     const isVideo = media instanceof HTMLVideoElement;
     if (isVideo) {
@@ -1633,20 +1664,6 @@ class LiquidGlassRenderer {
       media.crossOrigin === "anonymous" ||
       media.crossOrigin === "use-credentials";
     if (!sameOrigin(url) && !cors) return;
-    if (media.closest('[aria-hidden="true"]')) return;
-
-    const ir = media.getBoundingClientRect();
-    if (ir.width < 4 || ir.height < 4) return;
-    const right = rect.left + rect.width;
-    const bottom = rect.top + rect.height;
-    if (
-      ir.right <= rect.left ||
-      ir.left >= right ||
-      ir.bottom <= rect.top ||
-      ir.top >= bottom
-    ) {
-      return;
-    }
 
     let opacity = 1;
     let node: Element | null = media;
@@ -1719,6 +1736,26 @@ class LiquidGlassRenderer {
     } finally {
       ctx.restore();
     }
+  }
+
+  /**
+   * Sampling the stack behind a fixed surface costs five `elementsFromPoint`
+   * walks. The base fill changes slowly while scrolling, so refresh it a few
+   * times per second instead of once per frame.
+   */
+  private cachedBase(surface: Surface): string {
+    const now = performance.now();
+    if (
+      surface.anchored &&
+      surface.baseCache &&
+      now - surface.baseCacheAt < 250
+    ) {
+      return surface.baseCache;
+    }
+    const base = this.sampleBase(surface);
+    surface.baseCache = base;
+    surface.baseCacheAt = now;
+    return base;
   }
 
   private sampleBase(surface: Surface): string {

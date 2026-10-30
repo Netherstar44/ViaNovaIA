@@ -471,10 +471,10 @@ export default function Home() {
                 className="mt-8 w-full max-w-5xl sm:mt-10 md:mt-12"
               >
                 <div className="glass-search hero-search liquid-glass--refract liquid-glass--interactive lg-surface lg-surface--search mx-auto flex w-full max-w-[850px] items-center rounded-full p-1.5 sm:p-2">
-                  <GlassCanvas variant="search" />
+                  <GlassCanvas variant="search" scrim={0.02} ambient={0.08} />
                   <div className="hero-field group relative flex min-w-0 flex-[1.5] cursor-text flex-col justify-center rounded-full px-4 py-2 transition-colors sm:px-6">
                     <span className="hero-field-label truncate text-[10px] font-extrabold uppercase tracking-[0.12em] sm:text-[11px]">
-                      {t('home.search_placeholder') || 'Destino'}
+                      {t('home.destination', 'Destino')}
                     </span>
                     <input
                       type="text"
@@ -486,7 +486,7 @@ export default function Home() {
                     />
                   </div>
 
-                  <div className="hidden h-9 w-px bg-black/10 sm:block" />
+                  <div className="hidden h-9 w-px bg-black/15 sm:block" />
 
                   <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
                     <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
@@ -503,10 +503,10 @@ export default function Home() {
                       <option value="5">A menos de 5 km</option>
                       <option value="10">A menos de 10 km</option>
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/45 sm:right-6" />
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/55 sm:right-6" />
                   </div>
 
-                  <div className="hidden h-9 w-px bg-black/10 sm:block" />
+                  <div className="hidden h-9 w-px bg-black/15 sm:block" />
 
                   <div className="hero-field relative hidden min-w-0 flex-1 cursor-pointer flex-col justify-center rounded-full px-5 py-2 transition-colors sm:flex sm:px-6">
                     <span className="hero-field-label truncate text-[11px] font-extrabold uppercase tracking-[0.12em]">
@@ -523,7 +523,7 @@ export default function Home() {
                       <option value="$$">Moderado ($$)</option>
                       <option value="$$$">Lujo ($$$)</option>
                     </select>
-                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/45 sm:right-6" />
+                    <ChevronDown className="pointer-events-none absolute bottom-3 right-5 h-4 w-4 text-black/55 sm:right-6" />
                   </div>
 
                   <button

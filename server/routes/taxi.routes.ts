@@ -173,9 +173,12 @@ async function ensureTaxiSchema(): Promise<void> {
 
       await db.execute(sql`
         DO $$ BEGIN
-          CREATE TYPE payment_method_type AS ENUM ('cash', 'nequi', 'daviplata', 'card');
+          CREATE TYPE payment_method_type AS ENUM ('cash', 'nequi', 'daviplata', 'card', 'pse', 'qr', 'breb', 'wompi');
         EXCEPTION WHEN duplicate_object THEN null; END $$;
       `);
+      for (const value of ["pse", "qr", "breb", "wompi"]) {
+        await db.execute(sql.raw(`ALTER TYPE payment_method_type ADD VALUE IF NOT EXISTS '${value}'`));
+      }
 
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS payment_methods (

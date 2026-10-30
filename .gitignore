@@ -44,8 +44,12 @@ _capture-*/
 promo-video/
 
 # Hyperframes artifacts and secrets
-video-vianova/.hyperframes/artifacts/
+**/.hyperframes/artifacts/
 video-vianova/.env
+*.zip
+
+# Sesiones de IA / logs locales
+CONTEXTOS_ABELSITO/
 
 # Hyperframes assets (logos, qr, stills, cover)
 !video-vianova/assets/**/*.png

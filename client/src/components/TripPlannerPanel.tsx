@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { apiBase } from "@/lib/queryClient";
 import { authHeaders } from "@/lib/secureStorage";
+import RoutePaymentPanel from "./RoutePaymentPanel";
 
 export type TripStopDto = {
   id: string;
@@ -51,6 +52,9 @@ export type TripDto = {
   status: string;
   summary: string;
   totalEstimate: number;
+  paymentStatus: string;
+  paymentIntentId: string | null;
+  paidAt: string | null;
   createdAt: string | null;
   routeEstablishedAt: string | null;
   stops: TripStopDto[];
@@ -230,6 +234,8 @@ export default function TripPlannerPanel({ trip, onRouteEstablished }: Props) {
               Se enviará un mensaje de chat por cada parada del itinerario.
             </p>
           )}
+
+          <RoutePaymentPanel trip={trip} />
         </div>
       )}
     </div>

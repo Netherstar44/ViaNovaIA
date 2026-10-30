@@ -48,6 +48,9 @@ export type TripPlan = {
   status: string;
   summary: string;
   totalEstimate: number;
+  paymentStatus: string;
+  paymentIntentId: string | null;
+  paidAt: string | null;
   createdAt: string | null;
   routeEstablishedAt: string | null;
   stops: TripStop[];
@@ -101,10 +104,22 @@ export function ensureTripSchema(): Promise<void> {
         status text NOT NULL DEFAULT 'draft',
         summary text,
         total_estimate numeric(12,2) NOT NULL DEFAULT 0,
+        payment_status text NOT NULL DEFAULT 'unpaid',
+        payment_intent_id varchar,
+        paid_at timestamp,
         route_established_at timestamp,
         created_at timestamp DEFAULT now(),
         updated_at timestamp DEFAULT now()
       )
+    `);
+    await db.execute(drizzleSql`
+      ALTER TABLE trips ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'unpaid'
+    `);
+    await db.execute(drizzleSql`
+      ALTER TABLE trips ADD COLUMN IF NOT EXISTS payment_intent_id varchar
+    `);
+    await db.execute(drizzleSql`
+      ALTER TABLE trips ADD COLUMN IF NOT EXISTS paid_at timestamp
     `);
     await db.execute(drizzleSql`
       CREATE TABLE IF NOT EXISTS trip_stops (
@@ -184,6 +199,9 @@ function mapTrip(row: any, stops: TripStop[]): TripPlan {
     status: String(row.status || "draft"),
     summary: String(row.summary || ""),
     totalEstimate: num(row.total_estimate),
+    paymentStatus: String(row.payment_status || "unpaid"),
+    paymentIntentId: row.payment_intent_id ? String(row.payment_intent_id) : null,
+    paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
     routeEstablishedAt: row.route_established_at
       ? new Date(row.route_established_at).toISOString()

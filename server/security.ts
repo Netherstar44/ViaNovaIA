@@ -25,7 +25,12 @@ export type PublicUser = {
   role?: string | null;
   roles?: string[];
   avatarUrl?: string | null;
+  bannerUrl?: string | null;
   bio?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactWebsite?: string | null;
+  contactVisibility?: "public" | "followers" | "private";
   roleChangedAt?: Date | string | null;
   createdAt?: Date | string | null;
 };
@@ -44,7 +49,17 @@ const PUBLIC_USER_FIELDS = [
   "roles",
   "avatarUrl",
   "avatar_url",
+  "bannerUrl",
+  "banner_url",
   "bio",
+  "contactEmail",
+  "contact_email",
+  "contactPhone",
+  "contact_phone",
+  "contactWebsite",
+  "contact_website",
+  "contactVisibility",
+  "contact_visibility",
   "roleChangedAt",
   "role_changed_at",
   "createdAt",
@@ -67,7 +82,12 @@ export function sanitizeUser(user: any): PublicUser | null {
     email: (safe.email as string | null | undefined) ?? null,
     role: (safe.role as string | null | undefined) ?? null,
     avatarUrl: (safe.avatarUrl ?? safe.avatar_url ?? null) as string | null,
+    bannerUrl: (safe.bannerUrl ?? safe.banner_url ?? null) as string | null,
     bio: (safe.bio as string | null | undefined) ?? null,
+    contactEmail: (safe.contactEmail ?? safe.contact_email ?? null) as string | null,
+    contactPhone: (safe.contactPhone ?? safe.contact_phone ?? null) as string | null,
+    contactWebsite: (safe.contactWebsite ?? safe.contact_website ?? null) as string | null,
+    contactVisibility: ((safe.contactVisibility ?? safe.contact_visibility ?? "private") as "public" | "followers" | "private"),
     roleChangedAt: (safe.roleChangedAt ?? safe.role_changed_at ?? null) as Date | string | null,
     createdAt: (safe.createdAt ?? safe.created_at ?? null) as Date | string | null,
   };
@@ -291,7 +311,14 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
   if (SAFE_METHODS.has(req.method)) return next();
-  if (req.path === "/api/stripe/webhook" || req.originalUrl.startsWith("/api/stripe/webhook")) return next();
+  if (
+    req.path === "/api/stripe/webhook" ||
+    req.originalUrl.startsWith("/api/stripe/webhook") ||
+    req.path === "/api/payments/wompi/webhook" ||
+    req.originalUrl.startsWith("/api/payments/wompi/webhook")
+  ) {
+    return next();
+  }
 
   const origin = req.get("origin");
   const referer = req.get("referer");
@@ -448,20 +475,161 @@ export function validatePassword(password: unknown, username?: string): { ok: bo
   return { ok: true };
 }
 
-export function validateAvatarUrl(value: unknown): string | null {
+const DEFAULT_PROFILE_IMAGE_HOSTS = [
+  "res.cloudinary.com",
+  "lh3.googleusercontent.com",
+  "lh4.googleusercontent.com",
+  "lh5.googleusercontent.com",
+  "lh6.googleusercontent.com",
+  "images.unsplash.com",
+  "cdn.pixabay.com",
+  "avatars.githubusercontent.com",
+] as const;
+
+function profileImageHosts(): Set<string> {
+  const configured = String(process.env.PROFILE_IMAGE_HOSTS || "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set<string>([...DEFAULT_PROFILE_IMAGE_HOSTS, ...configured]);
+}
+
+/**
+ * Bloquea destinos internos. Aunque las URLs de imagen solo se renderizan en el
+ * navegador, esta comprobación evita que un futuro fetch/optimizador del servidor
+ * se convierta en un SSRF contra la red privada.
+ */
+export function isPrivateHostname(value: string): boolean {
+  const host = String(value || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
+  if (!host) return true;
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  if (host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".home.arpa")) return true;
+
+  // IPv6 literal (con o sin corchetes).
+  if (host.includes(":")) return true;
+
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const parts = ipv4.slice(1).map(Number);
+    if (parts.some((part) => part < 0 || part > 255)) return true;
+    const [a, b] = parts;
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127)
+    );
+  }
+
+  return false;
+}
+
+function assertSafeUrl(parsed: URL, maxLength: number, label: string): void {
+  if (parsed.toString().length > maxLength) throw new Error(`${label} es demasiado larga`);
+  if (parsed.protocol !== "https:") throw new Error(`${label} debe usar HTTPS`);
+  if (parsed.username || parsed.password) throw new Error(`${label} no puede incluir credenciales`);
+  if (parsed.port && parsed.port !== "443") throw new Error(`${label} no puede usar un puerto distinto de 443`);
+  if (isPrivateHostname(parsed.hostname)) throw new Error(`${label} apunta a una dirección no permitida`);
+}
+
+/** Imágenes de perfil: solo HTTPS y proveedores aprobados (Cloudinary/Google/…). */
+export function validateProfileImageUrl(value: unknown, kind: "avatar" | "banner" = "avatar"): string | null {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
-  if (raw.length > 1000) throw new Error("La URL del avatar es demasiado larga");
+  if (raw.length > 1000) throw new Error("La URL de la imagen es demasiado larga");
   let parsed: URL;
   try {
     parsed = new URL(raw);
   } catch {
-    throw new Error("La URL del avatar no es válida");
+    throw new Error("La URL de la imagen no es válida");
   }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    throw new Error("Solo se permiten URLs http(s) para el avatar");
+  assertSafeUrl(parsed, 1000, "La URL de la imagen");
+
+  const host = parsed.hostname.toLowerCase();
+  const allowed = profileImageHosts();
+  const isAllowed =
+    allowed.has(host) ||
+    host.endsWith(".cloudinary.com") ||
+    host.endsWith(".googleusercontent.com");
+  if (!isAllowed) {
+    throw new Error("Solo se permiten imágenes subidas a VIANova o proveedores aprobados");
   }
+
+  // No se necesita el fragmento para mostrar una imagen y puede usarse para
+  // ocultar rutas o generar enlaces engañosos.
+  parsed.hash = "";
   return parsed.toString();
+}
+
+/** Compatibilidad con llamadas existentes. */
+export function validateAvatarUrl(value: unknown): string | null {
+  return validateProfileImageUrl(value, "avatar");
+}
+
+export function validateBannerUrl(value: unknown): string | null {
+  return validateProfileImageUrl(value, "banner");
+}
+
+/** Sitio web/red social de contacto: HTTPS público, sin credenciales ni IP privadas. */
+export function validateContactWebsite(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  if (raw.length > 300) throw new Error("La URL de contacto es demasiado larga");
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error("La URL de contacto no es válida");
+  }
+  assertSafeUrl(parsed, 300, "La URL de contacto");
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+const CONTACT_VISIBILITIES = new Set(["public", "followers", "private"]);
+
+export function normalizeContactVisibility(value: unknown): "public" | "followers" | "private" {
+  const visibility = String(value ?? "private").trim().toLowerCase();
+  return (CONTACT_VISIBILITIES.has(visibility) ? visibility : "private") as "public" | "followers" | "private";
+}
+
+export function isValidContactVisibility(value: unknown): boolean {
+  return CONTACT_VISIBILITIES.has(String(value ?? "").trim().toLowerCase());
+}
+
+export function isValidContactEmail(value: unknown): boolean {
+  const email = normalizeEmail(value);
+  return email.length <= 254 && /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email);
+}
+
+export function isValidContactPhone(value: unknown): boolean {
+  const phone = String(value ?? "").trim();
+  if (!/^[+0-9][0-9 ()-]{6,31}$/.test(phone)) return false;
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15;
+}
+
+/** Limpia texto de perfil: sin etiquetas HTML ni caracteres de control. */
+export function sanitizeProfileText(value: unknown, max = 120): string {
+  return String(value ?? "")
+    .replace(/[\u0000-\u001F\u007F\u200B-\u200D\uFEFF]/g, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+/** Biografía: conserva saltos de línea, pero elimina HTML y controles peligrosos. */
+export function sanitizeProfileBio(value: unknown, max = 500): string {
+  return String(value ?? "")
+    .replace(/[\u0000\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\r\n?/g, "\n")
+    .trim()
+    .slice(0, max);
 }
 
 function paymentKey(): Buffer {
@@ -513,13 +681,127 @@ export function sanitizeProduct(product: any, canViewPrivate = false) {
   return publicFields;
 }
 
+/** Tipos de método de pago admitidos. La pasarela hospedada es `wompi`. */
+export const PAYMENT_METHOD_TYPES = [
+  "cash",
+  "nequi",
+  "daviplata",
+  "card",
+  "pse",
+  "qr",
+  "breb",
+  "wompi",
+] as const;
+
+export type PaymentMethodType = (typeof PAYMENT_METHOD_TYPES)[number];
+
+export function isPaymentMethodType(value: unknown): value is PaymentMethodType {
+  return PAYMENT_METHOD_TYPES.includes(String(value) as PaymentMethodType);
+}
+
+/**
+ * Normaliza y valida el único dato que guardamos por método.
+ *
+ * Regla de privacidad: VIANova nunca almacena números de tarjeta completos,
+ * CVV, claves bancarias, números de cuenta ni el contenido de un QR. Solo se
+ * aceptan referencias mínimas (últimos 4 dígitos, teléfono, llave Bre-B o una
+ * URL HTTPS del QR alojado por la pasarela).
+ */
+export function validatePaymentMethodDetails(
+  type: PaymentMethodType,
+  details: unknown,
+): { ok: true; details: string | null } | { ok: false; message: string } {
+  const raw = String(details ?? "").trim();
+
+  if (type === "cash" || type === "wompi") {
+    return { ok: true, details: null };
+  }
+
+  if (type === "qr") {
+    if (!raw) return { ok: false, message: "Vincula la URL HTTPS de tu QR de pago" };
+    if (raw.length > 500) return { ok: false, message: "La URL del QR es demasiado larga" };
+    try {
+      const url = new URL(raw);
+      if (url.protocol !== "https:") {
+        return { ok: false, message: "El QR debe apuntar a una URL HTTPS" };
+      }
+      if (url.username || url.password) {
+        return { ok: false, message: "La URL del QR no puede incluir credenciales" };
+      }
+      return { ok: true, details: url.toString() };
+    } catch {
+      return { ok: false, message: "La URL del QR no es válida" };
+    }
+  }
+
+  if (type === "pse") {
+    if (!raw) return { ok: true, details: null };
+    // Nombre de banco, no número de cuenta: debe contener al menos una letra.
+    if (
+      !/^[a-zA-Z0-9ÁÉÍÓÚÜÑáéíóúüñ .&_-]{2,60}$/.test(raw) ||
+      !/[a-zA-ZÁÉÍÓÚÜÑáéíóúüñ]/.test(raw)
+    ) {
+      return { ok: false, message: "Selecciona un banco válido para PSE" };
+    }
+    return { ok: true, details: raw };
+  }
+
+  if (type === "card") {
+    const last4 = raw.replace(/\D/g, "");
+    if (!/^\d{4}$/.test(last4)) {
+      return { ok: false, message: "Ingresa solo los últimos 4 dígitos de la tarjeta" };
+    }
+    return { ok: true, details: last4 };
+  }
+
+  if (type === "nequi" || type === "daviplata") {
+    const digits = raw.replace(/\D/g, "");
+    const national = digits.startsWith("57") && digits.length === 12 ? digits.slice(2) : digits;
+    if (!/^3\d{9}$/.test(national)) {
+      return { ok: false, message: "Ingresa un número de celular colombiano válido" };
+    }
+    return { ok: true, details: national };
+  }
+
+  // Bre-B: celular, correo o llave alfanumérica. Nunca números de cuenta.
+  if (/^\+?[0-9\s()-]+$/.test(raw)) {
+    const phoneDigits = raw.replace(/\D/g, "");
+    const nationalPhone = phoneDigits.startsWith("57") && phoneDigits.length === 12
+      ? phoneDigits.slice(2)
+      : phoneDigits;
+    if (/^3\d{9}$/.test(nationalPhone)) {
+      return { ok: true, details: nationalPhone };
+    }
+  }
+  if (isValidEmail(raw)) {
+    return { ok: true, details: normalizeEmail(raw) };
+  }
+  if (/^[A-Za-z0-9._@+-]{8,32}$/.test(raw) && /[A-Za-z]/.test(raw)) {
+    return { ok: true, details: raw };
+  }
+  return {
+    ok: false,
+    message: "Ingresa una llave Bre-B válida (celular, correo o llave alfanumérica)",
+  };
+}
+
 /** Nunca devolver detalles completos de un método de pago. */
 export function sanitizePaymentMethod(method: any) {
   if (!method || typeof method !== "object") return method;
   const { details, ...rest } = method;
+  const type = String(method.type || "");
+  let masked = maskPaymentDetails(details);
+
+  if (details) {
+    if (type === "qr") masked = "QR vinculado";
+    else if (type === "pse") masked = "PSE vinculado";
+    else if (type === "wompi") masked = "Pasarela Wompi";
+    else if (type === "card") masked = `•••• ${String(decryptSensitive(details) || "").slice(-4)}`;
+  }
+
   return {
     ...rest,
-    details: maskPaymentDetails(details),
+    details: masked,
     hasDetails: Boolean(details),
   };
 }

@@ -445,6 +445,9 @@ export default function Dashboard() {
               <Button size="sm" onClick={openExportDialog} className="gap-2 rounded-xl bg-primary font-bold text-black">
                 <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setLocation("/payments")} className="gap-2 rounded-xl">
+                <Wallet className="h-4 w-4" /> Pagos
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setLocation(quickAction.path)} className="gap-2 rounded-xl">
                 <quickAction.icon className="h-4 w-4" /> {quickAction.label}
               </Button>

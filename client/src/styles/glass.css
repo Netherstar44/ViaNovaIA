@@ -614,9 +614,11 @@
    canvas. CSS keeps the rim, shadow and fallback material; the tint layer
    restores text contrast without hiding the refraction. */
 
-.lg-surface {
-  position: relative;
-  isolation: isolate;
+@layer components {
+  .lg-surface {
+    position: relative;
+    isolation: isolate;
+  }
 }
 
 .lg-canvas-host {
@@ -676,12 +678,14 @@ html[data-glass-engine="webgl"] .lg-surface[data-glass-ready="true"] {
   );
 }
 
-/* The hero search keeps dark ink in every palette, so its tint stays light. */
+/* The hero search keeps dark ink in every palette, so its tint stays light.
+   It must stay opaque enough to guarantee 4.5:1 text contrast even when the
+   sampled photo behind it is dark or highly saturated. */
 .lg-surface--search {
   --lg-canvas-tint: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.34),
-    rgba(255, 255, 255, 0.16)
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.6)
   );
 }
 

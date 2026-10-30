@@ -22,6 +22,14 @@ PUBLIC_URL=http://localhost:8787
 CORS_ALLOWED_ORIGINS=http://localhost:8787
 GOOGLE_REDIRECT_URI=http://localhost:8787/api/auth/google
 
+# Wompi sandbox. El enlace de prueba funciona sin llaves; con llaves se firma
+# el monto y la referencia. El webhook exige WOMPI_EVENTS_SECRET.
+PAYMENT_SANDBOX_MODE=true
+WOMPI_CHECKOUT_URL=https://checkout.wompi.co/l/test_VPOS_tGKfH8
+WOMPI_PUBLIC_KEY=
+WOMPI_INTEGRITY_SECRET=
+WOMPI_EVENTS_SECRET=
+
 # Opcional: rate limiting distribuido entre isolates de Workers.
 # UPSTASH_REDIS_REST_URL=
 # UPSTASH_REDIS_REST_TOKEN=

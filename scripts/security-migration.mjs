@@ -41,8 +41,12 @@ const ddl = [
      CREATE TYPE withdrawal_status AS ENUM ('pending', 'completed', 'rejected');
    EXCEPTION WHEN duplicate_object THEN null; END $$`,
   `DO $$ BEGIN
-     CREATE TYPE payment_method_type AS ENUM ('cash', 'nequi', 'daviplata', 'card');
+     CREATE TYPE payment_method_type AS ENUM ('cash', 'nequi', 'daviplata', 'card', 'pse', 'qr', 'breb', 'wompi');
    EXCEPTION WHEN duplicate_object THEN null; END $$`,
+  `ALTER TYPE payment_method_type ADD VALUE IF NOT EXISTS 'pse'`,
+  `ALTER TYPE payment_method_type ADD VALUE IF NOT EXISTS 'qr'`,
+  `ALTER TYPE payment_method_type ADD VALUE IF NOT EXISTS 'breb'`,
+  `ALTER TYPE payment_method_type ADD VALUE IF NOT EXISTS 'wompi'`,
   `DO $$ BEGIN
      CREATE TYPE asset_type AS ENUM ('IMAGE', 'VIDEO', 'IMAGE_360', 'MODEL_3D', 'VR_TOUR');
    EXCEPTION WHEN duplicate_object THEN null; END $$`,
@@ -58,6 +62,11 @@ const ddl = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled text DEFAULT 'false'`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_attempts integer DEFAULT 0`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider text DEFAULT 'local'`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url text`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_email text`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_phone text`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_website text`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_visibility text DEFAULT 'private'`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_plan text DEFAULT 'free'`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at timestamp`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_available boolean DEFAULT false`,

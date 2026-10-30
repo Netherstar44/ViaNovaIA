@@ -246,8 +246,12 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button id="navbar-user-menu-btn" data-testid="navbar-user-menu-btn" variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary-ink sm:h-10 sm:w-10">
-                    <User className="h-5 w-5" />
+                  <Button id="navbar-user-menu-btn" data-testid="navbar-user-menu-btn" variant="ghost" size="icon" className="h-9 w-9 overflow-hidden rounded-full border border-border/50 bg-secondary/50 hover:bg-secondary hover:text-primary-ink sm:h-10 sm:w-10">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
                     <span className="sr-only">{t('navbar.account', 'Cuenta')}</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -263,6 +267,11 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => setLocation("/dashboard")} className="cursor-pointer gap-2">
                     <LayoutDashboard className="h-4 w-4 text-primary-ink" />
                     {t('navbar.dashboard', 'Mi Panel')}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => setLocation("/profile")} className="cursor-pointer gap-2">
+                    <User className="h-4 w-4 text-primary-ink" />
+                    Mi Perfil
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer gap-2">
