@@ -936,3 +936,12 @@ html[data-glass-engine="webgl"] .lg-surface--orb[data-glass-ready="true"] {
     transition: none;
   }
 }
+
+/* El buscador del hero siempre usa vidrio claro con tinta oscura. Los modos
+   de respaldo (sin backdrop-filter, transparencia reducida o WebGL aún sin
+   pintar) no deben cambiarlo al color oscuro de la tarjeta: las etiquetas
+   desaparecerían sobre la foto oscura. */
+html:not([data-glass-engine="webgl"]) .hero-search,
+html[data-glass-engine="webgl"] .hero-search:not([data-glass-ready="true"]) {
+  background-color: rgba(255, 255, 255, 0.86);
+}
