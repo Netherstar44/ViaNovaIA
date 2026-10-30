@@ -48,8 +48,6 @@ promo-video/
 video-vianova/.env
 *.zip
 
-# Sesiones de IA / logs locales
-CONTEXTOS_ABELSITO/
 
 # Hyperframes assets (logos, qr, stills, cover)
 !video-vianova/assets/**/*.png
