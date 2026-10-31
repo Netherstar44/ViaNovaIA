@@ -2,6 +2,7 @@
   "name": "via-nova-ia",
   "version": 2,
   "buildCommand": "npm run build",
+  "installCommand": "npm ci --include=dev",
   "outputDirectory": "dist/public",
   "cleanUrls": true,
   "trailingSlash": false,

@@ -1,0 +1,11 @@
+# Artefactos pesados que no participan del build (~273 MB trackeados).
+# Mantenerlos fuera del deploy reduce el tiempo de subida y evita limites de tamano.
+ViaNovaIA.apk
+*.apk
+configurar-skill-heygen-hyperframes.json
+CONTEXTOS_ABELSITO/
+video-vianova/
+video-internacional/
+video-empresarial/
+video-taxi/
+*.mp4
