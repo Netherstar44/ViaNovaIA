@@ -162,7 +162,7 @@ Los scripts de ataque y las sesiones de auditoría se eliminaron del árbol de t
 
 ```bash
 npm run check
-npm test                 # 40/40, incluye regresiones de seguridad
+npm test                 # 51/51, incluye regresiones de seguridad
 npm run build
 npm run start            # NODE_ENV=production
 ```
