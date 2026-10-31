@@ -364,18 +364,16 @@
   }
 }
 
+/* The orb is a single yellow glass bead: no outer shell, no dark ring. */
 .lg-surface--orb {
-  border: 1px solid var(--lg-border);
-  background-color: var(--lg-solid-raised);
-  box-shadow:
-    0 20px 44px -18px rgba(20, 14, 2, 0.6),
-    inset 0 1px 0 var(--lg-rim-top),
-    inset 0 -1px 0 var(--lg-rim-bottom);
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
 }
 
 .lg-orb__core {
   position: absolute;
-  inset: 6px;
+  inset: 0;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -471,13 +469,22 @@
     justify-content: center;
     gap: 2px;
     border-radius: 20px;
-    color: color-mix(in srgb, var(--muted-foreground) 90%, transparent);
+    color: var(--fg);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     transform-origin: center center;
   }
 
   .mobile-dock__tab[data-active="true"] {
+    color: var(--primary-fg);
+  }
+
+  /* Dark palettes paint the indicator as a muted accent tint, so the active
+     label has to flip back to the light accent ink. */
+  .dark .mobile-dock__tab[data-active="true"],
+  .sunset .mobile-dock__tab[data-active="true"],
+  .ocean .mobile-dock__tab[data-active="true"],
+  .forest .mobile-dock__tab[data-active="true"] {
     color: var(--primary-ink);
   }
 
@@ -500,6 +507,17 @@
     );
   }
 
+  .mobile-dock__tab--ai[data-active="true"] .mobile-dock__icon {
+    color: var(--primary-fg);
+  }
+
+  .dark .mobile-dock__tab--ai[data-active="true"] .mobile-dock__icon,
+  .sunset .mobile-dock__tab--ai[data-active="true"] .mobile-dock__icon,
+  .ocean .mobile-dock__tab--ai[data-active="true"] .mobile-dock__icon,
+  .forest .mobile-dock__tab--ai[data-active="true"] .mobile-dock__icon {
+    color: var(--primary-ink);
+  }
+
   .mobile-dock__label {
     font-size: 9.5px;
     line-height: 1;
@@ -513,10 +531,13 @@
     top: 4px;
     z-index: 0;
     border-radius: 20px;
-    background: color-mix(in srgb, var(--card) 72%, var(--primary) 28%);
+    /* 72% accent keeps the yellow vivid in light mode instead of a washed
+       cream. Dark palettes use the softer tint below. */
+    background: color-mix(in srgb, var(--card) 28%, var(--primary) 72%);
     box-shadow:
       0 6px 14px -8px rgba(30, 24, 6, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -2px 5px color-mix(in srgb, var(--primary-border) 60%, transparent);
     pointer-events: none;
     transform-origin: center center;
   }
@@ -537,3 +558,4 @@
     transition: none;
   }
 }
+

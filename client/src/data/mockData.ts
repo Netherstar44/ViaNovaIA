@@ -13,6 +13,9 @@ export interface LocationItem {
   priceRange?: string;
   hasVR?: boolean;
   hasAR?: boolean;
+  /** Real equirectangular 2:1 panorama uploaded by the provider. */
+  panoramaUrl?: string | null;
+  panoramaCaption?: string;
   contact?: string;
   parentHotelId?: string | null;
 }

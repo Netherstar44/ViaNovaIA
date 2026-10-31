@@ -4,11 +4,11 @@ import { LogOut, User, Settings, Package, Building2, Utensils, TentTree, Car, Cl
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
-// Logos sin fondo (para el Navbar)
-import logoPrincipal from "../assets/Logo_principal-removebg-preview.png";
-import logoOcean   from "../assets/Logo_ocean-removebg-preview.png";
-import logoForest  from "../assets/Logo_forest-removebg-preview.png";
-import logoSunset  from "../assets/Logo_sunset-Photoroom.png";
+// Logos sin fondo, recortados al arte visible (para el Navbar)
+import logoPrincipal from "../assets/brand-mark-principal.png";
+import logoOcean   from "../assets/brand-mark-ocean.png";
+import logoForest  from "../assets/brand-mark-forest.png";
+import logoSunset  from "../assets/brand-mark-sunset.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -108,14 +108,16 @@ export default function Navbar() {
             aria-label="VIANova, ir al inicio"
           >
             <motion.div
-              whileHover={{ scale: 1.08, rotate: 4 }}
+              whileHover={{ scale: 1.06, rotate: 3 }}
               transition={{ duration: 0.25 }}
               className="flex shrink-0 items-center justify-center"
             >
               <img
                 src={logoSrc}
                 alt=""
-                className="h-12 w-12 object-contain drop-shadow-md sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+                width={80}
+                height={80}
+                className="h-14 w-14 object-contain drop-shadow-md sm:h-16 sm:w-16 lg:h-20 lg:w-20"
               />
             </motion.div>
             <span className="truncate text-foreground notranslate max-[379px]:hidden"><span className="text-primary-ink">VIA</span>Nova</span>

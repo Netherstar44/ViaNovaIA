@@ -165,17 +165,6 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
 
         {children}
       </div>
-
-      <p className="absolute bottom-3 right-4 z-20 text-[10px] font-medium text-white/55 sm:bottom-4 sm:right-6">
-        <a
-          href="https://commons.wikimedia.org/wiki/Category:Tourism_in_Colombia"
-          target="_blank"
-          rel="noreferrer"
-          className="underline decoration-white/30 underline-offset-2 transition-colors hover:text-white/85"
-        >
-          Fotografías: Wikimedia Commons · CC BY / CC BY-SA
-        </a>
-      </p>
     </section>
   );
 };
@@ -795,7 +784,7 @@ export default function Home() {
                           </DialogContent>
                         </Dialog>
 
-                        <Button onClick={(e) => { e.stopPropagation(); setVrMode('interior') }} className="h-12 px-8 rounded-xl bg-primary text-black font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all">
+                        <Button onClick={(e) => { e.stopPropagation(); setVrMode('interior') }} className={`h-12 px-8 rounded-xl bg-primary text-black font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all ${selectedItem.panoramaUrl ? '' : 'hidden'}`}>
                           <Eye className="mr-2 h-5 w-5" />
                           {t('home.virtual_tour')}
                         </Button>
@@ -810,7 +799,12 @@ export default function Home() {
                           >
                             <DialogTitle className="sr-only">Tour virtual interior 360°</DialogTitle>
                             <Suspense fallback={<InlineLoader />}>
-                              <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                              <VRViewer
+                                mode="interior"
+                                onClose={() => setVrMode(null)}
+                                panoramaUrl={selectedItem.panoramaUrl}
+                                panoramaCaption={selectedItem.name}
+                              />
                             </Suspense>
                           </DialogContent>
                         </Dialog>
