@@ -123,7 +123,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
       <style dangerouslySetInnerHTML={{__html: `
         .swiper-button-next, .swiper-button-prev {
           color: #c9a227 !important;
-          background: rgba(9, 10, 12, 0.44);
+          background: rgba(9, 10, 12, 0.78);
           border: 1px solid rgba(255, 255, 255, 0.16);
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 6px 18px -8px rgba(0, 0, 0, 0.55);
           width: 40px !important;
@@ -131,8 +131,6 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
           border-radius: 50%;
           opacity: 0;
           transition: all 0.3s ease;
-          -webkit-backdrop-filter: blur(18px) saturate(190%);
-          backdrop-filter: blur(18px) saturate(190%);
         }
         .swiper-button-next:after, .swiper-button-prev:after {
           font-size: 16px !important;

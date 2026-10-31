@@ -415,11 +415,11 @@ export function PanoramaCamera({ onCapture }: PanoramaCameraProps) {
           {active && (
             <>
               <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-black/75 via-black/25 to-transparent p-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/85 backdrop-blur-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/85">
                   <Camera className="h-3 w-3 text-primary" />
                   360°
                 </span>
-                <span className="rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-semibold text-white/75 backdrop-blur-sm">
+                <span className="rounded-full border border-white/15 bg-black/70 px-2.5 py-1 text-[10px] font-semibold text-white/75">
                   {frames} {frames === 1 ? "captura" : "capturas"}
                 </span>
               </div>
@@ -452,7 +452,7 @@ export function PanoramaCamera({ onCapture }: PanoramaCameraProps) {
               </div>
 
               {status === "paused" && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/45 backdrop-blur-[1px]">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/70">
                   <span className="rounded-full border border-white/15 bg-black/60 px-4 py-2 text-xs font-semibold text-white/85">
                     Barrido en pausa
                   </span>
@@ -460,7 +460,7 @@ export function PanoramaCamera({ onCapture }: PanoramaCameraProps) {
               )}
 
               {status === "finishing" && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/65 backdrop-blur-[1px]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   <span className="text-xs font-semibold text-white/85">Creando panorama…</span>
                 </div>
