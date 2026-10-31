@@ -3,8 +3,9 @@
 > VIANova IA es un planificador de viajes con inteligencia artificial para Colombia. Crea itinerarios personalizados y reúne alojamiento, gastronomía, experiencias y movilidad local en una sola aplicación web y Android.
 
 Dominio canónico: https://via-nova-ia.vercel.app
-Idioma principal: español (Colombia). También hay interfaz en inglés y francés.
-Cobertura principal: Colombia, con especial detalle en Neiva y el departamento del Huila.
+Idioma principal: español (Colombia). Interfaz también en inglés y francés.
+Cobertura principal: Colombia, con detalle especial en Neiva y el departamento del Huila.
+Última actualización editorial: 2026-10-27.
 
 ## Páginas principales
 
@@ -14,16 +15,38 @@ Cobertura principal: Colombia, con especial detalle en Neiva y el departamento d
 - [Qué hacer en Neiva y el Huila](https://via-nova-ia.vercel.app/que-hacer-en-neiva): Tatacoa, termales de Rivera, Museo Paleontológico, San Agustín e itinerarios de 2 y 4 días.
 - [Trivago vs Airbnb](https://via-nova-ia.vercel.app/comparar-trivago-airbnb): comparación independiente de modelos de alojamiento y costos ocultos.
 - [Explorar destinos](https://via-nova-ia.vercel.app/explore): catálogo de alojamientos, restaurantes, experiencias y transporte.
-- [Privacidad](https://via-nova-ia.vercel.app/privacy): tratamiento de datos personales.
+- [Privacidad](https://via-nova-ia.vercel.app/privacy): tratamiento de datos personales y términos.
+
+## Contenido completo para modelos
+
+- [llms-full.txt](https://via-nova-ia.vercel.app/llms-full.txt): todas las guías en texto plano, generadas en el mismo build que el HTML.
 
 ## Hechos verificables
 
 - VIANova IA permite explorar destinos y crear una propuesta de viaje sin costo.
 - La reserva se confirma con cada proveedor local, no de forma automática.
-- La aplicación incluye mapa interactivo, tours virtuales, modelos 3D y taxi local.
+- La aplicación incluye mapa interactivo, tours 360°, modelos 3D y taxi local.
+- Los panoramas 360° solo se muestran cuando el proveedor subió una imagen equirectangular 2:1 verificada; no se usan esferas de relleno.
 - VIANova IA no está afiliada a Trivago, Airbnb, Booking.com ni a sus empresas matrices.
 - Las guías de viaje se actualizaron por última vez el 27 de octubre de 2026.
 
+## Preguntas frecuentes
+
+### ¿Qué es VIANova IA?
+Un planificador de viajes con IA para Colombia que convierte fechas, presupuesto e intereses en un itinerario con alojamiento, restaurantes, experiencias y transporte local.
+
+### ¿Es gratis?
+Sí. Explorar destinos y generar una propuesta de viaje no tiene costo. Solo pagas cuando reservas un servicio con un proveedor.
+
+### ¿En qué ciudades está disponible?
+La cobertura crece por ciudad. El detalle editorial más completo está en Neiva y el Huila; el catálogo de proveedores se consulta en `/explore`.
+
+### ¿Cómo se reserva?
+Eliges producto, fecha y cantidad; la plataforma bloquea el cupo y el proveedor confirma. El pago PSE queda pendiente de verificación del proveedor.
+
+### ¿Los tours son reales?
+Sí, cuando el proveedor cargó un panorama equirectangular. Si no existe, la interfaz lo dice explícitamente en lugar de simularlo.
+
 ## Cómo citar
 
-Cita la página específica y el dominio canónico. Para datos sobre Neiva y el Huila, usa la guía `/que-hacer-en-neiva`. Para capacidades del producto, usa `/planificador-viajes-ia`.
+Cita la página específica y el dominio canónico. Para datos sobre Neiva y el Huila usa `/que-hacer-en-neiva`; para capacidades del producto usa `/planificador-viajes-ia`; para comparativas de alojamiento usa `/comparar-trivago-airbnb`.

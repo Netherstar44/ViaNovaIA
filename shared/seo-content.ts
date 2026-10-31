@@ -765,6 +765,14 @@ export function websiteNode() {
     alternateName: BRAND_SHORT,
     inLanguage: "es-CO",
     publisher: { "@id": `${SITE_URL}/#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/explore?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 

@@ -344,34 +344,100 @@ function renderPage(template: string, page: SeoPage): string {
 }
 
 function renderSitemap(): string {
-  const today = new Date().toISOString().slice(0, 10);
+  const lastmod = CONTENT_UPDATED;
   const core = [
-    { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly" },
-    { url: absoluteUrl("/explore"), priority: "0.7", changefreq: "weekly" },
+    { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly", image: `${SITE_URL}/og-image.png` },
+    { url: absoluteUrl("/explore"), priority: "0.7", changefreq: "weekly", image: `${SITE_URL}/og-image.png` },
     { url: absoluteUrl("/privacy"), priority: "0.2", changefreq: "yearly" },
   ];
   const guides = seoPages.map((page) => ({
     url: absoluteUrl(pagePath(page.slug)),
     priority: "0.9",
     changefreq: "monthly",
+    image: guideVisual(page.slug).image,
+    slug: page.slug,
   }));
 
   const entries = [...core, ...guides]
-    .map(
-      (entry) => `  <url>
+    .map((entry) => {
+      const alternates = ["es-CO", "en", "fr"]
+        .map(
+          (lang) =>
+            `    <xhtml:link rel="alternate" hreflang="${lang}" href="${entry.url}" />`,
+        )
+        .join("\n");
+      const image = "image" in entry && entry.image
+        ? `\n    <image:image>\n      <image:loc>${entry.image}</image:loc>\n    </image:image>`
+        : "";
+      return `  <url>
     <loc>${entry.url}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority}</priority>
-  </url>`,
-    )
+${alternates}${image}
+  </url>`;
+    })
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${entries}
 </urlset>
 `;
+}
+
+/**
+ * `llms-full.txt` is the long-form companion of `llms.txt`: every guide is
+ * flattened to plain text so answer engines can quote it without rendering
+ * the React app. It is generated at build time from the same source of truth
+ * as the HTML pages, so it can never drift.
+ */
+function renderLlmsFull(): string {
+  const lines: string[] = [
+    "# VIANova IA — contenido completo para modelos de lenguaje",
+    "",
+    `> Fuente canónica: ${SITE_URL}`,
+    `> Última actualización editorial: ${CONTENT_UPDATED}`,
+    "> Idioma: español (Colombia). Interfaz también en inglés y francés.",
+    "> Licencia de citación: puedes citar y resumir este contenido indicando la URL canónica de la página.",
+    "",
+    "## Índice",
+    "",
+    ...seoPages.map((page) => `- ${absoluteUrl(pagePath(page.slug))} — ${page.h1}`),
+    "",
+  ];
+
+  for (const page of seoPages) {
+    lines.push(
+      "---",
+      "",
+      `# ${page.h1}`,
+      "",
+      `URL canónica: ${absoluteUrl(pagePath(page.slug))}`,
+      `Descripción: ${page.description}`,
+      "",
+      page.intro,
+      "",
+    );
+    for (const section of page.sections) {
+      lines.push(`## ${section.heading}`, "");
+      for (const paragraph of section.paragraphs) lines.push(paragraph, "");
+      if (section.bullets?.length) {
+        for (const bullet of section.bullets) lines.push(`- ${bullet}`);
+        lines.push("");
+      }
+    }
+    if (page.faqs.length) {
+      lines.push("## Preguntas frecuentes", "");
+      for (const faq of page.faqs) {
+        lines.push(`### ${faq.question}`, "", faq.answer, "");
+      }
+    }
+  }
+
+  return `${lines.join("\n").trim()}\n`;
 }
 
 export function seoPagesPlugin(): Plugin {
@@ -407,6 +473,7 @@ export async function generateSeoPages(outDir: string): Promise<void> {
   }
 
   writeFileSync(path.join(outDir, "sitemap.xml"), renderSitemap(), "utf8");
+  writeFileSync(path.join(outDir, "llms-full.txt"), renderLlmsFull(), "utf8");
 
   const verification = verificationTags();
   if (verification) {
