@@ -1,12 +1,54 @@
 # ViaNovaIA
 
+<p align="center">
+  <img src="client/src/assets/brand-mark-principal.png" alt="VIANova" width="132" />
+</p>
+
+<p align="center"><strong>VIANova IA</strong> — planificador de viajes con inteligencia artificial para Colombia.</p>
+
+<p align="center">
+  <a href="https://via-nova-ia.vercel.app"><img alt="Deploy" src="https://img.shields.io/badge/deploy-vercel-000000?style=flat-square&logo=vercel&logoColor=white" /></a>
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white" />
+  <img alt="Tailwind" src="https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img alt="Express" src="https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white" />
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=flat-square&logo=postgresql&logoColor=white" />
+  <img alt="Node" src="https://img.shields.io/badge/Node-%E2%89%A522-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white" />
+  <img alt="Security" src="https://img.shields.io/badge/security-tests%20%2B%20audit-2ea44f?style=flat-square&logo=shield&logoColor=white" />
+  <img alt="License" src="https://img.shields.io/badge/license-private-6b7280?style=flat-square" />
+</p>
+
 Plataforma full-stack de turismo y comercio local para Colombia. ViaNovaIA conecta viajeros con hoteles, restaurantes, experiencias de recreación, taxistas y traductores, e integra un asistente de viaje con IA, una red social, un marketplace con órdenes y paneles analíticos por rol.
 
 El repositorio contiene una SPA React, una API Express ejecutable en Node.js o Cloudflare Workers, una base de datos PostgreSQL (Neon), una app Android empaquetada con Capacitor y un prototipo móvil independiente en Expo.
 
-> Estado del documento: describe la implementación real del repositorio al **27 de octubre de 2026**. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
+> Estado del documento: describe la implementación real del repositorio al **30 de octubre de 2026**. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
 
 > **Resumen de estado:** MVP funcional y desplegado. La web/PWA, la API, el login local y con Google, el marketplace, las reservas, el taxi, el social y la capa SEO están operativos. Pagos PSE, offline de escrituras y publicación en tiendas siguen siendo prototipo o trabajo pendiente.
+
+> **Antes de tocar código:** lee [`AGENTS.md`](./AGENTS.md). Contiene las reglas de seguridad obligatorias, el flujo de trabajo y las trampas conocidas de este repositorio.
+
+### Seguridad en una vista
+
+| Control | Dónde vive | Qué garantiza |
+| --- | --- | --- |
+| Regresión de seguridad | `tests/security.test.ts` | 51 pruebas: auth, roles, IDOR, validación, cabeceras, rate limit. |
+| Auditoría de dependencias | `.github/workflows/security.yml` | `npm audit --omit=dev --audit-level=high` bloquea altas y críticas. |
+| Cabeceras HTTP | `client/public/_headers` | `nosniff`, `DENY` en frames, HSTS, `Referrer-Policy`, `Permissions-Policy`. |
+| Secretos | `.env` (ignorado) + `.env.example` | Ningún secreto se versiona; CI usa valores dummy. |
+| Contraseñas | `server/security.ts` | `scrypt` con sal por usuario, comparación en tiempo constante. |
+| Sesiones | `server/security.ts` | JWT corto + refresh con rotación, `SESSION_IDLE_MINUTES`. |
+| Pagos | `server/security.ts`, `server/payments.ts` | Cifrado AES-256-GCM de credenciales de pasarela y verificación de webhooks. |
+| SEO/GEO | `vite-plugin-seo-pages.ts`, `client/public/llms*.txt` | JSON-LD, sitemap, `llms.txt` y `llms-full.txt` generados en build. |
+
+### Cambios de seguridad recientes
+
+- **2026-10-30** — `AGENTS.md` con reglas de seguridad obligatorias para agentes y personas nuevas.
+- **2026-10-30** — `robots.txt` con allowlist explícita de rastreadores de IA y bloqueo de rutas privadas; `llms-full.txt` generado desde la misma fuente que el HTML.
+- **2026-10-30** — dependencias de build forzadas en Vercel (`npm ci --include=dev`) para que el despliegue no dependa de `NODE_ENV`.
+- **2026-10-29** — auditoría de producción sin vulnerabilidades altas ni críticas (8 moderadas aceptadas de `exceljs → archiver → glob → minimatch`).
+- **2026-10-27** — pruebas de regresión de seguridad ampliadas a 51 casos y cabeceras `_headers` endurecidas.
 
 ---
 
