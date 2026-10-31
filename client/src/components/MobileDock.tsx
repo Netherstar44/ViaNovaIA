@@ -196,7 +196,9 @@ export default function MobileDock() {
     };
     draggingRef.current = false;
     suppressClickRef.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // No capturar el puntero: la captura reasigna el `click` al pill y
+    // rompería los enlaces del dock. El arrastre horizontal sigue funcionando
+    // porque los eventos se emiten sobre los hijos del propio pill.
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -310,6 +312,7 @@ export default function MobileDock() {
                 <Link
                   href={tab.href ?? "/"}
                   className="mobile-dock__tab"
+                  draggable={false}
                   data-active={active ? "true" : undefined}
                   aria-current={active ? "page" : undefined}
                   onClick={(event) => handleTabClick(event, tab)}

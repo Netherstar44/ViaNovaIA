@@ -211,6 +211,7 @@ function App() {
       attribute="class"
       defaultTheme="light"
       enableSystem={false}
+      enableColorScheme={false}
       disableTransitionOnChange
       themes={["light", "dark", "sunset", "ocean", "forest"]}
     >
