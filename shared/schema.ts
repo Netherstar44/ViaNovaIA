@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   email: text("email"),
   role: userRoleEnum("role").default("traveler"),
   roleChangedAt: timestamp("role_changed_at"),
+  passwordChangedAt: timestamp("password_changed_at"),
   avatarUrl: text("avatar_url"),
   locationLat: text("location_lat"),
   locationLng: text("location_lng"),

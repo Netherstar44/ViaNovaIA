@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, optionalAuth } from "../security.js";
+import { requireAuth, optionalAuth, stripHtmlTags } from "../security.js";
 import { neon } from "@neondatabase/serverless";
 
 function getSql() {
@@ -125,7 +125,9 @@ async function notify(sql: any, recipient: string, actor: string, type: string, 
 }
 
 function cleanText(value: unknown, max: number): string {
-  return String(value ?? "").replace(/\u0000/g, "").trim().slice(0, max);
+  // Texto plano: las etiquetas HTML nunca deben persistir en posts, comentarios
+  // ni mensajes. React escapa al renderizar, esto es defensa en profundidad.
+  return stripHtmlTags(value).replace(/\u0000/g, "").trim().slice(0, max);
 }
 
 // GET /api/social/posts?limit=&before=

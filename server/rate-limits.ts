@@ -43,6 +43,20 @@ export const authLimiter = rateLimit({
   handler: jsonHandler("Demasiados intentos. Por favor, inténtalo de nuevo más tarde."),
 });
 
+/**
+ * Límite por IP independiente del usuario. Sin él, rotar nombres de usuario
+ * (password spraying) esquiva el límite por cuenta. Solo cuentan los intentos
+ * fallidos para no penalizar inicios de sesión legítimos.
+ */
+export const loginIpLimiter = rateLimit({
+  ...common(),
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => `login-ip:${ip(req)}`,
+  handler: jsonHandler("Demasiados intentos desde esta conexión. Espera 15 minutos."),
+});
+
 export const registerLimiter = rateLimit({
   ...common(),
   windowMs: 60 * 60 * 1000,
@@ -73,6 +87,15 @@ export const forgotPasswordLimiter = rateLimit({
   max: 5,
   keyGenerator: (req) => `forgot:${ip(req)}:${accountHash(req.body?.email)}`,
   handler: jsonHandler("Demasiadas solicitudes de recuperación. Inténtalo más tarde."),
+});
+
+/** Evita enumerar correos rotándolos desde una misma IP. */
+export const forgotPasswordIpLimiter = rateLimit({
+  ...common(),
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => `forgot-ip:${ip(req)}`,
+  handler: jsonHandler("Demasiadas solicitudes de recuperación desde esta conexión. Inténtalo más tarde."),
 });
 
 export const resetTokenLimiter = rateLimit({

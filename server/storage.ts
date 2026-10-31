@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, and, or, inArray, sql as drizzleSql } from "drizzle-orm";
+import { eq, desc, and, inArray, sql as drizzleSql } from "drizzle-orm";
 import {
   users,
   messages,
@@ -235,11 +235,11 @@ export class DbStorage implements IStorage {
 
   async getNotificationsForUser(username: string): Promise<DbNotification[]> {
     const db = getDb();
+    // `provider_username` guarda siempre al destinatario; `traveler_username`
+    // es quien realizó la acción. El actor no debe ver ni alterar la bandeja
+    // del destinatario.
     return await db.select().from(notifications)
-      .where(or(
-        eq(notifications.providerUsername, username),
-        eq(notifications.travelerUsername, username),
-      ))
+      .where(eq(notifications.providerUsername, username))
       .orderBy(desc(notifications.createdAt));
   }
 
@@ -249,10 +249,7 @@ export class DbStorage implements IStorage {
       ? eq(notifications.id, id)
       : and(
           eq(notifications.id, id),
-          or(
-            eq(notifications.providerUsername, username),
-            eq(notifications.travelerUsername, username),
-          ),
+          eq(notifications.providerUsername, username),
         );
     const rows = await db.update(notifications)
       .set({ isRead: "true" })
@@ -312,7 +309,8 @@ export class DbStorage implements IStorage {
 
   async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
     const db = getDb();
-    await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
+    // Marca el cambio para que requireAuth invalide los JWT emitidos antes.
+    await db.update(users).set({ password: hashedPassword, passwordChangedAt: new Date() }).where(eq(users.id, userId));
   }
 
   async updateUserRole(userId: string, role: string): Promise<User> {

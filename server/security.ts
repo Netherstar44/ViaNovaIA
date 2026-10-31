@@ -12,6 +12,8 @@ export type AuthUser = {
   jti?: string;
   exp?: number;
   iat?: number;
+  /** Momento (ms) del último cambio de contraseña cuando se emitió el token. */
+  pwd?: number;
 };
 
 export const PROVIDER_ROLES = ["hotel", "restaurant", "recreation", "taxi", "translator"] as const;
@@ -96,13 +98,21 @@ export function cookieOptions() {
   };
 }
 
-export function signToken(user: { id: string; username: string; role?: string | null }): string {
+export function signToken(user: {
+  id: string;
+  username: string;
+  role?: string | null;
+  passwordChangedAt?: Date | string | null;
+}): string {
   const ttl = process.env.JWT_EXPIRES_IN || "2h";
+  const rawChanged = user.passwordChangedAt ? new Date(user.passwordChangedAt).getTime() : 0;
   return jwt.sign(
     {
       id: user.id,
       username: user.username,
       role: user.role || "traveler",
+      // Sella la versión de la contraseña: un reset invalida los tokens previos.
+      pwd: Number.isFinite(rawChanged) ? rawChanged : 0,
       jti: crypto.randomUUID(),
     },
     getJwtSecret(),
@@ -138,9 +148,57 @@ async function isTokenRevoked(jti: string | undefined): Promise<boolean> {
   return Array.isArray(rows) && rows.length > 0;
 }
 
+type SessionUserRecord = {
+  id: string;
+  username: string;
+  role?: string | null;
+  deletedAt?: Date | string | null;
+  passwordChangedAt?: Date | string | null;
+};
+
+/**
+ * Revalida la sesión contra el estado actual de la base de datos.
+ *
+ * El JWT demuestra la identidad, pero el rol y la versión de contraseña se
+ * leen siempre de la fila vigente: una degradación de rol, una cuenta borrada
+ * o un reset de contraseña invalidan de inmediato los tokens anteriores.
+ */
+export async function resolveSessionUser(
+  decoded: AuthUser,
+  loadUser?: (id: string) => Promise<SessionUserRecord | undefined | null>,
+): Promise<AuthUser | null> {
+  if (!decoded?.id || !decoded?.username) return null;
+  // Los tests unitarios no tienen base de datos.
+  if (!loadUser && process.env.NODE_ENV === "test") return { ...decoded };
+
+  let user: SessionUserRecord | undefined | null;
+  if (loadUser) {
+    user = await loadUser(decoded.id);
+  } else {
+    const { storage } = await import("./storage.js");
+    user = await storage.getUser(decoded.id);
+  }
+  if (!user || user.deletedAt) return null;
+
+  const currentPasswordVersion = user.passwordChangedAt
+    ? new Date(user.passwordChangedAt).getTime()
+    : 0;
+  const tokenPasswordVersion = Number(decoded.pwd) || 0;
+  if (currentPasswordVersion > 0 && tokenPasswordVersion !== currentPasswordVersion) {
+    return null;
+  }
+
+  return {
+    ...decoded,
+    username: user.username,
+    role: user.role || "traveler",
+  };
+}
+
 /**
  * Autenticación obligatoria. Acepta cookie HttpOnly o Authorization: Bearer.
- * Verifica además que el token no haya sido revocado en logout.
+ * Verifica además que el token no haya sido revocado en logout y que el rol
+ * y la contraseña sigan vigentes en la base de datos.
  */
 export async function requireAuth(req: any, res: Response, next: NextFunction) {
   const token = extractToken(req);
@@ -165,7 +223,24 @@ export async function requireAuth(req: any, res: Response, next: NextFunction) {
       }
     }
 
-    req.user = decoded;
+    let sessionUser: AuthUser | null;
+    try {
+      sessionUser = await resolveSessionUser(decoded);
+    } catch (err: any) {
+      if (process.env.NODE_ENV === "test") {
+        sessionUser = { ...decoded };
+      } else {
+        console.error("[security] no se pudo revalidar la sesión:", err?.message || err);
+        return res.status(503).json({ message: "No se pudo verificar la sesión" });
+      }
+    }
+    if (!sessionUser) {
+      return res.status(401).json({ message: "Sesión inválida o expirada" });
+    }
+
+    req.user = sessionUser;
+    // Las respuestas autenticadas nunca deben quedar en cachés compartidas.
+    res.setHeader("Cache-Control", "no-store");
     if ((req as any).cookies?.token) {
       res.cookie("token", token, cookieOptions());
     }
@@ -182,9 +257,10 @@ export async function optionalAuth(req: any, _res: Response, next: NextFunction)
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as AuthUser;
     if (decoded?.id && decoded?.username) {
-      // Un token revocado nunca debe conservar privilegios en un endpoint
-      // público aunque la firma siga siendo válida.
-      if (!(await isTokenRevoked(decoded.jti))) req.user = decoded;
+      // Un token revocado, con rol degradado o anterior a un cambio de
+      // contraseña nunca debe conservar privilegios en un endpoint público.
+      const sessionUser = await resolveSessionUser(decoded).catch(() => null);
+      if (sessionUser && !(await isTokenRevoked(decoded.jti))) req.user = sessionUser;
     }
   } catch {
     // Token inválido, expirado o base de datos caída: continuar como anónimo.
@@ -546,6 +622,18 @@ export function sanitizeSingleLine(value: unknown, max = 200): string {
     .replace(/[\r\n\u0000]/g, " ")
     .trim()
     .slice(0, max);
+}
+
+/**
+ * Elimina etiquetas HTML de campos de texto plano.
+ *
+ * La interfaz React ya escapa el contenido, pero almacenar `<script>` permite
+ * que cualquier consumidor futuro (exportaciones, correos, paneles) lo
+ * interprete como HTML. Solo se eliminan secuencias con forma de etiqueta:
+ * comparaciones como "5 < 10" o emoticonos como "<3" se conservan.
+ */
+export function stripHtmlTags(value: unknown): string {
+  return String(value ?? "").replace(/<[a-z!/][^>]*>/gi, "");
 }
 
 export function isValidHttpUrl(value: unknown, allowedHosts?: string[]): boolean {

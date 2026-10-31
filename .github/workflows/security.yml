@@ -40,8 +40,12 @@ jobs:
       - name: Security regression tests
         run: npm test
 
+      # Se aceptan las 8 alertas moderadas de exceljs -> archiver -> glob ->
+      # minimatch (GHSA-g3hv-75wg-m249): no hay versión compatible que las
+      # corrija sin romper la exportación XLSX. El umbral high sigue bloqueando
+      # cualquier vulnerabilidad alta o crítica.
       - name: Production dependency audit
-        run: npm audit --omit=dev
+        run: npm audit --omit=dev --audit-level=high
 
       - uses: actions/setup-python@v5
         with:

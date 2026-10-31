@@ -15,7 +15,7 @@ process.env.PAYMENT_ENCRYPTION_KEY = "test-payment-key-0123456789-abcdef";
 
 const { default: rateLimit } = await import("express-rate-limit");
 const { registerRoutes } = await import("../server/routes/index.js");
-const { csrfProtection, requireAuth, optionalAuth, requireRole, sanitizeUser, sanitizeProduct, validatePassword, validateAvatarUrl, encryptSensitive, decryptSensitive, maskPaymentDetails, sanitizePaymentMethod, escapeHtml, isOwnerOrAdmin, isNativeAuthClient, signToken } = await import("../server/security.js");
+const { csrfProtection, requireAuth, optionalAuth, requireRole, resolveSessionUser, sanitizeUser, sanitizeProduct, validatePassword, validateAvatarUrl, encryptSensitive, decryptSensitive, maskPaymentDetails, sanitizePaymentMethod, escapeHtml, stripHtmlTags, isOwnerOrAdmin, isNativeAuthClient, signToken } = await import("../server/security.js");
 const { buildPasswordResetUrl } = await import("../server/mailer.js");
 const { applyHttpSecurity } = await import("../server/http-security.js");
 const { validateUpload, sniffMime } = await import("../server/upload-validation.js");
@@ -218,6 +218,32 @@ test("CORS: evil no recibe ACAO; origen permitido sí; headers de seguridad pres
   assert.equal(allowed.headers.get("access-control-allow-credentials"), "true");
 });
 
+test("trust proxy permanece desactivado sin proxy explícito", () => {
+  const previous = process.env.TRUST_PROXY;
+  delete process.env.TRUST_PROXY;
+  try {
+    const app = express();
+    applyHttpSecurity(app);
+    assert.notEqual(app.get("trust proxy"), 1, "X-Forwarded-For no debe confiarse en local");
+    assert.notEqual(app.get("trust proxy"), true);
+
+    process.env.TRUST_PROXY = "1";
+    const proxied = express();
+    applyHttpSecurity(proxied);
+    assert.equal(proxied.get("trust proxy"), 1, "un proxy explícito sí debe respetarse");
+  } finally {
+    if (previous === undefined) delete process.env.TRUST_PROXY;
+    else process.env.TRUST_PROXY = previous;
+  }
+});
+
+test("stripHtmlTags neutraliza etiquetas sin romper texto normal", () => {
+  assert.equal(stripHtmlTags("<script>alert('xss')</script>"), "alert('xss')");
+  assert.equal(stripHtmlTags("<img src=x onerror=alert(1)>hola"), "hola");
+  assert.equal(stripHtmlTags("5 < 10 y 10 > 5"), "5 < 10 y 10 > 5");
+  assert.equal(stripHtmlTags("te quiero <3"), "te quiero <3");
+});
+
 test("requireAuth rechaza sin token, token manipulado y token firmado con otro secreto", async () => {
   const anonymous = await request("/api/admin/stats");
   assert.equal(anonymous.status, 401);
@@ -228,6 +254,60 @@ test("requireAuth rechaza sin token, token manipulado y token firmado con otro s
 
   const invalid = await request("/api/admin/stats", { headers: { Authorization: "Bearer not-a-jwt" } });
   assert.equal(invalid.status, 401);
+});
+
+test("signToken sella la versión de contraseña del usuario", () => {
+  const withPassword = jwt.verify(
+    signToken({ id: "u1", username: "alice", passwordChangedAt: new Date(1234) }),
+    process.env.JWT_SECRET!,
+  ) as any;
+  assert.equal(withPassword.pwd, 1234);
+
+  const withoutPassword = jwt.verify(signToken({ id: "u1", username: "alice" }), process.env.JWT_SECRET!) as any;
+  assert.equal(withoutPassword.pwd, 0);
+});
+
+test("resolveSessionUser invalida tokens tras reset, borrado o degradación de rol", async () => {
+  const decoded = { id: "u1", username: "alice", role: "admin", pwd: 1000 };
+
+  const refreshed = await resolveSessionUser(decoded, async () => ({
+    id: "u1",
+    username: "alice",
+    role: "traveler",
+    passwordChangedAt: new Date(1000),
+    deletedAt: null,
+  }));
+  assert.equal(refreshed?.role, "traveler", "el rol debe leerse de la base de datos");
+  assert.equal(refreshed?.username, "alice");
+
+  const afterReset = await resolveSessionUser(decoded, async () => ({
+    id: "u1",
+    username: "alice",
+    role: "admin",
+    passwordChangedAt: new Date(2000),
+    deletedAt: null,
+  }));
+  assert.equal(afterReset, null, "un token anterior al cambio de contraseña no debe servir");
+
+  const deleted = await resolveSessionUser(decoded, async () => ({
+    id: "u1",
+    username: "alice",
+    role: "admin",
+    passwordChangedAt: new Date(1000),
+    deletedAt: new Date(),
+  }));
+  assert.equal(deleted, null, "una cuenta eliminada no debe conservar sesión");
+
+  const missing = await resolveSessionUser(decoded, async () => null);
+  assert.equal(missing, null);
+
+  const renamed = await resolveSessionUser(decoded, async () => ({
+    id: "u1",
+    username: "alice-renamed",
+    role: "traveler",
+    passwordChangedAt: null,
+  }));
+  assert.equal(renamed?.username, "alice-renamed", "el username debe venir de la base de datos");
 });
 
 test("matriz RBAC: viajero 403 y admin no recibe 401/403", async () => {
