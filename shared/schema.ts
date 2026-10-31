@@ -31,6 +31,13 @@ export const users = pgTable("users", {
   roleChangedAt: timestamp("role_changed_at"),
   passwordChangedAt: timestamp("password_changed_at"),
   avatarUrl: text("avatar_url"),
+  bannerUrl: text("banner_url"),
+  // Información de contacto pública del perfil. La visibilidad se controla
+  // explícitamente para no exponer datos personales por defecto.
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  contactWebsite: text("contact_website"),
+  contactVisibility: text("contact_visibility").default("private"),
   locationLat: text("location_lat"),
   locationLng: text("location_lng"),
   firstName: text("first_name"),
@@ -172,6 +179,10 @@ export const paymentMethodTypeEnum = pgEnum("payment_method_type", [
   "nequi",
   "daviplata",
   "card",
+  "pse",
+  "qr",
+  "breb",
+  "wompi",
 ]);
 
 export const paymentMethods = pgTable("payment_methods", {

@@ -1,0 +1,178 @@
+{
+  "ok": false,
+  "strict": false,
+  "browserSkipped": true,
+  "lint": {
+    "ok": false,
+    "errorCount": 5,
+    "warningCount": 1,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "audio_src_not_found",
+        "severity": "error",
+        "message": "<audio> element references file(s) not found in the project: assets/audio/music.mp3. The rendered video will be silent.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add the file \"assets/audio/music.mp3\" to the project directory, or update the src attribute to point to an existing file."
+      },
+      {
+        "code": "css_transition_used",
+        "severity": "warning",
+        "message": "CSS declaration `transition: background 0.3s` runs on the browser clock and cannot be seeked deterministically across render workers.",
+        "selector": ".toggle-pill",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\compositions\\02-toggle.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep the class or attribute swap for state; put the visual change on the paused GSAP timeline."
+      },
+      {
+        "code": "gsap_css_transform_conflict",
+        "severity": "error",
+        "message": "\".callout-panel\" has CSS `transform: translateY(-50%)` and a GSAP tween animates x. GSAP will overwrite the full CSS transform, discarding any translateX(-50%) centering or CSS scale value.",
+        "selector": ".callout-panel",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\compositions\\02-toggle.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Remove `transform: translateY(-50%)` from CSS and replace with GSAP properties: yPercent: -50. Example: tl.fromTo('.callout-panel', { yPercent: -50 }, { yPercent: -50, ...yourAnimation }). tl.fromTo is exempt from this rule."
+      },
+      {
+        "code": "gsap_css_transform_conflict",
+        "severity": "error",
+        "message": "\".status-bar\" has CSS `transform: translateX(-50%)` and a GSAP tween animates y. GSAP will overwrite the full CSS transform, discarding any translateX(-50%) centering or CSS scale value.",
+        "selector": ".status-bar",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\compositions\\03-map.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Remove `transform: translateX(-50%)` from CSS and replace with GSAP properties: xPercent: -50. Example: tl.fromTo('.status-bar', { xPercent: -50 }, { xPercent: -50, ...yourAnimation }). tl.fromTo is exempt from this rule."
+      },
+      {
+        "code": "gsap_css_transform_conflict",
+        "severity": "error",
+        "message": "\".right-callout\" has CSS `transform: translateY(-50%)` and a GSAP tween animates x. GSAP will overwrite the full CSS transform, discarding any translateX(-50%) centering or CSS scale value.",
+        "selector": ".right-callout",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\compositions\\03-map.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Remove `transform: translateY(-50%)` from CSS and replace with GSAP properties: yPercent: -50. Example: tl.fromTo('.right-callout', { yPercent: -50 }, { yPercent: -50, ...yourAnimation }). tl.fromTo is exempt from this rule."
+      },
+      {
+        "code": "gsap_css_transform_conflict",
+        "severity": "error",
+        "message": "\".right-callout\" has CSS `transform: translateY(-50%)` and a GSAP tween animates x. GSAP will overwrite the full CSS transform, discarding any translateX(-50%) centering or CSS scale value.",
+        "selector": ".right-callout",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\compositions\\04-earnings.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Remove `transform: translateY(-50%)` from CSS and replace with GSAP properties: yPercent: -50. Example: tl.fromTo('.right-callout', { yPercent: -50 }, { yPercent: -50, ...yourAnimation }). tl.fromTo is exempt from this rule."
+      }
+    ],
+    "filesScanned": 7
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 0,
+    "samples": [],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [],
+    "checked": 0,
+    "passed": 0
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "step": 0,
+    "samples": 0
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

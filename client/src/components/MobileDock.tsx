@@ -45,9 +45,7 @@ export default function MobileDock() {
   const suppressClickRef = useRef(false);
   const pointerRef = useRef({ id: -1, startX: 0, startY: 0, x: 0 });
 
-  const profileHref = user?.username
-    ? `/u/${encodeURIComponent(user.username)}`
-    : "/login";
+  const profileHref = user?.username ? "/profile" : "/login";
 
   const tabs = useMemo<DockTab[]>(
     () => [
@@ -67,6 +65,7 @@ export default function MobileDock() {
       if (tab.id === "profile") {
         return (
           location === tab.href ||
+          location === "/profile" ||
           location.startsWith("/u/") ||
           location === "/dashboard" ||
           location === "/settings"

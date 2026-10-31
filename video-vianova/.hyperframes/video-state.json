@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "8d6f4dd9-ae31-4e1d-ba90-466bc0e89526",
-  "currentRevision": "4551aa27-d343-401b-8c20-c85071a5e24f",
+  "currentRevision": "6c7e56ff-723a-4baf-b599-44f7b7b0b68c",
   "pendingChanges": false,
   "files": {
     "AGENTS.md": {
@@ -224,6 +224,10 @@
       "hash": "a5878e35993c69f8737f40e0daeae118bfed70afffa914e4a9119289da805353",
       "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\a5\\a5878e35993c69f8737f40e0daeae118bfed70afffa914e4a9119289da805353"
     },
+    "assets/portada-1280x720.png": {
+      "hash": "a894a4fbeea0053c2b48dcb944de0ec27d1b0dfdc1b0d7918720516dce879397",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\a8\\a894a4fbeea0053c2b48dcb944de0ec27d1b0dfdc1b0d7918720516dce879397"
+    },
     "assets/stills/still-00-02s.png": {
       "hash": "781f69a8259e99326a32836ebe7590863b25593fa9981196c642547ec0a4e8b3",
       "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\78\\781f69a8259e99326a32836ebe7590863b25593fa9981196c642547ec0a4e8b3"
@@ -236,9 +240,37 @@
       "hash": "e9482e6677f89c432f3367abb551c5b27dd9ddab794533b263aceeed8641f690",
       "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\e9\\e9482e6677f89c432f3367abb551c5b27dd9ddab794533b263aceeed8641f690"
     },
-    "assets/portada-1280x720.png": {
-      "hash": "a894a4fbeea0053c2b48dcb944de0ec27d1b0dfdc1b0d7918720516dce879397",
-      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\a8\\a894a4fbeea0053c2b48dcb944de0ec27d1b0dfdc1b0d7918720516dce879397"
+    "assets/audio/empresarial/b2b-vo-01.mp3": {
+      "hash": "69beb766f697360ad58c81ad98cbdd73dd25ad1f0170a5915f0f022461ff4897",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\69\\69beb766f697360ad58c81ad98cbdd73dd25ad1f0170a5915f0f022461ff4897"
+    },
+    "assets/audio/empresarial/b2b-vo-02.mp3": {
+      "hash": "cdd5976a33369fc5c35ff71cc6a7681f21db3bf6bc57415b4cbb3da478181eb0",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\cd\\cdd5976a33369fc5c35ff71cc6a7681f21db3bf6bc57415b4cbb3da478181eb0"
+    },
+    "assets/audio/empresarial/b2b-vo-03.mp3": {
+      "hash": "c2b78327b028b5db8b97c6f71ef63da671d0fe1e51b11b1b7a27b439032419ab",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\c2\\c2b78327b028b5db8b97c6f71ef63da671d0fe1e51b11b1b7a27b439032419ab"
+    },
+    "assets/audio/empresarial/b2b-vo-04.mp3": {
+      "hash": "9c0f6a676e7c2b7782e27a8a4c57a27a057ffa979e05bd957ac66a56eb23856f",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\9c\\9c0f6a676e7c2b7782e27a8a4c57a27a057ffa979e05bd957ac66a56eb23856f"
+    },
+    "assets/audio/empresarial/b2b-vo-05.mp3": {
+      "hash": "b5022162090fa79f6a051c9aaece436711f2e99b4721042f5f1078f2d35f3b9e",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\b5\\b5022162090fa79f6a051c9aaece436711f2e99b4721042f5f1078f2d35f3b9e"
+    },
+    "assets/audio/empresarial/b2b-vo-06.mp3": {
+      "hash": "6c6abb00bd8db00872c9ae60f8aa2335a5ece7ba172a92f9cec35119b1d0bdc2",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\6c\\6c6abb00bd8db00872c9ae60f8aa2335a5ece7ba172a92f9cec35119b1d0bdc2"
+    },
+    "assets/audio/empresarial/b2b-voiceover-master.mp3": {
+      "hash": "0b8b3757efda1a4ad0e55dc316af5b8de3bc03f46e1fc524544e37989344a76e",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\0b\\0b8b3757efda1a4ad0e55dc316af5b8de3bc03f46e1fc524544e37989344a76e"
+    },
+    "assets/subtitles-empresarial.srt": {
+      "hash": "894b5139bcf389eaf8cabf867556aae35bc09bad18be51c6143216eada8bfb35",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\89\\894b5139bcf389eaf8cabf867556aae35bc09bad18be51c6143216eada8bfb35"
     }
   },
   "revisions": {
@@ -616,12 +648,55 @@
           "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\e9\\e9482e6677f89c432f3367abb551c5b27dd9ddab794533b263aceeed8641f690"
         }
       }
+    },
+    "6c7e56ff-723a-4baf-b599-44f7b7b0b68c": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793318519434,
+      "endedAt": 1793318519533,
+      "files": {
+        "assets/audio/empresarial/b2b-vo-01.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\69\\69beb766f697360ad58c81ad98cbdd73dd25ad1f0170a5915f0f022461ff4897"
+        },
+        "assets/audio/empresarial/b2b-vo-02.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\cd\\cdd5976a33369fc5c35ff71cc6a7681f21db3bf6bc57415b4cbb3da478181eb0"
+        },
+        "assets/audio/empresarial/b2b-vo-03.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\c2\\c2b78327b028b5db8b97c6f71ef63da671d0fe1e51b11b1b7a27b439032419ab"
+        },
+        "assets/audio/empresarial/b2b-vo-04.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\9c\\9c0f6a676e7c2b7782e27a8a4c57a27a057ffa979e05bd957ac66a56eb23856f"
+        },
+        "assets/audio/empresarial/b2b-vo-05.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\b5\\b5022162090fa79f6a051c9aaece436711f2e99b4721042f5f1078f2d35f3b9e"
+        },
+        "assets/audio/empresarial/b2b-vo-06.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\6c\\6c6abb00bd8db00872c9ae60f8aa2335a5ece7ba172a92f9cec35119b1d0bdc2"
+        },
+        "assets/audio/empresarial/b2b-voiceover-master.mp3": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\0b\\0b8b3757efda1a4ad0e55dc316af5b8de3bc03f46e1fc524544e37989344a76e"
+        },
+        "assets/subtitles-empresarial.srt": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8d6f4dd9-ae31-4e1d-ba90-466bc0e89526\\blobs\\89\\894b5139bcf389eaf8cabf867556aae35bc09bad18be51c6143216eada8bfb35"
+        }
+      }
     }
   },
   "checks": {
     "latest": {
-      "revision": null,
-      "id": "b72142a4-59ce-4461-abb0-4fc8a3acfbbf"
+      "revision": "6c7e56ff-723a-4baf-b599-44f7b7b0b68c",
+      "id": "abeb1227-6176-4a89-9975-e87b9ac31709"
     },
     "revisions": {
       "32914c23-dd10-43e1-b45f-d55f66b3f05f": [
@@ -772,6 +847,35 @@
           "attribution": "recorded-revision",
           "status": "cleaned",
           "cleanedAfterRender": "35a29577-3771-4794-85c1-600a49a71a01"
+        }
+      ],
+      "6c7e56ff-723a-4baf-b599-44f7b7b0b68c": [
+        {
+          "id": "abeb1227-6176-4a89-9975-e87b9ac31709",
+          "scope": "project",
+          "report": "C:\\Users\\Famil\\Downloads\\ViaNovaIA-main\\ViaNovaIA-main\\video-vianova\\.hyperframes\\artifacts\\checks\\abeb1227-6176-4a89-9975-e87b9ac31709.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 10000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793318618508,
+          "contentHash": "47fc5cca489ab3b2f946ef8f3685012704a3a2f022944f8e89c8472f338882bf",
+          "revision": "6c7e56ff-723a-4baf-b599-44f7b7b0b68c",
+          "inputFingerprint": "6cface187af5c8907d54b5cbf89e7c0f4e6abae51154fdcdaf216dfb3ff56ef0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
         }
       ]
     },

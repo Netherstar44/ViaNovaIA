@@ -91,6 +91,11 @@ export function ensureUserSchema(): Promise<void> {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_attempts integer DEFAULT 0`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider text DEFAULT 'local'`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at timestamp without time zone`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url text`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_email text`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_phone text`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_website text`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_visibility text DEFAULT 'private'`,
       `CREATE TABLE IF NOT EXISTS revoked_tokens (
         jti text PRIMARY KEY,
         expires_at timestamptz NOT NULL

@@ -1,0 +1,221 @@
+<template>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 60px 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .glow-gold {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%);
+      width: 1400px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(250, 204, 21, 0.15) 0%, rgba(250, 204, 21, 0.03) 50%, transparent 75%);
+      filter: blur(25px);
+    }
+
+    /* Role chips bar */
+    .roles-bar {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      z-index: 2;
+      margin-top: 20px;
+    }
+    .role-chip {
+      padding: 14px 28px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 28px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .role-chip.active {
+      background: rgba(250, 204, 21, 0.15);
+      border-color: #facc15;
+      color: #facc15;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+    }
+
+    /* Hero Center Lockup */
+    .center-lockup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 2;
+      margin-top: -30px;
+    }
+    .logo-img {
+      width: 180px;
+      height: auto;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 12px 36px rgba(250, 204, 21, 0.4));
+    }
+    .brand-name {
+      font-family: Poppins, sans-serif;
+      font-size: 82px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .brand-name .gold {
+      color: #facc15;
+    }
+    .main-cta-title {
+      font-family: Poppins, sans-serif;
+      font-size: 46px;
+      font-weight: 700;
+      color: #f1f5f9;
+      letter-spacing: -0.02em;
+      max-width: 1400px;
+      margin-bottom: 28px;
+    }
+
+    /* Bottom Row: URL & QR */
+    .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      z-index: 2;
+      padding-top: 20px;
+      border-top: 1px solid rgba(226, 232, 240, 0.15);
+    }
+    .url-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .url-label {
+      font-size: 28px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .url-text {
+      font-family: Poppins, sans-serif;
+      font-size: 54px;
+      font-weight: 800;
+      color: #facc15;
+      letter-spacing: -0.02em;
+    }
+    .platforms {
+      font-size: 28px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .qr-container {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      padding: 16px 24px;
+      border-radius: 20px;
+    }
+    .qr-code {
+      width: 110px;
+      height: 110px;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 6px;
+    }
+    .qr-text {
+      text-align: left;
+    }
+    .qr-text h4 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .qr-text p {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+  </style>
+  <div id="root" data-composition-id="s6-closing" data-width="1920" data-height="1080">
+    <div class="glow-gold" data-layout-ignore></div>
+
+    <!-- Multi-role chips -->
+    <div class="roles-bar">
+      <div class="role-chip active">● Hoteles</div>
+      <div class="role-chip active">● Restaurantes</div>
+      <div class="role-chip active">● Experiencias</div>
+      <div class="role-chip active">● Transporte</div>
+      <div class="role-chip active">● Guías</div>
+    </div>
+
+    <!-- Center Hero -->
+    <div class="center-lockup">
+      <img src="assets/img/logo.png" alt="ViaNova" class="logo-img" />
+      <h1 class="brand-name">VIANova <span class="gold">IA</span></h1>
+      <h2 class="main-cta-title">
+        Haz crecer tu negocio turístico con inteligencia artificial y control financiero total.
+      </h2>
+    </div>
+
+    <!-- Bottom URL & QR -->
+    <div class="bottom-row">
+      <div class="url-box">
+        <span class="url-label">Portal Oficial para Proveedores</span>
+        <span class="url-text">via-nova-ia.vercel.app</span>
+        <span class="platforms">Plataforma Web · Aplicación PWA · Android</span>
+      </div>
+
+      <div class="qr-container">
+        <img src="assets/img/qr.png" alt="QR" class="qr-code" />
+        <div class="qr-text">
+          <h4>Escanea y Comienza</h4>
+          <p>Registra tu comercio hoy</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.role-chip', { opacity: 0, y: -20 });
+    gsap.set('.center-lockup', { opacity: 0, scale: 0.9, y: 30 });
+    gsap.set('.bottom-row', { opacity: 0, y: 30 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    // 0.2s: Role chips stagger in
+    tl.to('.role-chip', { opacity: 1, y: 0, duration: 0.5, stagger: 0.12, ease: 'back.out(1.4)' }, 0.2);
+
+    // 1.0s: Center lockup expands
+    tl.to('.center-lockup', { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'power3.out' }, 0.9);
+
+    // 1.6s: Bottom row reveals
+    tl.to('.bottom-row', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 1.5);
+
+    // 2.0s - 10.5s: Gentle cinematic push-in
+    tl.to('#root', { scale: 1.03, transformOrigin: 'center center', duration: 8.5, ease: 'sine.inOut' }, 2.0);
+
+    window.__timelines["s6-closing"] = tl;
+  </script>
+</template>
+

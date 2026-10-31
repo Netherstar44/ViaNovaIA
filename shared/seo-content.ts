@@ -653,6 +653,10 @@ const PRIVATE_ROUTE_META: Record<string, { title: string; description: string }>
     title: "Configuración de cuenta | VIANova",
     description: "Gestiona tu perfil, seguridad y preferencias en VIANova.",
   },
+  "/profile": {
+    title: "Mi perfil | VIANova",
+    description: "Personaliza tu nombre, avatar, banner y datos de contacto en VIANova.",
+  },
   "/my-products": {
     title: "Mis productos | VIANova",
     description: "Gestiona los productos y servicios que publicas en VIANova.",
@@ -698,6 +702,17 @@ export function getRouteSeo(pathname: string): RouteSeo {
       canonical: absoluteUrl(path),
       robots: "noindex, nofollow",
       ogType: "website",
+      image: DEFAULT_OG_IMAGE,
+    };
+  }
+
+  if (path.startsWith("/u/")) {
+    return {
+      title: "Perfil de usuario | VIANova",
+      description: "Perfil público de un miembro de la comunidad de VIANova.",
+      canonical: absoluteUrl(path),
+      robots: "noindex, nofollow",
+      ogType: "profile",
       image: DEFAULT_OG_IMAGE,
     };
   }

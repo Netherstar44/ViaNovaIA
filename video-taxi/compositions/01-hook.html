@@ -1,0 +1,150 @@
+<template>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #070b14;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+    }
+    .glow-left {
+      position: absolute;
+      left: -300px;
+      top: -150px;
+      width: 1200px;
+      height: 900px;
+      background: radial-gradient(circle at 40% 40%, rgba(250,204,21,0.12), rgba(250,204,21,0.03) 45%, transparent 70%);
+      filter: blur(18px);
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.7) 100%);
+    }
+    .grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+    .badge-taxi {
+      position: absolute;
+      left: 160px;
+      top: 130px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 26px;
+      border-radius: 999px;
+      background: rgba(250,204,21,0.1);
+      border: 1px solid rgba(250,204,21,0.35);
+      color: #facc15;
+      font-family: Poppins, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .logo-container {
+      position: absolute;
+      right: 160px;
+      top: 120px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .logo-container img {
+      width: 130px;
+      height: auto;
+      filter: drop-shadow(0 8px 24px rgba(250,204,21,0.3));
+    }
+    .logo-text {
+      font-family: Poppins, sans-serif;
+      font-size: 50px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .logo-text .gold { color: #facc15; }
+    .pain-question {
+      position: absolute;
+      left: 160px;
+      top: 300px;
+      width: 1300px;
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 82px;
+      line-height: 1.14;
+      letter-spacing: -0.03em;
+      color: #cbd5e1;
+    }
+    .pain-question .highlight { color: #facc15; }
+    .rule {
+      position: absolute;
+      left: 160px;
+      top: 650px;
+      width: 0;
+      height: 4px;
+      border-radius: 2px;
+      background: #facc15;
+      box-shadow: 0 0 20px rgba(250,204,21,0.6);
+    }
+    .promise {
+      position: absolute;
+      left: 160px;
+      top: 690px;
+      width: 1400px;
+      font-family: Poppins, sans-serif;
+      font-weight: 800;
+      font-size: 72px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .promise .gold { color: #facc15; }
+  </style>
+  <div id="root" data-composition-id="s1-hook" data-width="1920" data-height="1080">
+    <div class="glow-left" data-layout-ignore></div>
+    <div class="vignette" data-layout-ignore></div>
+    <div class="grain" data-layout-ignore></div>
+
+    <div class="badge-taxi">🚖 Gremio de Movilidad · ViaNovaIA</div>
+
+    <div class="logo-container">
+      <img src="assets/img/logo.png" alt="ViaNova" />
+      <div class="logo-text">VIANova <span class="gold">IA</span></div>
+    </div>
+
+    <h1 class="pain-question">
+      ¿Cuántas horas llevas<br />rodando vacío buscando<br /><span class="highlight">carreras que nunca llegan?</span>
+    </h1>
+
+    <div class="rule"></div>
+
+    <h2 class="promise">
+      Tu próxima carrera<br /><span class="gold">ya está esperándote.</span>
+    </h2>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    gsap.set('.badge-taxi', { opacity: 1, y: 0 });
+    gsap.set('.logo-container', { opacity: 1, scale: 1 });
+    gsap.set('.pain-question', { opacity: 0.15, y: 18 });
+    gsap.set('.rule', { width: 0, opacity: 1 });
+    gsap.set('.promise', { opacity: 0, y: 22 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to('.pain-question', { opacity: 1, y: 0, duration: 0.65, ease: 'power2.out' }, 0.1);
+    tl.to('.rule', { width: 120, duration: 0.5, ease: 'power2.out' }, 0.7);
+    tl.to('.promise', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, 1.0);
+    tl.to('#root', { scale: 1.022, transformOrigin: 'center center', duration: 4.5, ease: 'sine.inOut' }, 1.2);
+
+    window.__timelines["s1-hook"] = tl;
+  </script>
+</template>
+

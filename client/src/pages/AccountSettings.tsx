@@ -1,6 +1,6 @@
 import { apiBase } from "@/lib/queryClient";
 import React, { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth, UserRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -263,6 +263,12 @@ export default function AccountSettings() {
                     <span className="text-xs text-muted-foreground block mb-1">Email</span>
                     <p className="font-medium">{user.email || "—"}</p>
                   </div>
+
+                  <Link href="/profile">
+                    <Button variant="outline" className="w-full rounded-xl gap-2">
+                      <Pencil className="h-4 w-4" /> Personalizar perfil
+                    </Button>
+                  </Link>
                   
                   <div className="pt-2 border-t border-border/30">
                     <span className="text-xs text-muted-foreground block mb-2">Rol Activo</span>
@@ -480,16 +486,21 @@ export default function AccountSettings() {
                 </motion.div>
               )}
 
-              {/* ── Payment Methods (Traveler Only) ── */}
-              {user.role === "traveler" && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center gap-2 mb-6">
+              {/* ── Payment Methods (all roles) ── */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-2 mb-6">
+                  <div className="flex items-center gap-2">
                     <Wallet className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-bold">Métodos de Pago</h2>
+                    <h2 className="text-lg font-bold">
+                      {user.role === "traveler" ? "Métodos de Pago" : "Métodos de Cobro"}
+                    </h2>
                   </div>
-                  <PaymentMethods username={user.username} />
-                </motion.div>
-              )}
+                  <Button variant="outline" size="sm" onClick={() => setLocation("/payments")} className="text-xs rounded-xl">
+                    Ir a Pagos
+                  </Button>
+                </div>
+                <PaymentMethods username={user.username} role={user.role} />
+              </motion.div>
 
               {/* ── Reviews ── */}
               <div className="bg-card border border-border/40 rounded-2xl p-6 shadow-sm">

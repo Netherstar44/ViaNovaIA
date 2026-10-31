@@ -14,8 +14,32 @@ export interface User {
   role: UserRole;
   name?: string;
   email?: string;
+  avatarUrl?: string | null;
+  bannerUrl?: string | null;
+  bio?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  contactWebsite?: string | null;
+  contactVisibility?: "public" | "followers" | "private";
   roleChangedAt?: string | null;
   roles?: UserRole[];
+}
+
+function toAuthUser(raw: any): User {
+  return {
+    username: raw.username,
+    role: raw.role || 'traveler',
+    name: raw.name,
+    email: raw.email,
+    avatarUrl: raw.avatarUrl ?? null,
+    bannerUrl: raw.bannerUrl ?? null,
+    bio: raw.bio ?? null,
+    contactEmail: raw.contactEmail ?? null,
+    contactPhone: raw.contactPhone ?? null,
+    contactWebsite: raw.contactWebsite ?? null,
+    contactVisibility: raw.contactVisibility || 'private',
+    roleChangedAt: raw.roleChangedAt,
+  };
 }
 
 interface AuthState {
@@ -128,13 +152,7 @@ export const useAuth = create<AuthState>((set, get) => {
           set({ loading: false });
           return { ok: false, requires2FA: true, username: data.username, message: data.message };
         }
-        const user: User = {
-          username: data.user.username,
-          role: data.user.role || 'traveler',
-          name: data.user.name,
-          email: data.user.email,
-          roleChangedAt: data.user.roleChangedAt,
-        };
+        const user: User = toAuthUser(data.user);
         localStorage.setItem('user', JSON.stringify(user));
         await setAuthToken(data.token || null);
         set({ user, isAuthenticated: true, loading: false });
@@ -162,13 +180,7 @@ export const useAuth = create<AuthState>((set, get) => {
           set({ loading: false });
           return { ok: false, message: data.message || 'Código inválido' };
         }
-        const user: User = {
-          username: data.user.username,
-          role: data.user.role || 'traveler',
-          name: data.user.name,
-          email: data.user.email,
-          roleChangedAt: data.user.roleChangedAt,
-        };
+        const user: User = toAuthUser(data.user);
         localStorage.setItem('user', JSON.stringify(user));
         await setAuthToken(data.token || null);
         set({ user, isAuthenticated: true, loading: false });
@@ -211,10 +223,7 @@ export const useAuth = create<AuthState>((set, get) => {
           return { ok: false, message: result.message || 'Error al registrarse' };
         }
         const user: User = {
-          username: result.user.username,
-          role: result.user.role || 'traveler',
-          name: result.user.name,
-          email: result.user.email,
+          ...toAuthUser(result.user),
           roles: ['traveler'],
         };
         localStorage.setItem('user', JSON.stringify(user));

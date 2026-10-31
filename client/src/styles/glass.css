@@ -357,9 +357,11 @@
 /* -- Orb ---------------------------------------------------------------
    The AI orb keeps its radial core; only the outer shell is solid now. */
 
-.lg-surface {
-  position: relative;
-  isolation: isolate;
+@layer components {
+  .lg-surface {
+    position: relative;
+    isolation: isolate;
+  }
 }
 
 .lg-surface--orb {

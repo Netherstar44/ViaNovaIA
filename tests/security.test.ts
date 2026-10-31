@@ -15,7 +15,7 @@ process.env.PAYMENT_ENCRYPTION_KEY = "test-payment-key-0123456789-abcdef";
 
 const { default: rateLimit } = await import("express-rate-limit");
 const { registerRoutes } = await import("../server/routes/index.js");
-const { csrfProtection, requireAuth, optionalAuth, requireRole, resolveSessionUser, sanitizeUser, sanitizeProduct, validatePassword, validateAvatarUrl, encryptSensitive, decryptSensitive, maskPaymentDetails, sanitizePaymentMethod, escapeHtml, stripHtmlTags, isOwnerOrAdmin, isNativeAuthClient, signToken } = await import("../server/security.js");
+const { csrfProtection, requireAuth, optionalAuth, requireRole, resolveSessionUser, sanitizeUser, sanitizeProduct, validatePassword, validateAvatarUrl, validateBannerUrl, validateContactWebsite, isValidContactEmail, isValidContactPhone, isValidContactVisibility, normalizeContactVisibility, sanitizeProfileText, sanitizeProfileBio, encryptSensitive, decryptSensitive, maskPaymentDetails, sanitizePaymentMethod, escapeHtml, stripHtmlTags, isOwnerOrAdmin, isNativeAuthClient, signToken } = await import("../server/security.js");
 const { buildPasswordResetUrl } = await import("../server/mailer.js");
 const { applyHttpSecurity } = await import("../server/http-security.js");
 const { validateUpload, sniffMime } = await import("../server/upload-validation.js");
@@ -88,9 +88,15 @@ test("sanitizeUser excluye secretos y campos internos", () => {
     twoFactorEnabled: "true",
     deletedAt: new Date(),
     preferences: { secret: true },
+    bannerUrl: "https://res.cloudinary.com/demo/banner.png",
+    contactEmail: "contacto@example.com",
+    contactVisibility: "followers",
   }) as any;
   assert.equal(result.username, "alice");
   assert.equal(result.email, "alice@example.com");
+  assert.equal(result.bannerUrl, "https://res.cloudinary.com/demo/banner.png");
+  assert.equal(result.contactEmail, "contacto@example.com");
+  assert.equal(result.contactVisibility, "followers");
   for (const forbidden of ["password", "verificationToken", "failedLoginAttempts", "lockUntil", "twoFactorEnabled", "deletedAt", "preferences"]) {
     assert.equal(forbidden in result, false, `no debe filtrar ${forbidden}`);
   }
@@ -111,10 +117,49 @@ test("contraseñas débiles y comunes son rechazadas", () => {
   assert.equal(validatePassword("ViaNova-Segura-2026").ok, true);
 });
 
-test("avatar solo acepta http(s), no javascript/data", () => {
+test("avatar y banner solo aceptan HTTPS de proveedores aprobados", () => {
   assert.throws(() => validateAvatarUrl("javascript:alert(1)"));
   assert.throws(() => validateAvatarUrl("data:text/html,<script>alert(1)</script>"));
-  assert.equal(validateAvatarUrl("https://cdn.example.com/a.png"), "https://cdn.example.com/a.png");
+  assert.throws(() => validateAvatarUrl("http://res.cloudinary.com/a.png"));
+  assert.throws(() => validateAvatarUrl("https://cdn.example.com/a.png"));
+  assert.throws(() => validateAvatarUrl("https://user:pass@res.cloudinary.com/a.png"));
+  assert.throws(() => validateAvatarUrl("https://res.cloudinary.com:8443/a.png"));
+  assert.throws(() => validateAvatarUrl("https://127.0.0.1/a.png"));
+  assert.equal(validateAvatarUrl("https://res.cloudinary.com/demo/image/upload/a.png"), "https://res.cloudinary.com/demo/image/upload/a.png");
+  assert.equal(validateBannerUrl("https://lh3.googleusercontent.com/a/banner.png"), "https://lh3.googleusercontent.com/a/banner.png");
+});
+
+test("contacto: URL, email, teléfono y visibilidad se validan en servidor", () => {
+  assert.equal(validateContactWebsite("https://example.com/contacto#equipo"), "https://example.com/contacto");
+  assert.throws(() => validateContactWebsite("http://example.com"));
+  assert.throws(() => validateContactWebsite("ftp://example.com"));
+  assert.throws(() => validateContactWebsite("https://user:pass@example.com"));
+  assert.throws(() => validateContactWebsite("https://localhost:443/"));
+  assert.throws(() => validateContactWebsite("https://10.0.0.5/"));
+  assert.throws(() => validateContactWebsite("https://169.254.169.254/latest/meta-data"));
+
+  assert.equal(isValidContactEmail("contacto@ejemplo.com"), true);
+  assert.equal(isValidContactEmail("sin-arroba.example.com"), false);
+  assert.equal(isValidContactEmail("a@b"), false);
+
+  assert.equal(isValidContactPhone("+57 300 123 4567"), true);
+  assert.equal(isValidContactPhone("3001234567"), true);
+  assert.equal(isValidContactPhone("123"), false);
+  assert.equal(isValidContactPhone("+57 300 123 4567 8901 2345"), false);
+  assert.equal(isValidContactPhone("abc1234567"), false);
+
+  assert.equal(isValidContactVisibility("public"), true);
+  assert.equal(isValidContactVisibility("PUBLIC"), true);
+  assert.equal(isValidContactVisibility("amigos"), false);
+  assert.equal(normalizeContactVisibility("amigos"), "private");
+  assert.equal(normalizeContactVisibility(undefined), "private");
+  assert.equal(normalizeContactVisibility("followers"), "followers");
+});
+
+test("texto de perfil elimina HTML y caracteres de control", () => {
+  assert.equal(sanitizeProfileText("<b>Ana</b>\u0000  <script>alert(1)</script>", 40), "Ana alert(1)");
+  assert.equal(sanitizeProfileBio("Hola\r\n<script>alert(1)</script>\nMundo", 100), "Hola\nalert(1)\nMundo");
+  assert.equal(sanitizeProfileBio("x".repeat(600)).length, 500);
 });
 
 test("cifrado de pagos: roundtrip, no determinista y detección de manipulación", () => {

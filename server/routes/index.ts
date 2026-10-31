@@ -5,6 +5,8 @@ import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
 import { tripsRouter } from "./trips.routes.js";
+import { paymentsRouter } from "./payments.routes.js";
+import { ensurePaymentSchema } from "../payments.js";
 import { buildCatalogContext, buildCatalogFallbackReply, type CatalogItem } from "../catalog.js";
 import {
   detectRouteConfirmation,
@@ -37,14 +39,23 @@ import {
   cookieOptions,
   validatePassword,
   validateAvatarUrl,
+  validateBannerUrl,
+  validateContactWebsite,
+  isValidContactEmail,
+  isValidContactPhone,
+  isValidContactVisibility,
+  normalizeContactVisibility,
+  sanitizeProfileText,
+  sanitizeProfileBio,
   encryptSensitive,
   sanitizePaymentMethod,
+  isPaymentMethodType,
+  validatePaymentMethodDetails,
   sanitizeProduct,
   hashResetToken,
   generateResetToken,
   escapeHtml,
   sanitizeSingleLine,
-  stripHtmlTags,
   isValidHttpUrl,
   isValidUsername,
   isValidEmail,
@@ -71,6 +82,8 @@ import {
   uploadLimiter,
   chatLimiter,
   writeLimiter,
+  profileLimiter,
+  paymentLimiter,
   bookingRequestLimiter,
   mapsLimiter,
   publicReadLimiter,
@@ -307,6 +320,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
   app.use("/api/bookings", bookingsRouter);
   app.use("/api/social", socialRouter);
   app.use("/api/trips", tripsRouter);
+  app.use("/api/payments", paymentsRouter);
+  app.use("/api/payment-methods", async (_req, _res, next) => {
+    try {
+      await ensurePaymentSchema();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // Health
   app.get("/api/health", (_req, res) => {
@@ -1048,17 +1070,33 @@ export async function registerRoutes(app: Express): Promise<Express> {
     try {
       if (!req.file) return res.status(400).json({ message: "file required" });
 
+      const requestedCategory = sanitizeSingleLine(req.body?.category || "otros", 40)
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
+      // Allowlist de carpetas: evita crear rutas arbitrarias en Cloudinary.
+      const allowedCategories = new Set([
+        "avatars", "banners", "social", "otros",
+        "hotel", "restaurant", "recreation", "taxi", "translator",
+        "services", "products", "media",
+      ]);
+      const category = allowedCategories.has(requestedCategory) ? requestedCategory : "otros";
+      const isProfileImage = category === "avatars" || category === "banners";
+      const folder = `vianova/${category}/${req.user.id}`;
+
       const validation = validateUpload({
         buffer: req.file.buffer,
         mimetype: req.file.mimetype,
         originalname: req.file.originalname,
+        // Avatares y banners se muestran en cada visita: 5 MB es suficiente y
+        // reduce el coste de almacenamiento y el abuso del endpoint.
+        maxImageBytes: isProfileImage ? 5 * 1024 * 1024 : undefined,
       });
       if (!validation.ok) {
         return res.status(415).json({ message: validation.reason });
       }
-
-      const category = sanitizeSingleLine(req.body?.category || "otros", 40).replace(/[^a-zA-Z0-9_-]/g, "");
-      const folder = `vianova/${category || "otros"}/${req.user.id}`;
+      if (isProfileImage && validation.kind !== "image") {
+        return res.status(415).json({ message: "El avatar y el banner deben ser imágenes" });
+      }
 
       const uploaded: any = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -2007,7 +2045,7 @@ ${analyticsContext}`;
     },
   );
 
-  app.post("/api/payment-methods", requireAuth, writeLimiter, async (req: any, res, next) => {
+  app.post("/api/payment-methods", requireAuth, paymentLimiter, async (req: any, res, next) => {
     try {
       const { username: bodyUsername, type, label, details, isDefault } = req.body || {};
       const username = req.user.role === "admin" && bodyUsername
@@ -2016,19 +2054,31 @@ ${analyticsContext}`;
       if (!isValidUsername(username)) return res.status(400).json({ message: "Username inválido" });
       if (!type || !label) return res.status(400).json({ message: "type y label son obligatorios" });
 
-      const validTypes = ["cash", "nequi", "daviplata", "card"];
-      if (!validTypes.includes(type)) return res.status(400).json({ message: "Tipo de pago inválido" });
+      if (!isPaymentMethodType(type)) {
+        return res.status(400).json({ message: "Tipo de pago inválido" });
+      }
 
       const safeLabel = sanitizeSingleLine(label, 60);
-      const safeDetails = sanitizeSingleLine(details, 120);
       if (!safeLabel) return res.status(400).json({ message: "Etiqueta inválida" });
+
+      // Solo se normaliza el dato mínimo permitido. Nunca se aceptan números
+      // de tarjeta completos, CVV, cuentas bancarias ni contenido de QR.
+      const normalized = validatePaymentMethodDetails(type, details);
+      if (!normalized.ok) {
+        return res.status(400).json({ message: normalized.message });
+      }
 
       const method = await storage.addPaymentMethod({
         username,
         type,
         label: safeLabel,
-        details: safeDetails ? encryptSensitive(safeDetails) : null,
+        details: normalized.details ? encryptSensitive(normalized.details) : null,
         isDefault: isDefault === true || isDefault === "true" ? "true" : "false",
+      });
+      logSecurityEvent("payment.method_added", {
+        username,
+        methodId: method.id,
+        type,
       });
       res.status(201).json({ method: sanitizePaymentMethod(method) });
     } catch (err) {
@@ -2063,37 +2113,140 @@ ${analyticsContext}`;
   });
 
   // ── USER PROFILE ──────────────────────────────────────────────────────────
-  
-  app.patch("/api/user/profile", requireAuth, writeLimiter, async (req: any, res, next) => {
+
+  // Perfil propio: incluye datos de contacto y visibilidad. Solo el dueño (o
+  // un admin) puede leerlo completo; nunca se deriva de un username público.
+  app.get("/api/user/profile", requireAuth, async (req: any, res, next) => {
     try {
-      const { name, bio, avatarUrl } = req.body || {};
-      const bodyUsername = req.body?.username;
-      const username = req.user.role === "admin" && bodyUsername
-        ? sanitizeSingleLine(bodyUsername, 40)
-        : req.user.username;
-      if (!isValidUsername(username)) return res.status(400).json({ message: "Username inválido" });
-      if (name !== undefined && !String(name).trim()) {
-        return res.status(400).json({ message: "El nombre no puede estar vacío" });
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user || user.deletedAt) return res.status(404).json({ message: "Usuario no encontrado" });
+      res.set("Cache-Control", "no-store");
+      res.json({ user: sanitizeUser(user) });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch("/api/user/profile", requireAuth, profileLimiter, async (req: any, res, next) => {
+    try {
+      const body = req.body;
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return res.status(400).json({ message: "Datos de perfil no válidos" });
       }
 
-      const user = await storage.getUserByUsername(username);
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      const bodyUsername = typeof body.username === "string" ? sanitizeSingleLine(body.username, 40) : "";
+      const username = req.user.role === "admin" && bodyUsername ? bodyUsername : req.user.username;
+      if (!isValidUsername(username)) return res.status(400).json({ message: "Username inválido" });
+      if (username !== req.user.username && req.user.role !== "admin") {
+        return res.status(403).json({ message: "No puedes modificar el perfil de otra cuenta" });
+      }
 
-      const db = getDb();
+      const readOptionalString = (field: string): string | null | undefined => {
+        const value = body[field];
+        if (value === undefined) return undefined;
+        if (value === null) return null;
+        if (typeof value !== "string") {
+          throw Object.assign(new Error(`El campo ${field} no es válido`), { status: 400 });
+        }
+        return value;
+      };
+
+      // Allowlist explícita: nunca se aceptan id, username, role, email de la
+      // cuenta, password, tokens ni campos internos desde este endpoint.
       const patch: Record<string, any> = { updatedAt: new Date() };
-      if (name !== undefined) patch.name = sanitizeSingleLine(name, 120);
-      if (bio !== undefined) patch.bio = sanitizeSingleLine(stripHtmlTags(bio), 500) || null;
-      if (avatarUrl !== undefined) {
+      const changed: string[] = [];
+
+      const nameValue = readOptionalString("name");
+      if (nameValue !== undefined) {
+        if (nameValue === null) return res.status(400).json({ message: "El nombre no puede estar vacío" });
+        const name = profanityFilter.clean(sanitizeProfileText(nameValue, 120));
+        if (!name) return res.status(400).json({ message: "El nombre no puede estar vacío" });
+        patch.name = name;
+        changed.push("name");
+      }
+
+      const bioValue = readOptionalString("bio");
+      if (bioValue !== undefined) {
+        const bio = profanityFilter.clean(sanitizeProfileBio(bioValue ?? "", 500));
+        patch.bio = bio || null;
+        changed.push("bio");
+      }
+
+      const avatarValue = readOptionalString("avatarUrl");
+      if (avatarValue !== undefined) {
         try {
-          patch.avatarUrl = validateAvatarUrl(avatarUrl);
+          patch.avatarUrl = validateAvatarUrl(avatarValue);
         } catch (err: any) {
           return res.status(400).json({ message: err.message });
         }
+        changed.push("avatarUrl");
       }
 
-      const updatedRows = await db.update(users).set(patch).where(eq(users.id, user.id)).returning();
-      res.json({ user: sanitizeUser(updatedRows[0]) });
-    } catch (err) {
+      const bannerValue = readOptionalString("bannerUrl");
+      if (bannerValue !== undefined) {
+        try {
+          patch.bannerUrl = validateBannerUrl(bannerValue);
+        } catch (err: any) {
+          return res.status(400).json({ message: err.message });
+        }
+        changed.push("bannerUrl");
+      }
+
+      const contactEmailValue = readOptionalString("contactEmail");
+      if (contactEmailValue !== undefined) {
+        const raw = (contactEmailValue ?? "").trim();
+        if (raw && !isValidContactEmail(raw)) {
+          return res.status(400).json({ message: "El correo de contacto no es válido" });
+        }
+        patch.contactEmail = raw ? normalizeEmail(raw) : null;
+        changed.push("contactEmail");
+      }
+
+      const contactPhoneValue = readOptionalString("contactPhone");
+      if (contactPhoneValue !== undefined) {
+        const phone = contactPhoneValue ? sanitizeSingleLine(contactPhoneValue, 32) : "";
+        if (phone && !isValidContactPhone(phone)) {
+          return res.status(400).json({ message: "El teléfono de contacto no es válido" });
+        }
+        patch.contactPhone = phone || null;
+        changed.push("contactPhone");
+      }
+
+      const contactWebsiteValue = readOptionalString("contactWebsite");
+      if (contactWebsiteValue !== undefined) {
+        try {
+          patch.contactWebsite = validateContactWebsite(contactWebsiteValue);
+        } catch (err: any) {
+          return res.status(400).json({ message: err.message });
+        }
+        changed.push("contactWebsite");
+      }
+
+      if (body.contactVisibility !== undefined) {
+        if (typeof body.contactVisibility !== "string" || !isValidContactVisibility(body.contactVisibility)) {
+          return res.status(400).json({ message: "Visibilidad de contacto no válida" });
+        }
+        patch.contactVisibility = normalizeContactVisibility(body.contactVisibility);
+        changed.push("contactVisibility");
+      }
+
+      if (changed.length === 0) {
+        return res.status(400).json({ message: "No hay cambios para guardar" });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.deletedAt) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      const updated = await storage.updateUserProfile(user.id, patch);
+      logSecurityEvent("profile.update", {
+        actor: req.user.username,
+        target: username,
+        fields: changed,
+      });
+      res.set("Cache-Control", "no-store");
+      res.json({ user: sanitizeUser(updated) });
+    } catch (err: any) {
+      if (err?.status === 400) return res.status(400).json({ message: err.message });
       next(err);
     }
   });

@@ -14,11 +14,13 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
 const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
+const Profile = lazy(() => import("@/pages/Profile"));
 const MyProducts = lazy(() => import("@/pages/MyProducts"));
 const RoleSelection = lazy(() => import("@/pages/RoleSelection"));
 const Notifications = lazy(() => import("@/pages/Notifications"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Payments = lazy(() => import("@/pages/Payments"));
 
 // ── TAXI ──────────────────────────────────────────────────────────────────────
 const TaxiDashboard = lazy(() => import("@/pages/taxi/TaxiDashboard"));
@@ -153,9 +155,11 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/select-role" component={RoleSelection} />
         <Route path="/settings" component={AccountSettings} />
+        <Route path="/profile" component={Profile} />
         <Route path="/my-products" component={MyProducts} />
         <Route path="/notifications" component={Notifications} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/payments" component={Payments} />
         <Route path="/admin" component={AdminDashboard} />
 
         {/* ── Taxi ── */}

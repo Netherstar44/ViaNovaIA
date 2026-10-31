@@ -1,0 +1,367 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "filesScanned": 7
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 1,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"audio-voiceover\" is 44.86s but its slot (data-duration) is 48.50s — the slot is shortened to the media length when rendered. Set data-duration to ~44.86s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "48.5",
+          "data-width": "1920",
+          "data-height": "1080"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0
+      }
+    ]
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 7,
+    "findings": [
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.excel-icon-box",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 433.14,
+          "top": 298.54,
+          "right": 508.4,
+          "bottom": 344.84,
+          "width": 75.26,
+          "height": 46.3
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(1) > div:nth-of-type(2)",
+        "text": "XLS",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 433.14,
+          "y": 298.54,
+          "width": 75.26,
+          "height": 46.3
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.modal-title > h3:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 527.59,
+          "top": 269.61,
+          "right": 1112.24,
+          "bottom": 331.68,
+          "width": 584.65,
+          "height": 62.07
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(1) > div:nth-of-type(2)",
+        "text": "Exportar Reporte Contable",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 527.59,
+          "y": 269.61,
+          "width": 584.65,
+          "height": 62.07
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.sheets-list > div:nth-of-type(1) > div:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 511.81,
+          "top": 427.43,
+          "right": 930.52,
+          "bottom": 465.3,
+          "width": 418.71,
+          "height": 37.87
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(2) > div:nth-of-type(3)",
+        "text": "✓ Hoja General (Consolidado)",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 511.81,
+          "y": 427.43,
+          "width": 418.71,
+          "height": 37.87
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.sheets-list > div:nth-of-type(1) > div:nth-of-type(2)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 1344.77,
+          "top": 428.48,
+          "right": 1458.7,
+          "bottom": 464.25,
+          "width": 113.93,
+          "height": 35.77
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(2) > div:nth-of-type(6)",
+        "text": "Incluida",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 1344.77,
+          "y": 428.48,
+          "width": 113.93,
+          "height": 35.77
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.sheets-list > div:nth-of-type(2) > div:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 511.81,
+          "top": 522.11,
+          "right": 778.23,
+          "bottom": 559.99,
+          "width": 266.42,
+          "height": 37.88
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(3) > div:nth-of-type(3)",
+        "text": "✓ Hotel Plaza Neiva",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 511.81,
+          "y": 522.11,
+          "width": 266.42,
+          "height": 37.88
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.sheets-list > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 468.67,
+          "top": 527.37,
+          "right": 487.59,
+          "bottom": 557.89,
+          "width": 18.92,
+          "height": 30.52
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(3) > div:nth-of-type(2)",
+        "text": "✓",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 468.67,
+          "y": 527.37,
+          "width": 18.92,
+          "height": 30.52
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 32.243,
+        "selector": "div.sheets-list > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 1208.08,
+          "top": 523.17,
+          "right": 1458.7,
+          "bottom": 558.94,
+          "width": 250.62,
+          "height": 35.77
+        },
+        "containerSelector": "div.table-body > div:nth-of-type(3) > div:nth-of-type(5)",
+        "text": "48 transacciones",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply.",
+        "dataAttributes": {},
+        "sourceFile": "compositions/05-excel.html",
+        "bbox": {
+          "x": 1208.08,
+          "y": 523.17,
+          "width": 250.62,
+          "height": 35.77
+        },
+        "firstSeen": 32.243,
+        "lastSeen": 32.243,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          32.243
+        ]
+      }
+    ],
+    "duration": 48.5,
+    "samples": [
+      2.694,
+      8.083,
+      13.472,
+      18.861,
+      24.25,
+      29.639,
+      35.028,
+      40.417,
+      45.806
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 7,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      2.694,
+      13.472,
+      24.25,
+      35.028,
+      45.806
+    ],
+    "checked": 93,
+    "passed": 93
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 1,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "first_frame_empty",
+        "severity": "warning",
+        "message": "Frame 0 shows only the background, and the first frame is the thumbnail on social players: have the title or key image already on screen at 0 s instead of entering from nothing; see references/review.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 388
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

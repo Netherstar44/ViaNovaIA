@@ -1,0 +1,218 @@
+{
+  "version": 1,
+  "historyId": "8a3c8a2f-b1d4-45ec-a264-74281967c50e",
+  "currentRevision": "bdd0a0f0-90ae-430f-96f0-c7c755887080",
+  "pendingChanges": false,
+  "files": {
+    "assets/audio/music.mp3": {
+      "hash": "26bdf9980edf5e0fc3a3d0b8839305138ac23c68f88059041242c70175acc999",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\26\\26bdf9980edf5e0fc3a3d0b8839305138ac23c68f88059041242c70175acc999"
+    },
+    "assets/audio/taxi-vo-01.mp3": {
+      "hash": "bea744fb33df7f37f7dfd3321cb798eb9ab5639cd1b0de6029b98fc2f288683d",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\be\\bea744fb33df7f37f7dfd3321cb798eb9ab5639cd1b0de6029b98fc2f288683d"
+    },
+    "assets/audio/taxi-vo-02.mp3": {
+      "hash": "115a7ed413f04c4f72b592a6a6ee25802c1eaf3327653d25cd870d4172faa1d1",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\11\\115a7ed413f04c4f72b592a6a6ee25802c1eaf3327653d25cd870d4172faa1d1"
+    },
+    "assets/audio/taxi-vo-03.mp3": {
+      "hash": "35eb71779bda5e53763dfaa89bbdb001e0aa79a312867adde827864ea179406e",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\35\\35eb71779bda5e53763dfaa89bbdb001e0aa79a312867adde827864ea179406e"
+    },
+    "assets/audio/taxi-vo-04.mp3": {
+      "hash": "124adf16b20cdda21232356160d067b5ebce84819b4df98d99054d8afbeab233",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\12\\124adf16b20cdda21232356160d067b5ebce84819b4df98d99054d8afbeab233"
+    },
+    "assets/audio/taxi-vo-05.mp3": {
+      "hash": "8ff2d7e90de858631bcd0c7792299b734ca11e615892a15094e7edbb6f85a74b",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\8f\\8ff2d7e90de858631bcd0c7792299b734ca11e615892a15094e7edbb6f85a74b"
+    },
+    "assets/audio/taxi-vo-06.mp3": {
+      "hash": "88d75eda70ce5609768cec25e0da1f51cf64c84d243493f36f1f4208cf7b0d44",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\88\\88d75eda70ce5609768cec25e0da1f51cf64c84d243493f36f1f4208cf7b0d44"
+    },
+    "assets/audio/voiceover.mp3": {
+      "hash": "0f11ef4cc24278a270dae104d5e2f9a1d36e04c346720517a61a2f0f5baf79f7",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\0f\\0f11ef4cc24278a270dae104d5e2f9a1d36e04c346720517a61a2f0f5baf79f7"
+    },
+    "assets/img/asadero.jpg": {
+      "hash": "c11834638f09e7dc74d84d5306cb453e76d0299c42a56147b67f882cabf6643e",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\c1\\c11834638f09e7dc74d84d5306cb453e76d0299c42a56147b67f882cabf6643e"
+    },
+    "assets/img/hotel-cabin.jpg": {
+      "hash": "76aa7a3da4a3c166dc9702af5fa7b47fcca5d230c0530294cf649eca99b9243f",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\76\\76aa7a3da4a3c166dc9702af5fa7b47fcca5d230c0530294cf649eca99b9243f"
+    },
+    "assets/img/hotel-plaza.jpg": {
+      "hash": "50b81ee31f3429ed42c28c84b670e4f0ad86099f803ae58d8cb216ffb1a5de62",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\50\\50b81ee31f3429ed42c28c84b670e4f0ad86099f803ae58d8cb216ffb1a5de62"
+    },
+    "assets/img/map-neiva.jpg": {
+      "hash": "4d1a6359914707e0099a6864a886edb540eb21504adce6ada702796aefc3e7e7",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\4d\\4d1a6359914707e0099a6864a886edb540eb21504adce6ada702796aefc3e7e7"
+    },
+    "assets/img/tatacoa.jpg": {
+      "hash": "70710cbf2852b2b51097304501e2cb7a5578517e99f88488e003da9f60693d3c",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\70\\70710cbf2852b2b51097304501e2cb7a5578517e99f88488e003da9f60693d3c"
+    },
+    "assets/subtitles.srt": {
+      "hash": "f1477623f43b4123e3380783cd3933ac8d7253f5452c996013c09448261889ff",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\f1\\f1477623f43b4123e3380783cd3933ac8d7253f5452c996013c09448261889ff"
+    },
+    "compositions/01-hook.html": {
+      "hash": "6c4b169b8395ab2ea4ae21b176f3e6230e4e5d5f3adf62fb1129001c9f214647",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\6c\\6c4b169b8395ab2ea4ae21b176f3e6230e4e5d5f3adf62fb1129001c9f214647"
+    },
+    "compositions/02-toggle.html": {
+      "hash": "759cb923cb4868b946ebc8f94335177c1494d843248967ec18110153fd42e350",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\75\\759cb923cb4868b946ebc8f94335177c1494d843248967ec18110153fd42e350"
+    },
+    "compositions/03-map.html": {
+      "hash": "c72121bd76977a7ed54159b4d1a4cb8e8b1bf8406cc432b2c8eb2617bab575f4",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\c7\\c72121bd76977a7ed54159b4d1a4cb8e8b1bf8406cc432b2c8eb2617bab575f4"
+    },
+    "compositions/04-earnings.html": {
+      "hash": "53a2edba3092e1fdf82e23478a3ffcab7cdcd2446757cef6e4ba4b5782b17250",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\53\\53a2edba3092e1fdf82e23478a3ffcab7cdcd2446757cef6e4ba4b5782b17250"
+    },
+    "compositions/05-rating.html": {
+      "hash": "36196594180be17b0ce46ae693f0b98c66e0ba4ba507c1a9d985eb4fb847d196",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\36\\36196594180be17b0ce46ae693f0b98c66e0ba4ba507c1a9d985eb4fb847d196"
+    },
+    "compositions/06-closing.html": {
+      "hash": "abd319bab6238d8ea58c55b7e3a02f39e595901aee66deeafc977c7130d97e40",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\ab\\abd319bab6238d8ea58c55b7e3a02f39e595901aee66deeafc977c7130d97e40"
+    },
+    "hyperframes.json": {
+      "hash": "3b4ff1936eab3fb0c82eb11d4150224327491d6e52964144b3aab2c9bbc44775",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\3b\\3b4ff1936eab3fb0c82eb11d4150224327491d6e52964144b3aab2c9bbc44775"
+    },
+    "index.html": {
+      "hash": "53754182921c6e02ac3697d63430a590dc00e30fac2360067466d3c9c0f849b4",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\53\\53754182921c6e02ac3697d63430a590dc00e30fac2360067466d3c9c0f849b4"
+    },
+    "meta.json": {
+      "hash": "73c621e008ef77553731d23bdc6c346af17b4a400f7cdc38eeaef2d7803f4e1c",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\73\\73c621e008ef77553731d23bdc6c346af17b4a400f7cdc38eeaef2d7803f4e1c"
+    },
+    "package.json": {
+      "hash": "01bb7cd8376ca52f36b290643d2fd52cec17d55c5c78e8785032fd86c645af63",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\01\\01bb7cd8376ca52f36b290643d2fd52cec17d55c5c78e8785032fd86c645af63"
+    },
+    "assets/img/qr.png": {
+      "hash": "a54f90ea0d222ae3789750d6e6ff0f87ebbe13ed9fddead55c1d3ccf9c59af3c",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\a5\\a54f90ea0d222ae3789750d6e6ff0f87ebbe13ed9fddead55c1d3ccf9c59af3c"
+    },
+    "assets/img/logo.png": {
+      "hash": "27f9d7729f8a429eeb8987e89f017ef7fe063deed57b2924fa83cc8fe8143017",
+      "content": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\27\\27f9d7729f8a429eeb8987e89f017ef7fe063deed57b2924fa83cc8fe8143017"
+    }
+  },
+  "revisions": {
+    "bdd0a0f0-90ae-430f-96f0-c7c755887080": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793318819454,
+      "endedAt": 1793318819681,
+      "files": {
+        "assets/img/logo.png": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\27\\27f9d7729f8a429eeb8987e89f017ef7fe063deed57b2924fa83cc8fe8143017"
+        },
+        "assets/img/qr.png": {
+          "before": null,
+          "after": "C:\\Users\\Famil\\.cache\\hyperframes\\history\\8a3c8a2f-b1d4-45ec-a264-74281967c50e\\blobs\\a5\\a54f90ea0d222ae3789750d6e6ff0f87ebbe13ed9fddead55c1d3ccf9c59af3c"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "bdd0a0f0-90ae-430f-96f0-c7c755887080",
+      "id": "b0b937a7-b614-40fa-a88c-d582598d0260"
+    },
+    "revisions": {
+      "8ebd2937-1ca9-4367-a609-f2293b749b6e": [],
+      "bdd0a0f0-90ae-430f-96f0-c7c755887080": [
+        {
+          "id": "b0b937a7-b614-40fa-a88c-d582598d0260",
+          "scope": "project",
+          "report": "C:\\Users\\Famil\\Downloads\\ViaNovaIA-main\\ViaNovaIA-main\\video-taxi\\.hyperframes\\artifacts\\checks\\b0b937a7-b614-40fa-a88c-d582598d0260.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 10000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793318868145,
+          "contentHash": "39e5f72089720ece5c3c5d03aea3fd723842183063260e3e80daacadb406d92c",
+          "revision": "bdd0a0f0-90ae-430f-96f0-c7c755887080",
+          "inputFingerprint": "59d22fc1ab8c8e84163427c8980625d6af76741c0fb9c5def8b6bef92060548c",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "7b0a4096-2bcf-4e1e-a5af-c337098360f3",
+        "scope": "project",
+        "report": "C:\\Users\\Famil\\Downloads\\ViaNovaIA-main\\ViaNovaIA-main\\video-taxi\\.hyperframes\\artifacts\\checks\\7b0a4096-2bcf-4e1e-a5af-c337098360f3.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": true,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 10000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1793318520577,
+        "contentHash": "5c7e11e7d9b287f61511a213fb088da004be27868d733021ef0d8ec7a2f146ac",
+        "revision": null,
+        "inputFingerprint": "02d509475bbe64c33a270526b2cbd3ec47c33197a9cff576e67912a9f27c2642",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "4bf7ebac-c2e5-4159-91a7-5f29e4e61be3",
+      "completedAt": 1793308411799,
+      "output": "C:\\Users\\abel1\\Desktop\\Nueva carpeta\\ViaNovaIA\\ViaNovaIA\\video-taxi\\renders\\video-taxi_2026-10-29_16-12-12.mp4",
+      "status": "completed",
+      "revision": "8ebd2937-1ca9-4367-a609-f2293b749b6e"
+    },
+    "retainedRevisions": [
+      "8ebd2937-1ca9-4367-a609-f2293b749b6e"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

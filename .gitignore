@@ -44,8 +44,10 @@ _capture-*/
 promo-video/
 
 # Hyperframes artifacts and secrets
-video-vianova/.hyperframes/artifacts/
+**/.hyperframes/artifacts/
 video-vianova/.env
+*.zip
+
 
 # Hyperframes assets (logos, qr, stills, cover)
 !video-vianova/assets/**/*.png

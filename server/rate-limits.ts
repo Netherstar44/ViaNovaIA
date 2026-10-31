@@ -130,6 +130,24 @@ export const writeLimiter = rateLimit({
   handler: jsonHandler("Demasiadas solicitudes. Espera unos minutos."),
 });
 
+/** Cambios de perfil: más estricto que el límite general de escritura. */
+export const profileLimiter = rateLimit({
+  ...common(),
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  keyGenerator: userOrIp,
+  handler: jsonHandler("Demasiados cambios de perfil. Espera unos minutos."),
+});
+
+/** Pagos: evita fuerza bruta de referencias y creación masiva de intents. */
+export const paymentLimiter = rateLimit({
+  ...common(),
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  keyGenerator: userOrIp,
+  handler: jsonHandler("Demasiados intentos de pago. Espera unos minutos."),
+});
+
 export const bookingRequestLimiter = rateLimit({
   ...common(),
   windowMs: 60 * 60 * 1000,

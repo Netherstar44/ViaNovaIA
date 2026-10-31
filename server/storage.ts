@@ -40,7 +40,18 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   updateUserRole(userId: string, role: string): Promise<User>;
-  updateUserProfile(userId: string, data: { name?: string; email?: string }): Promise<User>;
+  updateUserProfile(userId: string, data: {
+    name?: string;
+    email?: string;
+    bio?: string | null;
+    avatarUrl?: string | null;
+    bannerUrl?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    contactWebsite?: string | null;
+    contactVisibility?: string;
+    updatedAt?: Date;
+  }): Promise<User>;
   upsertConversation(userId: string, title?: string): Promise<Conversation>;
   addMessage(conversationId: string, role: string, content: string, metadata?: any): Promise<Message>;
   getMessages(conversationId: string, limit?: number): Promise<Message[]>;
@@ -320,7 +331,18 @@ export class DbStorage implements IStorage {
     return rows[0];
   }
 
-  async updateUserProfile(userId: string, data: { name?: string; email?: string }): Promise<User> {
+  async updateUserProfile(userId: string, data: {
+    name?: string;
+    email?: string;
+    bio?: string | null;
+    avatarUrl?: string | null;
+    bannerUrl?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    contactWebsite?: string | null;
+    contactVisibility?: string;
+    updatedAt?: Date;
+  }): Promise<User> {
     const db = getDb();
     const rows = await db.update(users).set(data).where(eq(users.id, userId)).returning();
     if (!rows.length) throw new Error("User not found");
@@ -530,6 +552,8 @@ export class DbStorage implements IStorage {
     name: string | null;
     role: string | null;
     avatarUrl: string | null;
+    bannerUrl: string | null;
+    bio: string | null;
     roles: Array<{ role: string; businessName: string | null; createdAt: Date | null }>;
     averageRating: number;
     reviewCount: number;
@@ -546,7 +570,10 @@ export class DbStorage implements IStorage {
       name: user.name,
       role: user.role,
       avatarUrl: user.avatarUrl,
-      // Minimización: nunca exponer teléfono, placa ni dirección del negocio.
+      bannerUrl: user.bannerUrl,
+      bio: user.bio,
+      // Minimización: nunca exponer teléfono, placa, dirección del negocio ni
+      // datos de contacto desde este endpoint público.
       roles: roleRecords.map((record) => ({
         role: String(record.role),
         businessName: record.businessName ?? null,

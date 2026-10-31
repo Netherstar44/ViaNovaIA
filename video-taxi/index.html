@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #070b14;
+        --navy: #0b1220;
+        --gold: #facc15;
+        --gold-bright: #ffbf00;
+        --green: #22c55e;
+        --slate: #64748b;
+        --white: #ffffff;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--ground);
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ground);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="52.0"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- Audio: Master Voiceover from ElevenLabs -->
+      <audio
+        id="audio-voiceover"
+        src="assets/audio/voiceover.mp3"
+        data-start="0"
+        data-duration="50.57"
+        data-volume="1"
+      ></audio>
+      <!-- Audio: Latin Urban Beat Instrumental -->
+      <audio
+        id="audio-music"
+        src="assets/audio/music.mp3"
+        data-start="0"
+        data-duration="52.0"
+        data-volume="0.13"
+        data-fade-in="1.0"
+        data-fade-out="2.0"
+      ></audio>
+
+      <!-- Scene 1: El Gancho - Dolor y Promesa -->
+      <div
+        id="s1-hook"
+        class="clip"
+        data-composition-id="s1-hook"
+        data-composition-src="compositions/01-hook.html"
+        data-start="0"
+        data-duration="7.0"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 2: Toggle Activo + Solicitud de Carrera -->
+      <div
+        id="s2-toggle"
+        class="clip"
+        data-composition-id="s2-toggle"
+        data-composition-src="compositions/02-toggle.html"
+        data-start="7.0"
+        data-duration="10.0"
+        data-track-index="2"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 3: Mapa y Ruta en Tiempo Real -->
+      <div
+        id="s3-map"
+        class="clip"
+        data-composition-id="s3-map"
+        data-composition-src="compositions/03-map.html"
+        data-start="17.0"
+        data-duration="8.0"
+        data-track-index="3"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 4: Panel de Ganancias y Retiro -->
+      <div
+        id="s4-earnings"
+        class="clip"
+        data-composition-id="s4-earnings"
+        data-composition-src="compositions/04-earnings.html"
+        data-start="25.0"
+        data-duration="9.0"
+        data-track-index="4"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 5: Calificación y Reputación -->
+      <div
+        id="s5-rating"
+        class="clip"
+        data-composition-id="s5-rating"
+        data-composition-src="compositions/05-rating.html"
+        data-start="34.0"
+        data-duration="8.0"
+        data-track-index="5"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <!-- Scene 6: Cierre Comercial y CTA -->
+      <div
+        id="s6-closing"
+        class="clip"
+        data-composition-id="s6-closing"
+        data-composition-src="compositions/06-closing.html"
+        data-start="42.0"
+        data-duration="10.0"
+        data-track-index="6"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>
+

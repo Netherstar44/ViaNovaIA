@@ -1,0 +1,30 @@
+1
+00:00:00,500 --> 00:00:05,200
+Want to explore Colombia beyond the tourist traps... with zero language barriers?
+¿Quieres explorar Colombia más allá de las trampas turísticas... sin barreras de idioma?
+
+2
+00:00:05,500 --> 00:00:13,200
+Meet ViaNovaIA: your smart travel companion that speaks your language and crafts real local itineraries in seconds.
+Conoce ViaNovaIA: tu compañero inteligente que habla tu idioma y diseña itinerarios locales en segundos.
+
+3
+00:00:13,500 --> 00:00:22,800
+Preview boutique stays, taste authentic gastronomy, and explore breathtaking landscapes in 360 before you even pack your bags.
+Previsualiza hospedajes boutique, gastronomía auténtica y paisajes asombrosos en 360° antes de empacar.
+
+4
+00:00:23,000 --> 00:00:30,800
+Book local taxis with transparent, upfront pricing. No haggling, no surprises, just safe local rides.
+Pide taxis locales con tarifas fijas y transparentes. Sin regateos ni sorpresas: solo viajes seguros.
+
+5
+00:00:31,000 --> 00:00:37,200
+Join a vibrant community sharing secret spots and verified travel tips across Colombia.
+Únete a una comunidad vibrante que comparte lugares secretos y consejos verificados en toda Colombia.
+
+6
+00:00:37,500 --> 00:00:46,500
+Travel smarter. Experience the real Colombia with ViaNovaIA. Start free today at via-nova-ia.vercel.app.
+Viaja más inteligente. Vive la Colombia auténtica con ViaNovaIA. Empieza gratis en via-nova-ia.vercel.app.
+

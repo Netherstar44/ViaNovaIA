@@ -1,0 +1,24 @@
+1
+00:00:00,100 --> 00:00:06,800
+¿Cuántas horas llevas rodando vacío, buscando carreras que nunca llegan? Con ViaNovaIA, eso se acabó.
+
+2
+00:00:07,000 --> 00:00:16,800
+Activas tu disponibilidad y al instante recibes solicitudes reales de turistas que ya están en tu ciudad, con tarifa fija y sin intermediarios.
+
+3
+00:00:17,000 --> 00:00:24,800
+La ruta está lista, el destino confirmado. Sin vueltas innecesarias, sin confusión — tú mandas.
+
+4
+00:00:25,000 --> 00:00:33,800
+Cada carrera suma directo a tu bolsillo. Sin esperas de semanas ni descuentos arbitrarios. Tú decides cuándo retirar.
+
+5
+00:00:34,000 --> 00:00:41,800
+Tu buena actitud construye tu reputación digital. Los turistas te buscan a ti — no a la plataforma.
+
+6
+00:00:42,000 --> 00:00:51,500
+Únete al gremio de conductores de ViaNovaIA. Regístrate gratis en via-nova-ia.vercel.app y empieza a ganar desde hoy.
+
