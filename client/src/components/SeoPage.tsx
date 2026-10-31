@@ -39,15 +39,6 @@ export default function SeoPage({ page }: { page: SeoPageData }) {
 
       <main>
         <section className="relative isolate overflow-hidden border-b border-border">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(48rem 30rem at 6% -14%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 64%), radial-gradient(42rem 26rem at 92% 4%, color-mix(in srgb, var(--card) 88%, transparent), transparent 62%)",
-            }}
-          />
-
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-4 pb-14 pt-10 sm:px-6 min-[900px]:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)] min-[900px]:items-center min-[900px]:gap-12 lg:gap-16 lg:px-8 lg:pb-20 lg:pt-14">
             <div className="min-w-0">
               <nav
@@ -167,16 +158,11 @@ export default function SeoPage({ page }: { page: SeoPageData }) {
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.55, ease: EASE }}
               >
-                <div className="flex items-baseline gap-4">
-                  <span className="font-mono text-[11px] tabular-nums text-primary-ink">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h2 className="text-balance font-heading text-[clamp(1.5rem,2.6vw,2.1rem)] font-semibold leading-[1.16] tracking-[-0.03em] text-foreground">
-                    {section.heading}
-                  </h2>
-                </div>
+                <h2 className="text-balance font-heading text-[clamp(1.5rem,2.6vw,2.1rem)] font-semibold leading-[1.16] tracking-[-0.03em] text-foreground">
+                  {section.heading}
+                </h2>
 
-                <div className="mt-5 max-w-[68ch] space-y-4 sm:pl-8">
+                <div className="mt-5 max-w-[68ch] space-y-4">
                   {section.paragraphs.map((paragraph) => (
                     <p key={paragraph.slice(0, 48)} className="text-[15px] leading-7 text-muted-foreground sm:text-[15.5px] sm:leading-[1.82]">
                       {paragraph}

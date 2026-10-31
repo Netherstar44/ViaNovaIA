@@ -94,7 +94,7 @@ function renderHead(page: SeoPage): string {
   ${verificationTags()}
   ${jsonLd}
   <style>
-    #seo-prerender{--ink:#1f1e1a;--muted:#555147;--soft:#6a655a;--faint:#8a8578;--line:#ddd7c8;--hair:#e4dfd2;--gold:#ffbf00;--gold-ink:#7d5e12;--bg:#f5f4f0;background:var(--bg);background-image:radial-gradient(48rem 30rem at 6% -14%,rgba(255,191,0,.15),transparent 64%),radial-gradient(42rem 26rem at 92% 4%,rgba(255,255,255,.95),transparent 62%);color:var(--ink);font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+    #seo-prerender{--ink:#1f1e1a;--muted:#555147;--soft:#6a655a;--faint:#8a8578;--line:#ddd7c8;--hair:#e4dfd2;--gold:#ffbf00;--gold-ink:#7d5e12;--bg:#f5f4f0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
     #seo-prerender *{box-sizing:border-box}
     #seo-prerender a{color:inherit}
     #seo-prerender .seo-wrap{max-width:1200px;margin:0 auto;padding:0 20px}
@@ -133,8 +133,6 @@ function renderHead(page: SeoPage): string {
     #seo-prerender .seo-grid{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:64px;align-items:start}
     #seo-prerender .seo-section{padding-top:32px;border-top:1px solid var(--line);margin-top:44px}
     #seo-prerender .seo-section:first-child{padding-top:0;border-top:0;margin-top:0}
-    #seo-prerender .seo-section-head{display:flex;align-items:baseline;gap:16px}
-    #seo-prerender .seo-num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#b08a2a}
     #seo-prerender article h2{margin:0;color:var(--ink);font-family:Poppins,sans-serif;font-weight:600;font-size:clamp(24px,2.6vw,32px);line-height:1.16;letter-spacing:-.03em}
     #seo-prerender .seo-section-body{max-width:68ch;margin-top:18px;padding-left:0}
     #seo-prerender article p{color:var(--muted);margin:0 0 14px;font-size:15px;line-height:1.82}
@@ -184,10 +182,7 @@ function renderStaticBody(page: SeoPage): string {
   const sections = page.sections
     .map(
       (section, index) => `<section class="seo-section" id="${slugifyHeading(section.heading, index)}">
-          <div class="seo-section-head">
-            <span class="seo-num">${String(index + 1).padStart(2, "0")}</span>
-            <h2>${escapeHtml(section.heading)}</h2>
-          </div>
+          <h2>${escapeHtml(section.heading)}</h2>
           <div class="seo-section-body">
             ${section.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n            ")}
             ${

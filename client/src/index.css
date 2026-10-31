@@ -403,6 +403,12 @@
      heavy blur and dark ink. A dark body over a dark hero is what made the
      previous bar look like smoked grey plastic. */
   .hero-search {
+    /* `.glass-search` paints `--lg-solid` (theme `--card`) as its body, and
+       that is near-black in the dark palettes while the ink here is always
+       dark. Pin a bright body so the text and placeholder stay readable in
+       light, dark, sunset, ocean and forest. */
+    --lg-solid: rgba(255, 255, 255, 0.9);
+    --lg-solid-raised: rgba(255, 255, 255, 0.94);
     --lg-body: rgba(255, 255, 255, 0.48);
     --lg-body-strong: rgba(255, 255, 255, 0.64);
     --lg-tint: rgba(255, 255, 255, 0.16);
