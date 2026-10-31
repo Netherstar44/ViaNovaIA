@@ -115,12 +115,12 @@ export default function Navbar() {
               <img
                 src={logoSrc}
                 alt=""
-                width={80}
-                height={80}
-                className="h-14 w-14 object-contain drop-shadow-md sm:h-16 sm:w-16 lg:h-20 lg:w-20"
+                width={56}
+                height={56}
+                className="h-11 w-11 object-contain drop-shadow-md sm:h-12 sm:w-12 lg:h-14 lg:w-14"
               />
             </motion.div>
-            <span className="truncate text-foreground notranslate max-[379px]:hidden"><span className="text-primary-ink">VIA</span>Nova</span>
+            <span className="min-w-0 truncate text-foreground notranslate"><span className="text-primary-ink">VIA</span>Nova</span>
           </button>
         </div>
 

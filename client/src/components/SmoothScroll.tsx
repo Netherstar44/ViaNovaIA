@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import Lenis from "lenis";
+import { seoPages } from "@shared/seo-content";
 import "lenis/dist/lenis.css";
 
 declare global {
@@ -20,8 +21,12 @@ declare global {
  */
 export default function SmoothScroll() {
   const [location] = useLocation();
+  // Guides are long-form reading pages: native scrolling is lighter and keeps
+  // the browser's own scroll restoration and find-in-page behaviour intact.
+  const isGuide = seoPages.some((page) => `/${page.slug}` === location);
 
   useEffect(() => {
+    if (isGuide) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
 
@@ -74,12 +79,16 @@ export default function SmoothScroll() {
       lenis.destroy();
       delete window.__lenis;
     };
-  }, []);
+  }, [isGuide]);
 
   useEffect(() => {
+    if (isGuide) {
+      window.scrollTo(0, 0);
+      return;
+    }
     window.__lenis?.resize();
     window.__lenis?.scrollTo(0, { immediate: true });
-  }, [location]);
+  }, [location, isGuide]);
 
   return null;
 }

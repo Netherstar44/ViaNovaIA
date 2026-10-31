@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import type { SeoPage as SeoPageData } from "@shared/seo-content";
 import { seoPages } from "@shared/seo-content";
-import { guideThumb, guideVisual } from "@shared/guide-visuals";
+import { guideHeroSources, guideThumb, guideVisual } from "@shared/guide-visuals";
 import { ArrowRight, ArrowUpRight, CalendarDays, MapPin, Plus } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -28,6 +28,7 @@ export default function SeoPage({ page }: { page: SeoPageData }) {
   const currentYear = new Date().getFullYear();
   const otherPages = seoPages.filter((candidate) => candidate.slug !== page.slug);
   const visual = guideVisual(page.slug);
+  const hero = guideHeroSources(visual.image);
   const reduce = useReducedMotion();
   const [titleLead, ...titleRest] = page.h1.split(":");
   const titleTail = titleRest.join(":").trim();
@@ -120,15 +121,20 @@ export default function SeoPage({ page }: { page: SeoPageData }) {
               className="relative m-0 overflow-hidden rounded-[28px] border border-border bg-muted shadow-[0_36px_80px_-46px_rgba(0,0,0,0.55)]"
             >
               <div className="relative aspect-[4/5]">
-                <img
-                  src={visual.image}
-                  alt={visual.alt}
-                  className="h-full w-full object-cover object-center"
-                  fetchPriority="high"
-                  decoding="async"
-                  width={1800}
-                  height={1200}
-                />
+                <picture className="contents">
+                  <source type="image/avif" srcSet={hero.avifSrcSet} sizes={hero.sizes} />
+                  <img
+                    src={visual.image}
+                    srcSet={hero.webpSrcSet}
+                    sizes={hero.sizes}
+                    alt={visual.alt}
+                    className="h-full w-full object-cover object-center"
+                    fetchPriority="high"
+                    decoding="async"
+                    width={1800}
+                    height={1200}
+                  />
+                </picture>
                 <div
                   aria-hidden="true"
                   className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"
@@ -283,12 +289,14 @@ export default function SeoPage({ page }: { page: SeoPageData }) {
             <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-[0_28px_60px_-40px_rgba(0,0,0,0.55)]">
               <div className="relative h-28">
                 <img
-                  src={visual.image}
+                  src={visual.thumb}
                   alt=""
                   aria-hidden="true"
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="lazy"
                   decoding="async"
+                  width={480}
+                  height={320}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/10" aria-hidden="true" />
               </div>

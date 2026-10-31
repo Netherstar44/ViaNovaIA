@@ -64,6 +64,37 @@ export function guideVisual(slug: string): GuideVisual {
   return guideVisuals[slug] ?? fallbackVisual;
 }
 
+/**
+ * Responsive sources generated next to each hero (see
+ * `client/public/images/colombia`). AVIF is ~55-70% smaller than the WebP
+ * fallback; the 900w variant covers phones without shipping the full crop.
+ */
+const heroWidths: Record<string, number> = {
+  "/images/colombia/salento.webp": 1400,
+  "/images/colombia/cartagena.webp": 1400,
+  "/images/colombia/tatacoa.webp": 1400,
+  "/images/colombia/hotel-huila.webp": 1200,
+  "/images/colombia/cocora-hero.webp": 1920,
+};
+
+export type GuideHeroSources = {
+  avif: string;
+  avifSrcSet: string;
+  webpSrcSet: string;
+  sizes: string;
+};
+
+export function guideHeroSources(image: string): GuideHeroSources {
+  const base = image.replace(/\.webp$/, "");
+  const width = heroWidths[image] ?? 1400;
+  return {
+    avif: `${base}.avif`,
+    avifSrcSet: `${base}-900.avif 900w, ${base}.avif ${width}w`,
+    webpSrcSet: `${base}-900.webp 900w, ${image} ${width}w`,
+    sizes: "(min-width: 900px) 46vw, 100vw",
+  };
+}
+
 /** Small crop for index rows; the card art keeps the full-width version. */
 export function guideThumb(slug: string): string {
   return guideVisual(slug).thumb;

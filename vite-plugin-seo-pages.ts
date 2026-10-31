@@ -12,7 +12,7 @@ import {
   seoPages,
   type SeoPage,
 } from "./shared/seo-content";
-import { guideThumb, guideVisual } from "./shared/guide-visuals";
+import { guideHeroSources, guideThumb, guideVisual } from "./shared/guide-visuals";
 
 function escapeHtml(value: string): string {
   return value
@@ -54,6 +54,7 @@ function verificationTags(): string {
 function renderHead(page: SeoPage): string {
   const url = absoluteUrl(pagePath(page.slug));
   const visual = guideVisual(page.slug);
+  const hero = guideHeroSources(visual.image);
   // Share cards use the same art as the page hero, cropped to 1200x630.
   const ogImage = visual.image.replace("w=1800", "w=1200&h=630");
   const jsonLd = [
@@ -88,7 +89,7 @@ function renderHead(page: SeoPage): string {
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   <meta name="twitter:image:alt" content="${escapeHtml(page.h1)}" />
 
-  <link rel="preload" as="image" href="${escapeHtml(visual.image)}" fetchpriority="high" />
+  <link rel="preload" as="image" type="image/avif" href="${escapeHtml(hero.avif)}" imagesrcset="${escapeHtml(hero.avifSrcSet)}" imagesizes="${escapeHtml(hero.sizes)}" fetchpriority="high" />
 
   ${verificationTags()}
   ${jsonLd}
@@ -122,6 +123,7 @@ function renderHead(page: SeoPage): string {
     #seo-prerender .seo-btn-out{background:none;border:0;border-bottom:1px solid #c9c2b1;border-radius:0;padding:0 0 5px;color:var(--muted);box-shadow:none}
     #seo-prerender .seo-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:32px;padding-top:18px;border-top:1px solid var(--hair);color:var(--faint);font-size:11.5px}
     #seo-prerender .seo-figure{position:relative;margin:0;overflow:hidden;border-radius:28px;border:1px solid rgba(255,255,255,.85);background:#e9e4d7;box-shadow:0 36px 80px -46px rgba(53,44,18,.55);aspect-ratio:4/5}
+    #seo-prerender .seo-figure picture{display:contents}
     #seo-prerender .seo-figure img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
     #seo-prerender .seo-figure:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(23,20,12,.58),rgba(23,20,12,.08) 46%,transparent)}
     #seo-prerender .seo-figure-card{position:absolute;left:16px;right:16px;bottom:16px;z-index:1;padding:14px 18px;border-radius:18px;border:1px solid rgba(255,255,255,.72);background:rgba(255,255,255,.55);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 18px 46px -24px rgba(20,16,4,.45)}
@@ -172,6 +174,7 @@ function renderHead(page: SeoPage): string {
 
 function renderStaticBody(page: SeoPage): string {
   const visual = guideVisual(page.slug);
+  const hero = guideHeroSources(visual.image);
   const [titleLead, ...titleRest] = page.h1.split(":");
   const titleTail = titleRest.join(":").trim();
   const visualTitle = `${escapeHtml(titleLead)}<span class="seo-sr">: </span>${
@@ -272,7 +275,10 @@ function renderStaticBody(page: SeoPage): string {
           </div>
         </div>
         <figure class="seo-figure">
-          <img src="${escapeHtml(visual.image)}" alt="${escapeHtml(visual.alt)}" width="1800" height="1200" fetchpriority="high" />
+          <picture class="contents">
+            <source type="image/avif" srcset="${escapeHtml(hero.avifSrcSet)}" sizes="${escapeHtml(hero.sizes)}" />
+            <img src="${escapeHtml(visual.image)}" srcset="${escapeHtml(hero.webpSrcSet)}" sizes="${escapeHtml(hero.sizes)}" alt="${escapeHtml(visual.alt)}" class="h-full w-full object-cover object-center" width="1800" height="1200" fetchpriority="high" decoding="async" />
+          </picture>
           <figcaption class="seo-figure-card">
             <p class="seo-figure-kicker">${escapeHtml(visual.kicker)}</p>
             <p class="seo-figure-place">${escapeHtml(visual.place)}</p>
@@ -305,7 +311,7 @@ function renderStaticBody(page: SeoPage): string {
               <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
             </nav>
           </div>
-          <div class="seo-cta" style="background-image:linear-gradient(160deg,rgba(245,244,240,.86),rgba(245,244,240,.94)),url('${escapeHtml(visual.image)}');background-size:cover;background-position:center">
+          <div class="seo-cta" style="background-image:linear-gradient(160deg,rgba(245,244,240,.86),rgba(245,244,240,.94)),url('${escapeHtml(visual.thumb)}');background-size:cover;background-position:center">
             <h3>Planificador</h3>
             <p><strong>¿Listo para tu itinerario?</strong>Cuéntale a la IA tus fechas, presupuesto e intereses y recibe un plan editable en minutos.</p>
             <a href="/">Crear plan gratis →</a>
@@ -336,7 +342,14 @@ function renderStaticBody(page: SeoPage): string {
 function renderPage(template: string, page: SeoPage): string {
   // Guide pages ship real prerendered content, so the generic <noscript> fallback
   // would only duplicate the H1 and the internal links for crawlers and no-JS users.
-  const withoutNoscript = template.replace(/\s*<noscript>[\s\S]*?<\/noscript>/, "");
+  // They also never load the map or Unsplash imagery, so those connection hints
+  // would open sockets the article does not use.
+  const withoutNoscript = template
+    .replace(/\s*<noscript>[\s\S]*?<\/noscript>/, "")
+    .replace(/\s*<link rel="preconnect" href="https:\/\/images\.unsplash\.com"[^>]*>/, "")
+    .replace(/\s*<link rel="preconnect" href="https:\/\/tiles\.openfreemap\.org"[^>]*>/, "")
+    .replace(/\s*<link rel="dns-prefetch" href="https:\/\/images\.unsplash\.com"[^>]*>/, "")
+    .replace(/\s*<link rel="dns-prefetch" href="https:\/\/tiles\.openfreemap\.org"[^>]*>/, "");
 
   return withoutNoscript
     .replace(/<!-- SEO:START -->[\s\S]*?<!-- SEO:END -->/, renderHead(page))

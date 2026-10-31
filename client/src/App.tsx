@@ -49,16 +49,20 @@ const BOOT_MAX_MS = 2400;
  * Shows the brand splash while fonts, the shell chunk and first paint settle.
  * It never blocks for longer than BOOT_MAX_MS, and it skips the theatrics for
  * people who ask for reduced motion.
+ *
+ * Prerendered guide pages pass `splash={false}`: their HTML already paints the
+ * article, so the overlay only delayed the first meaningful paint.
  */
-function BootGate({ children }: { children: React.ReactNode }) {
-  const [booting, setBooting] = useState(true);
+function BootGate({ children, splash = true }: { children: React.ReactNode; splash?: boolean }) {
+  const [booting, setBooting] = useState(splash);
   // AnimatePresence keeps the exiting splash mounted until its exit tween ends.
   // Browsers throttle requestAnimationFrame in background windows, so the tween
   // can freeze forever. This layer is torn down unconditionally after the exit
   // window, which guarantees the overlay never blocks the app.
-  const [splashLayer, setSplashLayer] = useState(true);
+  const [splashLayer, setSplashLayer] = useState(splash);
 
   useEffect(() => {
+    if (!splash) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const minimum = reducedMotion ? 450 : BOOT_MIN_MS;
     const maximum = reducedMotion ? 900 : BOOT_MAX_MS;
@@ -87,22 +91,24 @@ function BootGate({ children }: { children: React.ReactNode }) {
       window.clearTimeout(hardStop);
       window.removeEventListener("load", onLoad);
     };
-  }, []);
+  }, [splash]);
 
   useEffect(() => {
-    if (booting) return;
+    if (!splash || booting) return;
     const teardown = window.setTimeout(() => setSplashLayer(false), 700);
     return () => window.clearTimeout(teardown);
-  }, [booting]);
+  }, [booting, splash]);
 
   useEffect(() => {
-    if (!splashLayer) return;
+    if (!splash || !splashLayer) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [splashLayer]);
+  }, [splashLayer, splash]);
+
+  if (!splash) return <>{children}</>;
 
   return (
     <>
@@ -206,6 +212,12 @@ function SeoManager() {
 }
 
 function App() {
+  // The guides ship prerendered HTML, so the boot splash only delays the
+  // article the visitor came to read.
+  const isPrerenderedGuide =
+    typeof window !== "undefined" &&
+    seoPages.some((page) => `/${page.slug}` === window.location.pathname.replace(/\/+$/, ""));
+
   return (
     <ThemeProvider
       attribute="class"
@@ -218,7 +230,7 @@ function App() {
       <ThemeFavicon />
       <LiquidGlassDefs />
       <SeoManager />
-      <BootGate>
+      <BootGate splash={!isPrerenderedGuide}>
         <QueryClientProvider client={queryClient}>
           <Toaster />
           <Router />
