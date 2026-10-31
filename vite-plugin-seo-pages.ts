@@ -251,7 +251,7 @@ function renderStaticBody(page: SeoPage): string {
           <a href="/viajes-colombia">Colombia</a>
           <a href="/que-hacer-en-neiva">Neiva</a>
         </nav>
-        <a class="seo-app" href="/">Abrir la app</a>
+        <a class="seo-app" href="/">Planificar mi viaje</a>
       </div>
     </header>
 
