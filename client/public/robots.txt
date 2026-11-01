@@ -1,24 +1,89 @@
+# robots.txt — VIANova IA
+# Canonical host: https://via-nova-ia.vercel.app
+# AI answer engines are welcome. Private app surfaces are not.
+
+# Content signals (IETF aipref draft): search, AI answers and training allowed
+# as long as the canonical URL is cited.
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /checkout
+Disallow: /login
+Disallow: /profile
+Disallow: /u/
 
-# ViaNova — planificador de viajes con IA
+# Structured discovery
 Sitemap: https://via-nova-ia.vercel.app/sitemap.xml
 Host: https://via-nova-ia.vercel.app
 
-# LLM / agent discovery
+# Long-form context for LLMs (generated at build time)
 # https://via-nova-ia.vercel.app/llms.txt
+# https://via-nova-ia.vercel.app/llms-full.txt
 
-User-agent: GPTBot
+# --- Search + AI crawlers (explicit allow) ---
+User-agent: Googlebot
 Allow: /
 
 User-agent: Google-Extended
 Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
 User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: anthropic-ai
 Allow: /
 
 User-agent: PerplexityBot
 Allow: /
 
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
 User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Diffbot
 Allow: /

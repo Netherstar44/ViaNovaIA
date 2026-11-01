@@ -74,10 +74,12 @@ import { validateUpload } from "../upload-validation.js";
 import { logSecurityEvent } from "../observability.js";
 import {
   authLimiter,
+  loginIpLimiter,
   registerLimiter,
   twoFactorLimiter,
   verifyEmailLimiter,
   forgotPasswordLimiter,
+  forgotPasswordIpLimiter,
   resetTokenLimiter,
   uploadLimiter,
   chatLimiter,
@@ -132,7 +134,9 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Formato de archivo no soportado o inválido"));
+      const err: any = new Error("Formato de archivo no soportado o inválido");
+      err.status = 415;
+      cb(err);
     }
   }
 });
@@ -548,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   });
 
   // ─── AUTH: Login ─────────────────────────────────────────────────────────────
-  app.post("/api/auth/login", authLimiter, async (req, res, next) => {
+  app.post("/api/auth/login", loginIpLimiter, authLimiter, async (req, res, next) => {
     try {
       if (typeof req.body?.username !== "string" || typeof req.body?.password !== "string") {
         return res.status(400).json({ message: "username y password son obligatorios" });
@@ -628,6 +632,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   // 200 with user:null avoids noisy 401 responses in the browser console while
   // protected endpoints keep using requireAuth.
   app.get("/api/auth/me", optionalAuth, async (req: any, res) => {
+    res.set("Cache-Control", "no-store");
     if (!req.user) return res.json({ user: null });
     try {
       const user = await storage.getUserByUsername(req.user.username);
@@ -772,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   });
 
   // ─── AUTH: Google Mobile (ID Token verification) ────────────────────────────
-  app.post("/api/auth/google/mobile", authLimiter, async (req, res, next) => {
+  app.post("/api/auth/google/mobile", loginIpLimiter, authLimiter, async (req, res, next) => {
     try {
       const idToken = String(req.body?.idToken ?? "");
       if (!idToken || idToken.length > 10_000) {
@@ -824,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
   });
 
   // ─── AUTH: Forgot Password ──────────────────────────────────────────────────
-  app.post("/api/auth/forgot-password", forgotPasswordLimiter, async (req, res, next) => {
+  app.post("/api/auth/forgot-password", forgotPasswordIpLimiter, forgotPasswordLimiter, async (req, res, next) => {
     try {
       const email = normalizeEmail(req.body?.email);
       if (!isValidEmail(email)) {

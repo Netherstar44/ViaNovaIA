@@ -59,7 +59,15 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
 /** Aplica CORS, cabeceras y límites básicos a una app Express. */
 export function applyHttpSecurity(app: Express) {
   app.disable("x-powered-by");
-  app.set("trust proxy", 1);
+  // Confiar en X-Forwarded-For solo cuando existe un proxy real delante.
+  // En desarrollo/local un cliente podría falsificarlo y rotar la clave de
+  // los rate limits. TRUST_PROXY acepta el número de saltos (p. ej. "1").
+  const configuredHops = Number(process.env.TRUST_PROXY);
+  if (Number.isInteger(configuredHops) && configuredHops > 0) {
+    app.set("trust proxy", configuredHops);
+  } else if (!process.env.TRUST_PROXY && isProduction()) {
+    app.set("trust proxy", 1);
+  }
   app.use(cors(corsOptions));
   app.use(securityHeaders);
   app.use((req, res, next) => {

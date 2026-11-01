@@ -90,6 +90,7 @@ export function ensureUserSchema(): Promise<void> {
     for (const statement of [
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_attempts integer DEFAULT 0`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider text DEFAULT 'local'`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at timestamp without time zone`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url text`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_email text`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS contact_phone text`,

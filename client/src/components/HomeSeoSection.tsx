@@ -18,23 +18,6 @@ export default function HomeSeoSection() {
       aria-labelledby="home-seo-title"
       className="relative isolate overflow-hidden border-t border-[#e4dfd2] bg-[#f5f4f0] text-[#1f1f1f] dark:border-white/10 dark:bg-[#0b0e0c] dark:text-[#f2efe6]"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 dark:hidden"
-        style={{
-          background:
-            "radial-gradient(52rem 30rem at 4% -12%, rgba(255,191,0,0.16), transparent 62%), radial-gradient(46rem 28rem at 96% 2%, rgba(255,255,255,0.9), transparent 60%)",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 hidden dark:block"
-        style={{
-          background:
-            "radial-gradient(52rem 30rem at 4% -12%, rgba(255,191,0,0.12), transparent 62%), radial-gradient(46rem 28rem at 96% 2%, rgba(255,255,255,0.05), transparent 60%)",
-        }}
-      />
-
       <div className="relative mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <motion.header
           initial={reduce ? false : { opacity: 0, y: 18 }}
@@ -45,7 +28,6 @@ export default function HomeSeoSection() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10.5px] font-semibold uppercase tracking-[0.28em] text-[#8d8778] dark:text-white/45">
             <span aria-hidden="true" className="h-px w-9 bg-[#ffbf00]" />
             <span className="text-[#6f6a5e] dark:text-white/65">Guías de viaje</span>
-            <span className="font-mono text-[10px] tabular-nums text-[#b3ac9b] dark:text-white/35">04</span>
             <span className="ml-auto hidden items-center gap-2 text-[10px] tracking-[0.22em] text-[#a49d8b] dark:text-white/40 sm:flex">
               <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#d6cfbd] dark:bg-white/25" />
               Lecturas breves
@@ -110,11 +92,10 @@ export default function HomeSeoSection() {
                   className="absolute inset-0 bg-gradient-to-t from-[#17140c]/62 via-[#17140c]/12 to-transparent"
                 />
 
-                <div className="absolute inset-x-5 top-5 flex items-center justify-between gap-3">
+                <div className="absolute inset-x-5 top-5 flex items-center gap-3">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/90">
                     {featuredVisual.kicker}
                   </span>
-                  <span className="font-mono text-[10px] tabular-nums text-white/70">01</span>
                 </div>
 
                 <LiquidGlass
@@ -155,12 +136,8 @@ export default function HomeSeoSection() {
                   >
                     <Link
                       href={`/${page.slug}`}
-                      className="group -mx-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-2xl border-b border-[#ddd7c8] px-3 py-6 transition-colors duration-300 hover:bg-white/60 dark:border-white/10 dark:hover:bg-white/[0.05] sm:gap-6 sm:py-7"
+                      className="group -mx-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-2xl border-b border-[#ddd7c8] px-3 py-6 transition-colors duration-300 hover:bg-white/60 dark:border-white/10 dark:hover:bg-white/[0.05] sm:gap-6 sm:py-7"
                     >
-                      <span className="self-start pt-1 font-mono text-[10.5px] tabular-nums text-[#a49b83] transition-colors group-hover:text-[#8a6a1a] dark:text-white/35 dark:group-hover:text-[#ffd34d]">
-                        {String(index + 2).padStart(2, "0")}
-                      </span>
-
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] font-semibold uppercase tracking-[0.18em]">
                           <span className="text-[#8a6a1a] dark:text-[#ffd34d]">{visual.kicker}</span>

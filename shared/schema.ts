@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   email: text("email"),
   role: userRoleEnum("role").default("traveler"),
   roleChangedAt: timestamp("role_changed_at"),
+  passwordChangedAt: timestamp("password_changed_at"),
   avatarUrl: text("avatar_url"),
   bannerUrl: text("banner_url"),
   // Información de contacto pública del perfil. La visibilidad se controla

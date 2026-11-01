@@ -58,7 +58,14 @@ export default function MobileDock() {
     [profileHref],
   );
 
+  const seoSlugs = useMemo(
+    () => new Set(seoPages.map((page) => `/${page.slug}`)),
+    [],
+  );
+
   const activeIndex = useMemo(() => {
+    // Guide pages are discovery content, so "Explorar" is the honest tab.
+    if (seoSlugs.has(location)) return 1;
     const index = tabs.findIndex((tab) => {
       if (!tab.href) return false;
       if (tab.id === "home") return location === "/";
@@ -74,7 +81,7 @@ export default function MobileDock() {
       return location === tab.href || location.startsWith(`${tab.href}/`);
     });
     return index >= 0 ? index : 0;
-  }, [location, tabs]);
+  }, [location, tabs, seoSlugs]);
 
   const tabWidth = metrics.width > 0 ? (metrics.width - PAD * 2) / tabs.length : 0;
   const indicatorWidth = Math.max(0, tabWidth - GAP);
@@ -196,7 +203,9 @@ export default function MobileDock() {
     };
     draggingRef.current = false;
     suppressClickRef.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // No capturar el puntero: la captura reasigna el `click` al pill y
+    // rompería los enlaces del dock. El arrastre horizontal sigue funcionando
+    // porque los eventos se emiten sobre los hijos del propio pill.
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -248,11 +257,7 @@ export default function MobileDock() {
     settleTo(activeX);
   };
 
-  const seoSlugs = useMemo(
-    () => new Set(seoPages.map((page) => `/${page.slug}`)),
-    [],
-  );
-  const hidden = location === "/login" || seoSlugs.has(location) || chatOpen;
+  const hidden = location === "/login" || chatOpen;
   if (hidden) return null;
 
   return (
@@ -310,6 +315,7 @@ export default function MobileDock() {
                 <Link
                   href={tab.href ?? "/"}
                   className="mobile-dock__tab"
+                  draggable={false}
                   data-active={active ? "true" : undefined}
                   aria-current={active ? "page" : undefined}
                   onClick={(event) => handleTabClick(event, tab)}

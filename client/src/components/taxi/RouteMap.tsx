@@ -284,7 +284,7 @@ export default function RouteMap({
       </Map>
 
       {isRouting && (
-        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/60 bg-white/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-600 shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-white/60 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-neutral-600 shadow-sm">
           Trazando ruta…
         </div>
       )}

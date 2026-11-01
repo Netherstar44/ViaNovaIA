@@ -20,6 +20,7 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
   const { t } = useTranslation();
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
   const displayRating = ratingOverride ?? item.rating ?? 0;
+  const hasPanorama = Boolean(item.panoramaUrl);
 
   return (
     <motion.div 
@@ -68,7 +69,7 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
              <Button 
                 variant="outline" 
                 size="sm" 
-                className="w-full gap-1 text-xs"
+                className={`w-full gap-1 text-xs ${hasPanorama ? '' : 'col-span-2'}`}
                 onClick={(e) => { e.stopPropagation(); setVrMode('product'); }}
              >
                <Box className="h-3 w-3" />
@@ -89,6 +90,8 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
               </DialogContent>
             </Dialog>
 
+             {hasPanorama && (
+               <>
              <Button 
                 variant="secondary" 
                 size="sm" 
@@ -96,7 +99,7 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
                 onClick={(e) => { e.stopPropagation(); setVrMode('interior'); }}
              >
                <Eye className="h-3 w-3" />
-               {t('home.virtual_tour', 'Ver Interior VR')}
+               {t('home.virtual_tour', 'Ver Interior 360°')}
              </Button>
             <Dialog open={vrMode === 'interior'} onOpenChange={(open) => !open && setVrMode(null)}>
               <DialogContent 
@@ -108,10 +111,17 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
               >
                 <DialogTitle className="sr-only">Tour virtual interior 360°</DialogTitle>
                  <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
-                   <VRViewer mode="interior" onClose={() => setVrMode(null)} />
+                   <VRViewer
+                     mode="interior"
+                     onClose={() => setVrMode(null)}
+                     panoramaUrl={item.panoramaUrl}
+                     panoramaCaption={item.panoramaCaption ?? item.name}
+                   />
                  </Suspense>
               </DialogContent>
             </Dialog>
+               </>
+             )}
           </div>
         )}
         <Button className="w-full gap-2" onClick={(e) => { e.stopPropagation(); if (onViewMap) onViewMap(); }}>

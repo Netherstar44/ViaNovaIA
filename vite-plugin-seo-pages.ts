@@ -12,7 +12,7 @@ import {
   seoPages,
   type SeoPage,
 } from "./shared/seo-content";
-import { guideThumb, guideVisual } from "./shared/guide-visuals";
+import { guideHeroSources, guideThumb, guideVisual } from "./shared/guide-visuals";
 
 function escapeHtml(value: string): string {
   return value
@@ -54,6 +54,7 @@ function verificationTags(): string {
 function renderHead(page: SeoPage): string {
   const url = absoluteUrl(pagePath(page.slug));
   const visual = guideVisual(page.slug);
+  const hero = guideHeroSources(visual.image);
   // Share cards use the same art as the page hero, cropped to 1200x630.
   const ogImage = visual.image.replace("w=1800", "w=1200&h=630");
   const jsonLd = [
@@ -88,12 +89,12 @@ function renderHead(page: SeoPage): string {
   <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
   <meta name="twitter:image:alt" content="${escapeHtml(page.h1)}" />
 
-  <link rel="preload" as="image" href="${escapeHtml(visual.image)}" fetchpriority="high" />
+  <link rel="preload" as="image" type="image/avif" href="${escapeHtml(hero.avif)}" imagesrcset="${escapeHtml(hero.avifSrcSet)}" imagesizes="${escapeHtml(hero.sizes)}" fetchpriority="high" />
 
   ${verificationTags()}
   ${jsonLd}
   <style>
-    #seo-prerender{--ink:#1f1e1a;--muted:#555147;--soft:#6a655a;--faint:#8a8578;--line:#ddd7c8;--hair:#e4dfd2;--gold:#ffbf00;--gold-ink:#7d5e12;--bg:#f5f4f0;background:var(--bg);background-image:radial-gradient(48rem 30rem at 6% -14%,rgba(255,191,0,.15),transparent 64%),radial-gradient(42rem 26rem at 92% 4%,rgba(255,255,255,.95),transparent 62%);color:var(--ink);font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+    #seo-prerender{--ink:#1f1e1a;--muted:#555147;--soft:#6a655a;--faint:#8a8578;--line:#ddd7c8;--hair:#e4dfd2;--gold:#ffbf00;--gold-ink:#7d5e12;--bg:#f5f4f0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
     #seo-prerender *{box-sizing:border-box}
     #seo-prerender a{color:inherit}
     #seo-prerender .seo-wrap{max-width:1200px;margin:0 auto;padding:0 20px}
@@ -122,6 +123,7 @@ function renderHead(page: SeoPage): string {
     #seo-prerender .seo-btn-out{background:none;border:0;border-bottom:1px solid #c9c2b1;border-radius:0;padding:0 0 5px;color:var(--muted);box-shadow:none}
     #seo-prerender .seo-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:32px;padding-top:18px;border-top:1px solid var(--hair);color:var(--faint);font-size:11.5px}
     #seo-prerender .seo-figure{position:relative;margin:0;overflow:hidden;border-radius:28px;border:1px solid rgba(255,255,255,.85);background:#e9e4d7;box-shadow:0 36px 80px -46px rgba(53,44,18,.55);aspect-ratio:4/5}
+    #seo-prerender .seo-figure picture{display:contents}
     #seo-prerender .seo-figure img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
     #seo-prerender .seo-figure:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(23,20,12,.58),rgba(23,20,12,.08) 46%,transparent)}
     #seo-prerender .seo-figure-card{position:absolute;left:16px;right:16px;bottom:16px;z-index:1;padding:14px 18px;border-radius:18px;border:1px solid rgba(255,255,255,.72);background:rgba(255,255,255,.55);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 18px 46px -24px rgba(20,16,4,.45)}
@@ -131,8 +133,6 @@ function renderHead(page: SeoPage): string {
     #seo-prerender .seo-grid{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:64px;align-items:start}
     #seo-prerender .seo-section{padding-top:32px;border-top:1px solid var(--line);margin-top:44px}
     #seo-prerender .seo-section:first-child{padding-top:0;border-top:0;margin-top:0}
-    #seo-prerender .seo-section-head{display:flex;align-items:baseline;gap:16px}
-    #seo-prerender .seo-num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:#b08a2a}
     #seo-prerender article h2{margin:0;color:var(--ink);font-family:Poppins,sans-serif;font-weight:600;font-size:clamp(24px,2.6vw,32px);line-height:1.16;letter-spacing:-.03em}
     #seo-prerender .seo-section-body{max-width:68ch;margin-top:18px;padding-left:0}
     #seo-prerender article p{color:var(--muted);margin:0 0 14px;font-size:15px;line-height:1.82}
@@ -172,6 +172,7 @@ function renderHead(page: SeoPage): string {
 
 function renderStaticBody(page: SeoPage): string {
   const visual = guideVisual(page.slug);
+  const hero = guideHeroSources(visual.image);
   const [titleLead, ...titleRest] = page.h1.split(":");
   const titleTail = titleRest.join(":").trim();
   const visualTitle = `${escapeHtml(titleLead)}<span class="seo-sr">: </span>${
@@ -181,10 +182,7 @@ function renderStaticBody(page: SeoPage): string {
   const sections = page.sections
     .map(
       (section, index) => `<section class="seo-section" id="${slugifyHeading(section.heading, index)}">
-          <div class="seo-section-head">
-            <span class="seo-num">${String(index + 1).padStart(2, "0")}</span>
-            <h2>${escapeHtml(section.heading)}</h2>
-          </div>
+          <h2>${escapeHtml(section.heading)}</h2>
           <div class="seo-section-body">
             ${section.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n            ")}
             ${
@@ -248,7 +246,7 @@ function renderStaticBody(page: SeoPage): string {
           <a href="/viajes-colombia">Colombia</a>
           <a href="/que-hacer-en-neiva">Neiva</a>
         </nav>
-        <a class="seo-app" href="/">Abrir la app</a>
+        <a class="seo-app" href="/">Planificar mi viaje</a>
       </div>
     </header>
 
@@ -272,7 +270,10 @@ function renderStaticBody(page: SeoPage): string {
           </div>
         </div>
         <figure class="seo-figure">
-          <img src="${escapeHtml(visual.image)}" alt="${escapeHtml(visual.alt)}" width="1800" height="1200" fetchpriority="high" />
+          <picture class="contents">
+            <source type="image/avif" srcset="${escapeHtml(hero.avifSrcSet)}" sizes="${escapeHtml(hero.sizes)}" />
+            <img src="${escapeHtml(visual.image)}" srcset="${escapeHtml(hero.webpSrcSet)}" sizes="${escapeHtml(hero.sizes)}" alt="${escapeHtml(visual.alt)}" class="h-full w-full object-cover object-center" width="1800" height="1200" fetchpriority="high" decoding="async" />
+          </picture>
           <figcaption class="seo-figure-card">
             <p class="seo-figure-kicker">${escapeHtml(visual.kicker)}</p>
             <p class="seo-figure-place">${escapeHtml(visual.place)}</p>
@@ -305,7 +306,7 @@ function renderStaticBody(page: SeoPage): string {
               <a href="#preguntas-frecuentes">Preguntas frecuentes</a>
             </nav>
           </div>
-          <div class="seo-cta" style="background-image:linear-gradient(160deg,rgba(245,244,240,.86),rgba(245,244,240,.94)),url('${escapeHtml(visual.image)}');background-size:cover;background-position:center">
+          <div class="seo-cta" style="background-image:linear-gradient(160deg,rgba(245,244,240,.86),rgba(245,244,240,.94)),url('${escapeHtml(visual.thumb)}');background-size:cover;background-position:center">
             <h3>Planificador</h3>
             <p><strong>¿Listo para tu itinerario?</strong>Cuéntale a la IA tus fechas, presupuesto e intereses y recibe un plan editable en minutos.</p>
             <a href="/">Crear plan gratis →</a>
@@ -336,7 +337,14 @@ function renderStaticBody(page: SeoPage): string {
 function renderPage(template: string, page: SeoPage): string {
   // Guide pages ship real prerendered content, so the generic <noscript> fallback
   // would only duplicate the H1 and the internal links for crawlers and no-JS users.
-  const withoutNoscript = template.replace(/\s*<noscript>[\s\S]*?<\/noscript>/, "");
+  // They also never load the map or Unsplash imagery, so those connection hints
+  // would open sockets the article does not use.
+  const withoutNoscript = template
+    .replace(/\s*<noscript>[\s\S]*?<\/noscript>/, "")
+    .replace(/\s*<link rel="preconnect" href="https:\/\/images\.unsplash\.com"[^>]*>/, "")
+    .replace(/\s*<link rel="preconnect" href="https:\/\/tiles\.openfreemap\.org"[^>]*>/, "")
+    .replace(/\s*<link rel="dns-prefetch" href="https:\/\/images\.unsplash\.com"[^>]*>/, "")
+    .replace(/\s*<link rel="dns-prefetch" href="https:\/\/tiles\.openfreemap\.org"[^>]*>/, "");
 
   return withoutNoscript
     .replace(/<!-- SEO:START -->[\s\S]*?<!-- SEO:END -->/, renderHead(page))
@@ -344,34 +352,100 @@ function renderPage(template: string, page: SeoPage): string {
 }
 
 function renderSitemap(): string {
-  const today = new Date().toISOString().slice(0, 10);
+  const lastmod = CONTENT_UPDATED;
   const core = [
-    { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly" },
-    { url: absoluteUrl("/explore"), priority: "0.7", changefreq: "weekly" },
+    { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly", image: `${SITE_URL}/og-image.png` },
+    { url: absoluteUrl("/explore"), priority: "0.7", changefreq: "weekly", image: `${SITE_URL}/og-image.png` },
     { url: absoluteUrl("/privacy"), priority: "0.2", changefreq: "yearly" },
   ];
   const guides = seoPages.map((page) => ({
     url: absoluteUrl(pagePath(page.slug)),
     priority: "0.9",
     changefreq: "monthly",
+    image: guideVisual(page.slug).image,
+    slug: page.slug,
   }));
 
   const entries = [...core, ...guides]
-    .map(
-      (entry) => `  <url>
+    .map((entry) => {
+      const alternates = ["es-CO", "en", "fr"]
+        .map(
+          (lang) =>
+            `    <xhtml:link rel="alternate" hreflang="${lang}" href="${entry.url}" />`,
+        )
+        .join("\n");
+      const image = "image" in entry && entry.image
+        ? `\n    <image:image>\n      <image:loc>${entry.image}</image:loc>\n    </image:image>`
+        : "";
+      return `  <url>
     <loc>${entry.url}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority}</priority>
-  </url>`,
-    )
+${alternates}${image}
+  </url>`;
+    })
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${entries}
 </urlset>
 `;
+}
+
+/**
+ * `llms-full.txt` is the long-form companion of `llms.txt`: every guide is
+ * flattened to plain text so answer engines can quote it without rendering
+ * the React app. It is generated at build time from the same source of truth
+ * as the HTML pages, so it can never drift.
+ */
+function renderLlmsFull(): string {
+  const lines: string[] = [
+    "# VIANova IA — contenido completo para modelos de lenguaje",
+    "",
+    `> Fuente canónica: ${SITE_URL}`,
+    `> Última actualización editorial: ${CONTENT_UPDATED}`,
+    "> Idioma: español (Colombia). Interfaz también en inglés y francés.",
+    "> Licencia de citación: puedes citar y resumir este contenido indicando la URL canónica de la página.",
+    "",
+    "## Índice",
+    "",
+    ...seoPages.map((page) => `- ${absoluteUrl(pagePath(page.slug))} — ${page.h1}`),
+    "",
+  ];
+
+  for (const page of seoPages) {
+    lines.push(
+      "---",
+      "",
+      `# ${page.h1}`,
+      "",
+      `URL canónica: ${absoluteUrl(pagePath(page.slug))}`,
+      `Descripción: ${page.description}`,
+      "",
+      page.intro,
+      "",
+    );
+    for (const section of page.sections) {
+      lines.push(`## ${section.heading}`, "");
+      for (const paragraph of section.paragraphs) lines.push(paragraph, "");
+      if (section.bullets?.length) {
+        for (const bullet of section.bullets) lines.push(`- ${bullet}`);
+        lines.push("");
+      }
+    }
+    if (page.faqs.length) {
+      lines.push("## Preguntas frecuentes", "");
+      for (const faq of page.faqs) {
+        lines.push(`### ${faq.question}`, "", faq.answer, "");
+      }
+    }
+  }
+
+  return `${lines.join("\n").trim()}\n`;
 }
 
 export function seoPagesPlugin(): Plugin {
@@ -407,6 +481,7 @@ export async function generateSeoPages(outDir: string): Promise<void> {
   }
 
   writeFileSync(path.join(outDir, "sitemap.xml"), renderSitemap(), "utf8");
+  writeFileSync(path.join(outDir, "llms-full.txt"), renderLlmsFull(), "utf8");
 
   const verification = verificationTags();
   if (verification) {
