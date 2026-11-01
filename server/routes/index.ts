@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { storage, getDb } from "../storage.js";
+import { databaseTimestampToIso } from "../time.js";
 import { registerTaxiRoutes } from "./taxi.routes.js";
 import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
@@ -37,6 +38,7 @@ import {
   sanitizeUser,
   signToken,
   cookieOptions,
+  clearCookieOptions,
   validatePassword,
   validateAvatarUrl,
   validateBannerUrl,
@@ -630,7 +632,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     try {
       const user = await storage.getUserByUsername(req.user.username);
       if (!user || user.deletedAt) {
-        res.clearCookie("token", cookieOptions());
+        res.clearCookie("token", clearCookieOptions());
         return res.json({ user: null });
       }
       return res.json({ user: sanitizeUser(user) });
@@ -645,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     } catch (err: any) {
       console.warn("[auth] no se pudo revocar el token:", err?.message || err);
     }
-    res.clearCookie("token", cookieOptions());
+    res.clearCookie("token", clearCookieOptions());
     res.json({ message: "Sesión cerrada" });
   });
 
@@ -762,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       await db.execute(drizzleSql`DELETE FROM users WHERE id = ${user.id}`);
       try { await revokeTokenFromRequest(req); } catch { /* la cuenta ya no existe */ }
 
-      res.clearCookie("token", cookieOptions());
+      res.clearCookie("token", clearCookieOptions());
       res.json({ message: "Cuenta eliminada correctamente" });
     } catch (err) {
       next(err);
@@ -2345,7 +2347,12 @@ ${analyticsContext}`;
         ORDER BY p.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `);
-      const products = (rows as any).rows ?? (rows as any) ?? [];
+      const rawProducts = (rows as any).rows ?? (rows as any) ?? [];
+      const products = rawProducts.map((product: any) => ({
+        ...product,
+        created_at: databaseTimestampToIso(product.created_at),
+        updated_at: databaseTimestampToIso(product.updated_at),
+      }));
 
       const countRow = await db.execute(drizzleSql`
         SELECT COUNT(*) as total FROM products
@@ -2393,7 +2400,14 @@ ${analyticsContext}`;
       const canSeePrivate = Boolean(
         req.user && (req.user.username === req.params.username || req.user.role === "admin"),
       );
-      const products = raw.map((product: any) => sanitizeProduct(product, canSeePrivate));
+      const products = raw.map((product: any) => {
+        const sanitized = sanitizeProduct(product, canSeePrivate);
+        return {
+          ...sanitized,
+          created_at: databaseTimestampToIso(sanitized.created_at),
+          updated_at: databaseTimestampToIso(sanitized.updated_at),
+        };
+      });
       res.json({ products });
     } catch (err) { next(err); }
   });
@@ -2748,7 +2762,12 @@ ${analyticsContext}`;
           WHERE o.buyer_id = ${buyer.id}
           ORDER BY o.created_at DESC LIMIT 50
         `);
-        res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
+        const orders = ((rows as any).rows ?? (rows as any) ?? []).map((order: any) => ({
+          ...order,
+          created_at: databaseTimestampToIso(order.created_at),
+          updated_at: databaseTimestampToIso(order.updated_at),
+        }));
+        res.json({ orders });
       } catch (err) {
         next(err);
       }
@@ -2774,7 +2793,12 @@ ${analyticsContext}`;
           WHERE p.provider_username = ${req.params.username}
           ORDER BY o.created_at DESC LIMIT 50
         `);
-        res.json({ orders: (rows as any).rows ?? (rows as any) ?? [] });
+        const orders = ((rows as any).rows ?? (rows as any) ?? []).map((order: any) => ({
+          ...order,
+          created_at: databaseTimestampToIso(order.created_at),
+          updated_at: databaseTimestampToIso(order.updated_at),
+        }));
+        res.json({ orders });
       } catch (err) {
         next(err);
       }

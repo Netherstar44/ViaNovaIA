@@ -351,6 +351,7 @@ export default function ProductStore() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
+      <main>
       {/* Hero Section */}
       <div className="relative pt-20 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-background to-background pointer-events-none" />
@@ -404,6 +405,7 @@ export default function ProductStore() {
 
       {/* Product Grid */}
       <div className="container px-4 pb-24">
+        <h2 className="sr-only">Productos disponibles</h2>
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : visibleProducts.length === 0 ? (
@@ -441,10 +443,10 @@ export default function ProductStore() {
                   </div>
                   <div className={`liquid-glass-chip absolute top-3 left-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
                     product.stock === 0
-                      ? "bg-red-500/80 text-white"
+                      ? "bg-red-700/90 text-white"
                       : product.stock === -1
-                        ? "bg-black/60 text-white/80"
-                        : "bg-black/60 text-primary"
+                        ? "bg-black/75 text-white"
+                        : "bg-black/75 text-primary"
                   }`}>
                     {product.stock === 0 ? "Agotado" : product.stock === -1 ? "Disponible" : `${product.stock} cupos`}
                   </div>
@@ -470,6 +472,7 @@ export default function ProductStore() {
           </div>
         )}
       </div>
+      </main>
 
       <AnimatePresence>
         {selectedProduct && (

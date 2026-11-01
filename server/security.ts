@@ -116,6 +116,15 @@ export function cookieOptions() {
   };
 }
 
+/**
+ * Opciones para borrar la cookie de sesión. `clearCookie` ya fuerza la
+ * expiración; pasarle `maxAge` está deprecado en Express 5.
+ */
+export function clearCookieOptions() {
+  const { httpOnly, secure, sameSite, path } = cookieOptions();
+  return { httpOnly, secure, sameSite, path };
+}
+
 export function signToken(user: { id: string; username: string; role?: string | null }): string {
   const ttl = process.env.JWT_EXPIRES_IN || "2h";
   return jwt.sign(

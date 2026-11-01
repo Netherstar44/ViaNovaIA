@@ -566,6 +566,8 @@ export default function Home() {
                     ))}
                   </div>
 
+                  <h2 className="sr-only">Resultados de búsqueda</h2>
+
                   {/* Layout Grid For Cards */}
                   {filteredAll.length === 0 ? (
                     <div className="flex w-full flex-col items-center justify-center py-20 text-center opacity-70">
@@ -600,7 +602,7 @@ export default function Home() {
                       </AnimatePresence>
                       {filteredAll.length > displayLimit && (
                         <div className="col-span-1 sm:col-span-2 text-center pt-8 flex flex-col items-center">
-                          <p className="opacity-60 text-sm mb-4">
+                          <p className="text-muted-foreground text-sm mb-4">
                             {t('home.showing_results', 'Mostrando {{limit}} de {{total}} resultados. Usa los filtros para refinar tu búsqueda.', { limit: displayLimit, total: filteredAll.length })}
                           </p>
                           <Button 
@@ -869,10 +871,10 @@ export default function Home() {
 
                 {/* "Relacionados" Panel with glass effect */}
                 <div className="glass-panel rounded-3xl p-6">
-                  <h3 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
+                  <h2 className="text-xl font-heading font-bold mb-4 flex items-center gap-2">
                     <Star className="text-primary w-5 h-5 fill-primary" />
                     Sugerencias Similares
-                  </h3>
+                  </h2>
                   <div className="space-y-3">
                     {mapLocations.filter(l => l.category === selectedItem?.category && l.id !== selectedItem?.id).slice(0, 4).map(item => (
                       <div
@@ -884,9 +886,9 @@ export default function Home() {
                           <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="font-semibold text-foreground truncate group-hover:text-primary-ink transition-colors">
+                          <h3 className="font-semibold text-foreground truncate group-hover:text-primary-ink transition-colors">
                             {item.name}
-                          </h5>
+                          </h3>
                           <p className="text-xs text-muted-foreground/80 truncate">
                             {item.description}
                           </p>

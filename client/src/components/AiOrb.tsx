@@ -26,6 +26,8 @@ export default function AiOrb() {
   const hidden =
     chatOpen ||
     location === "/login" ||
+    // En /payments el orbe fijo tapa el botón "Verificar" de la intención.
+    location === "/payments" ||
     seoPages.some((page) => `/${page.slug}` === location);
 
   const openChat = () => {

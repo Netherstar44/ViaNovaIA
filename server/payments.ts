@@ -4,6 +4,7 @@ import { getAppBaseUrl, isProduction } from "./config.js";
 import { logSecurityEvent } from "./observability.js";
 import { isPaymentMethodType, type PaymentMethodType } from "./security.js";
 import { getDb } from "./storage.js";
+import { databaseTimestampToIso } from "./time.js";
 import { ensureTripSchema, getTripById, type TripPlan } from "./trips.js";
 
 /**
@@ -73,12 +74,6 @@ function safeEqualHex(a: string, b: string): boolean {
   const right = Buffer.from(b.toLowerCase(), "utf8");
   if (left.length !== right.length) return false;
   return crypto.timingSafeEqual(left, right);
-}
-
-function asDate(value: unknown): string | null {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(String(value));
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 export function isPaymentSandbox(): boolean {
@@ -249,9 +244,9 @@ function mapIntent(row: any): PaymentIntentDto {
     sandbox: Boolean(row.sandbox),
     instructions: row.instructions ? String(row.instructions) : null,
     tripId: row.trip_id ? String(row.trip_id) : null,
-    expiresAt: asDate(row.expires_at),
-    paidAt: asDate(row.paid_at),
-    createdAt: asDate(row.created_at),
+    expiresAt: databaseTimestampToIso(row.expires_at),
+    paidAt: databaseTimestampToIso(row.paid_at),
+    createdAt: databaseTimestampToIso(row.created_at),
   };
 }
 
@@ -389,7 +384,7 @@ export async function createPaymentIntent(input: CreatePaymentIntentInput): Prom
         ${input.method}, ${amountInCents}, ${trip.currency || "COP"}, ${status},
         ${tripDescription(trip)}, ${checkout.url}, ${checkout.sandbox},
         ${instructions}, ${idempotencyKey},
-        CAST(${JSON.stringify(metadata)} AS jsonb), ${expiresAt}
+        CAST(${JSON.stringify(metadata)} AS jsonb), ${drizzleSql`now() + interval '30 minutes'`}
       )
       RETURNING *
     `),
@@ -473,6 +468,10 @@ export async function confirmSandboxPayment(
     throw Object.assign(new Error("La confirmación sandbox está deshabilitada"), { status: 403 });
   }
   const db = getDb();
+  // Una intención puede seguir en `pending` aunque su `expires_at` ya pasó si
+  // nadie consultó la lista. Expirarla antes de confirmar evita aprobar un
+  // pago vencido desde el botón sandbox.
+  await expireStaleIntents(username);
   const rows = rowsOf(
     await db.execute(drizzleSql`
       SELECT * FROM payment_intents WHERE id = ${id} AND username = ${username} LIMIT 1
@@ -480,8 +479,19 @@ export async function confirmSandboxPayment(
   );
   const intent = rows[0];
   if (!intent) throw Object.assign(new Error("Pago no encontrado"), { status: 404 });
-  if (!["pending", "checkout_opened"].includes(String(intent.status))) {
+  const status = String(intent.status);
+  if (status === "sandbox_paid" || status === "paid") {
     return mapIntent(intent);
+  }
+  if (!["pending", "checkout_opened"].includes(status)) {
+    throw Object.assign(
+      new Error(
+        status === "expired"
+          ? "El pago expiró. Crea una nueva intención para continuar."
+          : "El pago ya no está pendiente de confirmación.",
+      ),
+      { status: 409 },
+    );
   }
 
   const updated = rowsOf(

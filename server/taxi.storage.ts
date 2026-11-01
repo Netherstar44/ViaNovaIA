@@ -5,6 +5,7 @@
 
 import { eq, desc, and, sql } from "drizzle-orm";
 import { getDb } from "./storage.js"; // reutiliza el getDb existente
+import { databaseTimestampToIso } from "./time.js";
 import {
   rides,
   earnings,
@@ -229,7 +230,13 @@ export async function createWithdrawalAtomic(input: {
               updated_at AS "updatedAt"
   `);
   const rows = (result as any).rows ?? (result as any);
-  return Array.isArray(rows) && rows[0] ? (rows[0] as Withdrawal) : null;
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) return null;
+  return {
+    ...row,
+    createdAt: databaseTimestampToIso(row.createdAt),
+    updatedAt: databaseTimestampToIso(row.updatedAt),
+  } as Withdrawal;
 }
 
 export async function getWithdrawalByIdempotencyKey(

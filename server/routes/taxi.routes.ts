@@ -8,6 +8,7 @@ import type { Server } from "http";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "../storage.js";
+import { databaseTimestampToIso } from "../time.js";
 import {
   isValidUsername,
   loadUserRoles,
@@ -424,9 +425,9 @@ export function registerTaxiRoutes(app: Express): void {
         fare: updated.fare,
         distanceKm: updated.distance_km,
         status: updated.status,
-        startedAt: updated.started_at,
-        completedAt: updated.completed_at,
-        createdAt: updated.created_at,
+        startedAt: databaseTimestampToIso(updated.started_at),
+        completedAt: databaseTimestampToIso(updated.completed_at),
+        createdAt: databaseTimestampToIso(updated.created_at),
       };
 
       res.json({ ride: rideResponse });

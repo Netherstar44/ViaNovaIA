@@ -50,11 +50,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: "border-amber-500/30 bg-amber-500/10 text-amber-200",
-  checkout_opened: "border-blue-500/30 bg-blue-500/10 text-blue-200",
-  sandbox_paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-  paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-  failed: "border-red-500/30 bg-red-500/10 text-red-200",
+  pending: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+  checkout_opened: "border-blue-500/30 bg-blue-500/10 text-blue-800 dark:text-blue-200",
+  sandbox_paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+  paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+  failed: "border-red-500/30 bg-red-500/10 text-red-800 dark:text-red-200",
   expired: "border-border/40 bg-secondary/20 text-muted-foreground",
   cancelled: "border-border/40 bg-secondary/20 text-muted-foreground",
 };
@@ -203,7 +203,16 @@ export default function RoutePaymentPanel({ trip }: { trip: TripDto }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "No se pudo confirmar en sandbox");
-      setIntent(data.intent);
+      const nextIntent = data?.intent;
+      if (!nextIntent) throw new Error("La pasarela no devolvió el estado del pago");
+      setIntent(nextIntent);
+      if (nextIntent.status !== "sandbox_paid" && nextIntent.status !== "paid") {
+        throw new Error(
+          nextIntent.status === "expired"
+            ? "El pago expiró. Crea una nueva intención para continuar."
+            : `El pago no quedó aprobado (estado: ${nextIntent.status || "desconocido"}).`,
+        );
+      }
       toast({ title: "Pago sandbox aprobado", description: "No se cobró dinero real. Estado: sandbox_paid." });
     } catch (err: any) {
       setError(err?.message || "No se pudo confirmar en sandbox");
@@ -245,7 +254,7 @@ export default function RoutePaymentPanel({ trip }: { trip: TripDto }) {
             La IA armó el itinerario. Revisa cada parada antes de pagar.
           </p>
         </div>
-        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${config?.sandbox ? "border-amber-500/30 bg-amber-500/10 text-amber-200" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"}`}>
+        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${config?.sandbox ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"}`}>
           {config?.sandbox ? "SANDBOX" : "PRODUCCIÓN"}
         </span>
       </div>
@@ -358,7 +367,7 @@ export default function RoutePaymentPanel({ trip }: { trip: TripDto }) {
                 variant="outline"
                 onClick={confirmSandbox}
                 disabled={creating}
-                className="h-8 border-amber-500/30 text-[10px] text-amber-200 hover:bg-amber-500/10"
+                className="h-8 border-amber-500/30 text-[10px] text-amber-800 dark:text-amber-200 hover:bg-amber-500/10"
               >
                 Simular pago sandbox
               </Button>

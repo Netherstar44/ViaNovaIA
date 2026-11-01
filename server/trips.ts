@@ -1,5 +1,6 @@
 import { sql as drizzleSql } from "drizzle-orm";
 import { getDb, storage } from "./storage.js";
+import { databaseTimestampToIso } from "./time.js";
 import {
   searchCatalog,
   ensureCatalogSchema,
@@ -201,11 +202,9 @@ function mapTrip(row: any, stops: TripStop[]): TripPlan {
     totalEstimate: num(row.total_estimate),
     paymentStatus: String(row.payment_status || "unpaid"),
     paymentIntentId: row.payment_intent_id ? String(row.payment_intent_id) : null,
-    paidAt: row.paid_at ? new Date(row.paid_at).toISOString() : null,
-    createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
-    routeEstablishedAt: row.route_established_at
-      ? new Date(row.route_established_at).toISOString()
-      : null,
+    paidAt: databaseTimestampToIso(row.paid_at),
+    createdAt: databaseTimestampToIso(row.created_at),
+    routeEstablishedAt: databaseTimestampToIso(row.route_established_at),
     stops,
   };
 }

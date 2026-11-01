@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, optionalAuth } from "../security.js";
+import { databaseTimestampToIso } from "../time.js";
 import { neon } from "@neondatabase/serverless";
 
 function getSql() {
@@ -168,7 +169,12 @@ router.get("/posts", optionalAuth, async (req: any, res) => {
       ORDER BY sp.created_at DESC
       LIMIT ${limit}
     `;
-    res.json(posts);
+    res.json(
+      posts.map((post: any) => ({
+        ...post,
+        createdAt: databaseTimestampToIso(post.createdAt),
+      })),
+    );
   } catch (err: any) {
     console.error("[social] GET /posts error:", err.message);
     res.status(500).json({ message: "No se pudo cargar el feed" });
@@ -209,7 +215,7 @@ router.post("/posts", requireAuth, async (req: any, res) => {
         comments_count AS "commentsCount",
         created_at AS "createdAt"
     `;
-    res.json(post);
+    res.json({ ...post, createdAt: databaseTimestampToIso(post.createdAt) });
   } catch (err: any) {
     console.error("[social] POST /posts error:", err.message);
     res.status(400).json({ message: "No se pudo publicar" });
@@ -568,6 +574,7 @@ router.get("/users/:username/profile", optionalAuth, async (req: any, res) => {
     res.json({
       profile: {
         ...publicProfile,
+        createdAt: databaseTimestampToIso(profile.createdAt),
         contactVisibility: visibility,
         contact: hasContact ? contact : null,
         postsCount: Number(postsCount?.c || 0),
@@ -605,7 +612,12 @@ router.get("/users/:username/posts", async (req, res) => {
       ORDER BY sp.created_at DESC
       LIMIT 50
     `;
-    res.json({ posts });
+    res.json({
+      posts: posts.map((post: any) => ({
+        ...post,
+        createdAt: databaseTimestampToIso(post.createdAt),
+      })),
+    });
   } catch (err: any) {
     console.error("[social] GET /users/:username/posts error:", err.message);
     res.status(500).json({ posts: [] });
@@ -643,8 +655,15 @@ router.get("/messages/conversations", requireAuth, async (req: any, res) => {
       LEFT JOIN users u ON u.username = t.other_username
       ORDER BY t.other_username, t.created_at DESC
     `;
-    rows.sort((a: any, b: any) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
-    res.json({ conversations: rows.map((r: any) => ({ ...r, unread: Number(r.unread || 0) })) });
+    const conversations = rows.map((r: any) => ({
+      ...r,
+      lastAt: databaseTimestampToIso(r.lastAt),
+      unread: Number(r.unread || 0),
+    }));
+    conversations.sort(
+      (a: any, b: any) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime(),
+    );
+    res.json({ conversations });
   } catch (err: any) {
     console.error("[social] conversations error:", err.message);
     res.status(500).json({ conversations: [] });
@@ -696,7 +715,12 @@ router.get("/messages/:otherUsername", requireAuth, async (req: any, res) => {
       UPDATE social_messages SET is_read = 'true'
       WHERE recipient_username = ${me} AND sender_username = ${other} AND is_read = 'false'
     `;
-    res.json({ messages });
+    res.json({
+      messages: messages.map((message: any) => ({
+        ...message,
+        createdAt: databaseTimestampToIso(message.createdAt),
+      })),
+    });
   } catch {
     res.status(500).json({ messages: [] });
   }
@@ -729,7 +753,7 @@ router.post("/messages", requireAuth, async (req: any, res) => {
                 content, is_read AS "isRead", created_at AS "createdAt"
     `;
     await notify(sql, recipient, me, "message", `@${me} te envió un mensaje`);
-    res.json(message);
+    res.json({ ...message, createdAt: databaseTimestampToIso(message.createdAt) });
   } catch {
     res.status(500).json({ message: "No se pudo enviar el mensaje" });
   }

@@ -127,7 +127,7 @@ export default function Comments({ locationId }: { locationId: string }) {
                   className={`h-6 w-6 cursor-pointer transition-all ${
                     (hoverRating || rating) >= star 
                       ? 'fill-amber-400 text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' 
-                      : 'text-muted-foreground/30 hover:text-amber-200'
+                      : 'text-muted-foreground/30 hover:text-amber-700 dark:hover:text-amber-200'
                   }`}
                   onMouseEnter={() => setHoverRating(star)}
                   onClick={() => setRating(star)}

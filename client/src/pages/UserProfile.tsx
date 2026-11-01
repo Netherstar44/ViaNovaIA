@@ -117,7 +117,10 @@ export default function UserProfile() {
 
   const toggleBlock = async () => {
     if (!profile) return;
-    if (!profile.isBlocked && !window.confirm(`¿Bloquear a @${profile.username}? Dejarán de ver tu contenido.`)) return;
+    const blockLabel = profile.username.includes("@")
+      ? profile.name || "este usuario"
+      : `@${profile.username}`;
+    if (!profile.isBlocked && !window.confirm(`¿Bloquear a ${blockLabel}? Dejarán de ver tu contenido.`)) return;
     const res = await fetch(`${apiBase}/api/social/block`, {
       method: profile.isBlocked ? "DELETE" : "POST",
       credentials: "include",
@@ -198,7 +201,11 @@ export default function UserProfile() {
               <div className="min-w-0 flex-1 sm:pb-1">
                 <h1 className="truncate text-2xl font-bold">{profile.name || profile.username}</h1>
                 <p className="text-sm text-muted-foreground">
-                  @{profile.username} · {profile.role || "traveler"}
+                  {profile.username.includes("@") ? (
+                    <span className="capitalize">{profile.role || "traveler"}</span>
+                  ) : (
+                    <>@{profile.username} · {profile.role || "traveler"}</>
+                  )}
                 </p>
               </div>
 

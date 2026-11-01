@@ -44,11 +44,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: "border-amber-500/30 bg-amber-500/10 text-amber-200",
-  checkout_opened: "border-blue-500/30 bg-blue-500/10 text-blue-200",
-  sandbox_paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-  paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-  failed: "border-red-500/30 bg-red-500/10 text-red-200",
+  pending: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+  checkout_opened: "border-blue-500/30 bg-blue-500/10 text-blue-800 dark:text-blue-200",
+  sandbox_paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+  paid: "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+  failed: "border-red-500/30 bg-red-500/10 text-red-800 dark:text-red-200",
   expired: "border-border/40 bg-secondary/20 text-muted-foreground",
   cancelled: "border-border/40 bg-secondary/20 text-muted-foreground",
 };
@@ -160,7 +160,7 @@ export default function Payments() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <div className="mx-auto w-full max-w-5xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-5xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary">
@@ -185,8 +185,8 @@ export default function Payments() {
         <div
           className={`flex items-start gap-2 rounded-2xl border p-3 text-[11px] ${
             config?.sandbox
-              ? "border-amber-500/30 bg-amber-500/5 text-amber-100"
-              : "border-emerald-500/25 bg-emerald-500/5 text-emerald-100"
+              ? "border-amber-500/30 bg-amber-500/5 text-amber-900 dark:text-amber-100"
+              : "border-emerald-500/25 bg-emerald-500/5 text-emerald-900 dark:text-emerald-100"
           }`}
         >
           {config?.sandbox ? (
@@ -296,7 +296,7 @@ export default function Payments() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-[11px] text-emerald-100/90">
+        <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-[11px] text-emerald-900/90 dark:text-emerald-100/90">
           <div className="flex items-center gap-2 font-bold">
             <LockKeyhole className="h-4 w-4" /> Privacidad de pagos
           </div>
@@ -307,7 +307,7 @@ export default function Payments() {
             <li>No compartas datos bancarios por chat, correo ni redes sociales.</li>
           </ul>
         </section>
-      </div>
+      </main>
     </div>
   );
 }

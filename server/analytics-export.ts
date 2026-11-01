@@ -8,6 +8,7 @@ import {
   type DashboardScope,
 } from "./analytics.js";
 import { storage } from "./storage.js";
+import { databaseTimestampToIso } from "./time.js";
 import { BRAND_LOGO_PNG_BASE64 } from "./brand-logo.js";
 
 type Row = Record<string, any>;
@@ -142,13 +143,13 @@ const roleSheetName = (role: string): string => ROLE_META[role]?.sheetName || ro
 const asDate = (value: unknown): Date | null => {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  const text = String(value);
-  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
-    const [year, month, day] = text.slice(0, 10).split("-").map(Number);
+  const text = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const [year, month, day] = text.split("-").map(Number);
     return new Date(year, month - 1, day);
   }
-  const date = new Date(text);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const iso = databaseTimestampToIso(text);
+  return iso ? new Date(iso) : null;
 };
 
 const dateTimeLabel = (value: unknown): string => {

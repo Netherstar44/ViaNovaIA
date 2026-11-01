@@ -318,7 +318,7 @@ export default function Login() {
   // ────────────────────────── RENDER ──────────────────────────
 
   return (
-    <div className="flex min-h-screen bg-background relative overflow-hidden text-foreground">
+    <main className="flex min-h-screen bg-background relative overflow-hidden text-foreground">
       {/* LEFT SIDE — BRANDING */}
       <div className="hidden lg:flex w-1/2 relative bg-secondary/20 items-center justify-center overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
@@ -424,7 +424,7 @@ export default function Login() {
                         </div>
                         <div className="relative">
                           <Input id="login-password" type={showLoginPass ? "text" : "password"} placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required className="bg-secondary/20 h-12 px-4 pr-12 rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
-                          <button type="button" onClick={() => setShowLoginPass(!showLoginPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                          <button type="button" onClick={() => setShowLoginPass(!showLoginPass)} aria-label={showLoginPass ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showLoginPass} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                             {showLoginPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
@@ -461,7 +461,7 @@ export default function Login() {
                           <Label htmlFor="reg-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contraseña</Label>
                           <div className="relative">
                             <Input id="reg-password" type={showRegPass ? "text" : "password"} placeholder="Mín. 6 caracteres" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required className="bg-secondary/20 h-12 px-4 pr-12 rounded-xl border-border/50 focus-visible:ring-primary transition-all" />
-                            <button type="button" onClick={() => setShowRegPass(!showRegPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                            <button type="button" onClick={() => setShowRegPass(!showRegPass)} aria-label={showRegPass ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showRegPass} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                               {showRegPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
@@ -569,7 +569,7 @@ export default function Login() {
                       <Label htmlFor="new-password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nueva Contraseña</Label>
                       <div className="relative">
                         <Input id="new-password" type={showNewPass ? "text" : "password"} placeholder="Mín. 6 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="bg-secondary/20 h-12 px-4 pr-12 rounded-xl border-border/50 focus-visible:ring-primary transition-all" />
-                        <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                        <button type="button" onClick={() => setShowNewPass(!showNewPass)} aria-label={showNewPass ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showNewPass} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                           {showNewPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
@@ -588,6 +588,6 @@ export default function Login() {
           </AnimatePresence>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

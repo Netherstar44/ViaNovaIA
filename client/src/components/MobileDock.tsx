@@ -298,7 +298,7 @@ export default function MobileDock() {
                   whileTap={reducedMotion ? undefined : { scale: 1.06 }}
                   className="mobile-dock__tab mobile-dock__tab--ai"
                   data-active={active ? "true" : undefined}
-                  aria-label="Abrir el asistente VIANova"
+                  aria-label="IA: abrir el asistente VIANova"
                   onClick={(event) => handleTabClick(event, tab)}
                 >
                   {content}
