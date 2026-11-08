@@ -13,6 +13,7 @@ export type PanoramaCheck = {
   /** Roughly 2:1, the projection used by Photo Sphere. */
   isEquirectangular: boolean;
   warning?: string;
+  coverage?: number | null;
 };
 
 /**
@@ -32,17 +33,20 @@ export async function inspectPanorama(file: File): Promise<PanoramaCheck> {
     const ratio = image.naturalWidth / image.naturalHeight;
     const isEquirectangular = Math.abs(ratio - 2) <= 0.12;
     const tooSmall = image.naturalWidth < 2048 || image.naturalHeight < 1024;
+    const { readSphereMetadata } = await import("./panoramaMetadata");
+    const { coverage } = readSphereMetadata(new Uint8Array(await file.slice(0, 128 * 1024).arrayBuffer()));
     return {
       ok: !tooSmall,
       width: image.naturalWidth,
       height: image.naturalHeight,
       ratio,
+      coverage,
       isEquirectangular,
       warning: tooSmall
         ? "La imagen es muy pequeña para verse bien en 360°. Usa al menos 2048 × 1024 px."
         : !isEquirectangular
           ? `La proporción es ${ratio.toFixed(2)}:1. Un panorama 360° debería ser 2:1 (por ejemplo 4000 × 2000).`
-          : undefined,
+          : coverage === null ? "Cobertura desconocida. Confirma que la imagen incluya cielo y suelo; un lienzo 2:1 puede contener solo una franja." : coverage < 99.5 ? `Cobertura parcial estimada: ${coverage.toFixed(1)}% de la esfera. Las zonas sin captura quedan negras.` : undefined,
     };
   } finally {
     URL.revokeObjectURL(url);
@@ -83,7 +87,10 @@ export async function preparePanorama(file: File): Promise<File> {
     if (!blob || blob.size >= file.size) return file;
 
     const baseName = file.name.replace(/\.[^.]+$/, "") || "panorama";
-    return new File([blob], `${baseName}-360.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+    const { readSphereMetadata, withGpano } = await import("./panoramaMetadata");
+    const metadata = readSphereMetadata(new Uint8Array(await file.slice(0, 128 * 1024).arrayBuffer()));
+    const bytes = metadata.coverage === null ? blob : withGpano(new Uint8Array(await blob.arrayBuffer()), canvas.width, canvas.height, metadata.coverage);
+    return new File([bytes], `${baseName}-360.jpg`, { type: "image/jpeg", lastModified: Date.now() });
   } finally {
     URL.revokeObjectURL(url);
   }

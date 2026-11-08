@@ -1,5 +1,5 @@
 /* VIANova service worker: push notifications + offline app shell. */
-const CACHE_VERSION = "vianova-v5";
+const CACHE_VERSION = "vianova-v6";
 const APP_SHELL = ["/", "/manifest.json", "/brand-icon-192.png", "/brand-icon-512.png", "/brand-icon-maskable-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -51,7 +51,7 @@ self.addEventListener("fetch", (event) => {
       (cached) =>
         cached ||
         fetch(request).then((response) => {
-          if (response.ok && (url.pathname.startsWith("/assets/") || url.pathname.match(/\.(?:png|jpe?g|webp|svg|woff2?|css|js)$/))) {
+          if (response.ok && (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/face-models/1.7.15/") || url.pathname.match(/\.(?:png|jpe?g|webp|svg|woff2?|css|js)$/))) {
             const copy = response.clone();
             caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy)).catch(() => undefined);
           }

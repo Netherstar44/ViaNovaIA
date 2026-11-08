@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
 import { es } from "date-fns/locale";
 import { format } from "date-fns";
+import { productGallery, type CatalogMedia } from "@shared/catalog-media";
 import { useToast } from "@/hooks/use-toast";
 
 export interface Product {
@@ -23,11 +24,13 @@ export interface Product {
   provider_name: string;
   provider_username: string;
   avatar_url: string | null;
+  media?: CatalogMedia[];
 }
 
 export default function ProductModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mediaError, setMediaError] = useState(false);
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [checkingOut, setCheckingOut] = useState(false);
@@ -44,29 +47,26 @@ export default function ProductModal({ product, onClose }: { product: Product; o
   const totalPrice = Number(product.price) * quantity;
 
   useEffect(() => {
-    // Fetch full product details including all media assets
-    fetch(`${apiBase}/api/products/provider/${product.provider_username}`)
-      .then(r => r.json())
-      .then(d => {
-        const fullProduct = d.products?.find((p: any) => p.id === product.id);
-        const assets = fullProduct?.media || [];
-        // always put cover_image first if it exists
-        const formatted = [];
-        if (product.cover_image) {
-          formatted.push({ id: 'cover', url: product.cover_image, type: 'image', caption: product.name });
-        }
-        assets.forEach((a: any) => {
-          if (a.url !== product.cover_image) formatted.push(a);
+    let cancelled = false;
+    setLoading(true); setMediaError(false); setMedia([]);
+    const loadMedia = async () => {
+      try {
+        const assets = product.media ?? await fetch(`${apiBase}/api/products/${encodeURIComponent(product.id)}/media`).then(async response => {
+          if (!response.ok) throw new Error("No se pudieron cargar los archivos.");
+          return (await response.json()).media;
         });
-        setMedia(formatted);
-      })
-      .finally(() => setLoading(false));
+        if (!cancelled) setMedia(productGallery(product.cover_image, product.name, assets));
+      } catch { if (!cancelled) { setMedia(productGallery(product.cover_image, product.name, [])); setMediaError(true); } }
+      finally { if (!cancelled) setLoading(false); }
+    };
+    void loadMedia();
 
     // Fetch availability slots
     fetch(`${apiBase}/api/bookings/slots/${product.id}`)
       .then(r => r.ok ? r.json() : [])
       .then(d => setSlots(d))
       .catch(() => setSlots([]));
+    return () => { cancelled = true; };
   }, [product]);
 
   const handleCheckout = async () => {
@@ -169,7 +169,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <MediaGallery media={media} />
+            <><MediaGallery media={media} />{mediaError && <p role="alert" className="absolute bottom-4 left-4 right-4 rounded bg-background p-3 text-sm text-foreground">No se pudieron cargar los archivos adicionales. Reabre el producto para reintentar.</p>}</>
           )}
         </div>
 

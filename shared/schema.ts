@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer, bigint, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -408,6 +408,26 @@ export type PostComment = typeof postComments.$inferSelect;
 export type SocialBlock = typeof socialBlocks.$inferSelect;
 export type SocialReport = typeof socialReports.$inferSelect;
 export type SocialMessage = typeof socialMessages.$inferSelect;
+
+// Kept in Drizzle's model as well as the explicit local-only SQL migration.
+export const identityVerifications = pgTable("identity_verifications", {
+  username: text("username").primaryKey().references(() => users.username, { onDelete: "cascade" }),
+  revision: integer("revision").notNull(),
+  sealed: text("sealed").notNull(),
+  validUntil: timestamp("valid_until", { withTimezone: true }),
+  method: text("method"),
+  templateExpires: timestamp("template_expires", { withTimezone: true }),
+  purgeAfter: timestamp("purge_after", { withTimezone: true }),
+});
+export const identityAudit = pgTable("identity_audit", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  actor: text("actor").notNull(),
+  subject: text("subject").notNull(),
+  event: text("event").notNull(),
+  result: text("result").notNull(),
+  score: real("score"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 
 export type LocationItem = {

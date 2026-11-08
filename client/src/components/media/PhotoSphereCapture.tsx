@@ -101,7 +101,7 @@ export function PhotoSphereCapture({ open, onClose, onConfirm, title = "Captura 
     setError(null);
     setPreparing(true);
     try {
-      if (!selected.type.startsWith("image/")) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(selected.type) || selected.size > 25 * 1024 * 1024) {
         throw new Error("Selecciona una imagen panorámica (JPEG, PNG o WebP).");
       }
       const metadata = await inspectPanorama(selected);
@@ -216,7 +216,7 @@ export function PhotoSphereCapture({ open, onClose, onConfirm, title = "Captura 
                         </span>
                       </span>
                       <span className="mt-1 block text-[12.5px] leading-5 text-white/55">
-                        Gira sobre ti siguiendo la guía. La app une los fotogramas y crea el panorama 2:1 sin instalar nada.
+                        Sigue los anillos, el cenit y el nadir. La app mide la cobertura geométrica y proyecta una esfera 2:1; no inventa las zonas que falten.
                       </span>
                     </span>
                     <span className="relative shrink-0 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold text-black transition group-hover:bg-primary/85">
@@ -305,7 +305,7 @@ export function PhotoSphereCapture({ open, onClose, onConfirm, title = "Captura 
                   {check?.warning && (
                     <p className="flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-[12px] leading-5 text-amber-200">
                       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      {check.warning} Puedes continuar, pero el giro puede verse deformado.
+                      {check.warning} Una imagen 2:1 por sí sola no garantiza cobertura de cielo y suelo.
                     </p>
                   )}
 

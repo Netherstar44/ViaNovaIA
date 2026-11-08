@@ -7,6 +7,14 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import jwt from "jsonwebtoken";
 
+test("biometría no llega a logs aunque aparezca en un objeto de error", async () => {
+  const { redactForLog } = await import("../server/observability.js");
+  const result: any = redactForLog({ jpeg: "image-bytes", descriptor: [0.1], template: [0.2], landmarks: [1], documentRef: "private" });
+  for (const value of Object.values(result)) assert.equal(value, "[REDACTED]");
+});
+
+
+
 // Secrets de test: nunca usar valores de producción en este archivo.
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "test-jwt-secret-0123456789-abcdef";
@@ -484,4 +492,15 @@ test("Google: firma RS256/JWKS válida, audiencia/email no confiables fallan", a
 test("el rate limiter de TTS no existe en Node (se prueba en Python)", () => {
   // Marcador explícito: api/tts.py tiene su propia suite en tests/test_tts.py.
   assert.equal(typeof rateLimit, "function");
+});
+
+
+test("taxi: una petición anónima no alcanza la migración de datos", async () => {
+  assert.equal((await fetch(baseUrl + "/api/taxi/nearby")).status, 401);
+  assert.equal((await fetch(baseUrl + "/api/rides/nearby")).status, 401);
+});
+
+test("los medios públicos validan el identificador antes de consultar", async () => {
+  const response = await fetch(baseUrl + "/api/products/not-a-valid-id/media");
+  assert.equal(response.status, 400);
 });

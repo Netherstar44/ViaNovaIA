@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/lib/auth";
 import { useTaxiDashboard } from "@/hooks/useTaxiDashboard";
+import { IdentityVerification } from "@/components/identity/IdentityVerification";
 import { RideCard } from "@/components/taxi/RideCard";
 import { ActiveRidePanel } from "@/components/taxi/ActiveRidePanel";
 import TaxiMap from "@/components/taxi/TaxiMap";
@@ -57,6 +58,7 @@ export default function TaxiDashboard() {
       <Navbar />
 
       <div className="flex-1 w-full max-w-[1600px] mx-auto py-4 px-4 sm:px-6 lg:px-8 space-y-4">
+        <IdentityVerification />
 
         {/* ── Header ───────────────────────────────────────────── */}
         <motion.div

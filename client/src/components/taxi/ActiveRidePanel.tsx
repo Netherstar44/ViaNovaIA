@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import type { Ride } from "@shared/taxi.schema";
 import { ReviewForm } from "@/components/ReviewSystem";
+import { IdentityBadge } from "@/components/identity/IdentityBadge";
 
 interface ActiveRidePanelProps {
   ride: Ride;
@@ -71,7 +72,7 @@ export function ActiveRidePanel({ ride, onStart, onComplete, onDismiss, isStarti
         </div>
         <div className="flex-1">
           <p className="text-xs text-muted-foreground">Pasajero</p>
-          <p className="font-semibold">{ride.travelerUsername}</p>
+          <IdentityBadge identity={ride.travelerIdentity} label="Cliente" />
         </div>
         <Badge className="bg-primary/15 text-primary border-primary/20 font-bold">{fare}</Badge>
       </div>

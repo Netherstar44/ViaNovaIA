@@ -1,0 +1,440 @@
+{
+  "checks": [
+    {
+      "surface": "viewer",
+      "theme": "light",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "capture",
+      "theme": "light",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "identity",
+      "theme": "light",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "capture",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "identity",
+      "theme": "light",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "capture",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "identity",
+      "theme": "light",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(31, 31, 31)",
+      "background": "rgb(245, 244, 240)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "dark",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "dark",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "dark",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "dark",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "dark",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(247, 247, 248)",
+      "background": "rgb(8, 8, 10)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "sunset",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "capture",
+      "theme": "sunset",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "identity",
+      "theme": "sunset",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "sunset",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "capture",
+      "theme": "sunset",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "identity",
+      "theme": "sunset",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "sunset",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "capture",
+      "theme": "sunset",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "identity",
+      "theme": "sunset",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(255, 248, 241)",
+      "background": "rgb(20, 11, 8)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "ocean",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "capture",
+      "theme": "ocean",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "identity",
+      "theme": "ocean",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "ocean",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "capture",
+      "theme": "ocean",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "identity",
+      "theme": "ocean",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "ocean",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "capture",
+      "theme": "ocean",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "identity",
+      "theme": "ocean",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(238, 250, 255)",
+      "background": "rgb(3, 17, 27)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "forest",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "forest",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "forest",
+      "width": 360,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "forest",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "forest",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "forest",
+      "width": 768,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "viewer",
+      "theme": "forest",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "capture",
+      "theme": "forest",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    },
+    {
+      "surface": "identity",
+      "theme": "forest",
+      "width": 1440,
+      "overflow": false,
+      "buttons": true,
+      "bodyColor": "rgb(239, 255, 244)",
+      "background": "rgb(5, 17, 10)"
+    }
+  ],
+  "screenshots": [
+    "pitch--90.png",
+    "pitch-0.png",
+    "pitch-90.png",
+    "capture-partial-360.png"
+  ],
+  "pageErrors": [],
+  "worker": {
+    "frames": 42,
+    "coverage": 99.99999999999915,
+    "width": 512,
+    "height": 256,
+    "milliseconds": 1144.5999999996275,
+    "zenith": [
+      242,
+      58,
+      50
+    ],
+    "nadir": [
+      36,
+      72,
+      238
+    ]
+  },
+  "capture": {
+    "width": 2048,
+    "height": 1024,
+    "coverage": 5.8,
+    "guided": true
+  },
+  "cameraReleased": true
+}

@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { storage, getDb } from "../storage.js";
 import { databaseTimestampToIso } from "../time.js";
+import { attachCatalogMedia } from "../catalog-media.js";
+import { normalizeCatalogMedia } from "../../shared/catalog-media.js";
 import { registerTaxiRoutes } from "./taxi.routes.js";
+import { registerIdentityRoutes, identities } from "../identity/routes.js";
 import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
@@ -1148,8 +1151,11 @@ export async function registerRoutes(app: Express): Promise<Express> {
       if (![...PROVIDER_ROLES, "transport"].includes(category as any)) {
         return res.status(400).json({ message: "Categoría inválida" });
       }
-      const list = await storage.listServicesByCategory(category);
-      res.json({ services: list });
+      const list = await attachCatalogMedia(await storage.listServicesByCategory(category), "service");
+      const services = await Promise.all(list.map(async service => ({ ...service,
+        responsibleVerified: await identities.public(service.providerUsername).then(identity => identity.verified).catch(() => false),
+      })));
+      res.json({ services });
     } catch (err) {
       next(err);
     }
@@ -1159,7 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     try {
       const username = sanitizeSingleLine(req.params.username, 40);
       if (!isValidUsername(username)) return res.status(400).json({ message: "Usuario inválido" });
-      const list = await storage.listProviderServices(username);
+      const list = await attachCatalogMedia(await storage.listProviderServices(username), "service");
       res.json({ services: list });
     } catch (err) {
       next(err);
@@ -2353,11 +2359,11 @@ ${analyticsContext}`;
         LIMIT ${limit} OFFSET ${offset}
       `);
       const rawProducts = (rows as any).rows ?? (rows as any) ?? [];
-      const products = rawProducts.map((product: any) => ({
+      const products = await attachCatalogMedia(rawProducts.map((product: any) => ({
         ...product,
         created_at: databaseTimestampToIso(product.created_at),
         updated_at: databaseTimestampToIso(product.updated_at),
-      }));
+      })), "product");
 
       const countRow = await db.execute(drizzleSql`
         SELECT COUNT(*) as total FROM products
@@ -2368,6 +2374,19 @@ ${analyticsContext}`;
 
       res.json({ products, total, hasMore: offset + limit < total });
     } catch (err) { next(err); }
+  });
+
+  // Only active products expose media through this public compatibility endpoint.
+  app.get("/api/products/:id/media", publicReadLimiter, async (req, res, next) => {
+    const parsed = z.string().uuid().safeParse(req.params.id);
+    if (!parsed.success) return res.status(400).json({ message: "Producto inválido" });
+    try {
+      const result = await getDb().execute(drizzleSql`SELECT id FROM products WHERE id = ${parsed.data} AND is_active = true LIMIT 1`);
+      const products = ((result as any).rows ?? result) as { id: string }[];
+      if (!products.length) return res.status(404).json({ message: "Producto no disponible" });
+      const [product] = await attachCatalogMedia(products, "product");
+      res.json({ media: product.media });
+    } catch (error) { next(error); }
   });
 
   // GET /api/products/provider/:username
@@ -2409,6 +2428,7 @@ ${analyticsContext}`;
         const sanitized = sanitizeProduct(product, canSeePrivate);
         return {
           ...sanitized,
+          media: normalizeCatalogMedia(sanitized.media),
           created_at: databaseTimestampToIso(sanitized.created_at),
           updated_at: databaseTimestampToIso(sanitized.updated_at),
         };
@@ -3047,6 +3067,7 @@ ${analyticsContext}`;
   });
 
   // ── Módulo Taxi ────────────────────────────────────────────────────────────
+  registerIdentityRoutes(app);
   registerTaxiRoutes(app);
 
   return app;

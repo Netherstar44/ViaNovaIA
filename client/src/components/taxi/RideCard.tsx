@@ -8,6 +8,7 @@ import { MapPin, Navigation, DollarSign, Route, User, Check, X, Loader2 } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Ride } from "@shared/taxi.schema";
+import { IdentityBadge } from "@/components/identity/IdentityBadge";
 
 interface RideCardProps {
   ride: Ride;
@@ -36,7 +37,7 @@ export function RideCard({ ride, onAccept, onReject, isAccepting, isRejecting }:
             <User className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{ride.travelerUsername}</p>
+            <IdentityBadge identity={ride.travelerIdentity} label="Cliente" />
             <p className="text-xs text-muted-foreground">Hace {elapsed}m</p>
           </div>
         </div>

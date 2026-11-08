@@ -16,6 +16,7 @@ import RouteMap from "@/components/taxi/RouteMap";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import type { Ride } from "@shared/taxi.schema";
+import { IdentityBadge } from "@/components/identity/IdentityBadge";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -338,7 +339,7 @@ export default function RequestRide() {
                 <div>
                   <p className="font-bold text-lg">{statusConfig[activeRide.status]?.label}</p>
                   {activeRide.taxiUsername && (
-                    <p className="text-sm opacity-80">Conductor: {activeRide.taxiUsername}</p>
+                    <IdentityBadge identity={activeRide.driverIdentity} label="Conductor" />
                   )}
                 </div>
               </div>

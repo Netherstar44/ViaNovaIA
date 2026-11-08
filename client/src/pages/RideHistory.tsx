@@ -81,40 +81,6 @@ export default function RideHistory() {
         if (data.activeRide) allItems.push(mapRide(data.activeRide));
         if (data.history) allItems.push(...data.history.map(mapRide));
 
-        // MOCK: Add some fake service bookings so the user can see the structure
-        if (!isTaxi) {
-          allItems.push({
-            id: "mock_hotel_1",
-            type: "service_booking",
-            serviceCategory: "hotel",
-            serviceName: "Hotel El Dorado Premium",
-            travelerUsername: user.username,
-            providerUsername: "hotel_dorado",
-            originAddress: null,
-            destinationAddress: "Habitación Doble - 3 Noches",
-            fare: 450000,
-            status: "confirmed", // requires payment
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-            completedAt: null,
-            startedAt: null,
-          });
-          allItems.push({
-            id: "mock_rest_1",
-            type: "service_booking",
-            serviceCategory: "restaurant",
-            serviceName: "Restaurante La Casona",
-            travelerUsername: user.username,
-            providerUsername: "la_casona",
-            originAddress: null,
-            destinationAddress: "Reserva Mesa para 4 - Cena",
-            fare: 120000,
-            status: "completed",
-            createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-            completedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-            startedAt: null,
-          });
-        }
-
         setItems(allItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         setLoading(false);
       })
