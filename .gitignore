@@ -29,6 +29,7 @@ tsc-out.txt
 !client/src/assets/favicons/*.png
 !docs/seed-neiva-chat.png
 !docs/seed-neiva-3d.png
+!docs/sphere-qa/*.png
 audit.json
 qa-report*.json
 scripts/e2e-ui-report.json

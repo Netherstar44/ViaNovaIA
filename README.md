@@ -1179,3 +1179,5 @@ ViaNovaIA aspira a ser el **sistema operativo de viajes locales de Colombia**: u
 
 La integración facial de desarrollo, sus límites y requisitos están en [docs/identity-verification.md](docs/identity-verification.md). No hay umbral de reconocimiento habilitado sin calibración ni cambios automáticos de producción.
 
+El diagnóstico, la captura y la evidencia del visor esférico están en [docs/spherical-capture.md](docs/spherical-capture.md). Las zonas no capturadas se declaran; una imagen 2:1 no demuestra por sí sola cobertura completa.
+

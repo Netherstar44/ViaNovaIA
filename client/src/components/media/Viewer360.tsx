@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { clampPitch, partialVerticalFov } from '@shared/sphere';
+import { devicePose } from '@/lib/devicePose';
+import { useSphereTexture } from '@/lib/useSphereTexture';
 import {
   AlertCircle,
   Loader2,
@@ -14,48 +17,25 @@ import {
   ZoomOut,
 } from 'lucide-react';
 
-const textureCache = new Map<string, THREE.Texture>();
 const MAX_TEXTURE_WIDTH = 4096;
-const LOAD_TIMEOUT_MS = 30000;
 const MIN_FOV = 32;
 const MAX_FOV = 100;
 
-/**
- * Cloudinary serves the original file by default. A 360 photo is usually
- * several megabytes, so request an auto-format, auto-quality, width-limited
- * version. Non-Cloudinary URLs are returned untouched.
- */
-function optimizedPanoramaUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    if ((parsed.hostname !== 'cloudinary.com' && !parsed.hostname.endsWith('.cloudinary.com')) || !parsed.pathname.includes('/image/upload/')) {
-      return url;
-    }
-    const viewportWidth = typeof window === 'undefined' ? 2048 : window.innerWidth;
-    const dpr = typeof window === 'undefined' ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-    const targetWidth = Math.min(MAX_TEXTURE_WIDTH, Math.max(2048, Math.round(viewportWidth * dpr * 1.5)));
-    const transform = `f_auto,q_auto,c_limit,w_${targetWidth}`;
-    return url.replace('/image/upload/', `/image/upload/${transform}/`);
-  } catch {
-    return url;
-  }
-}
-
 /** Cap the texture size and disable mipmaps to keep mobile GPUs responsive. */
-function prepareTexture(texture: THREE.Texture): THREE.Texture {
+function prepareTexture(texture: THREE.Texture, limit = MAX_TEXTURE_WIDTH): THREE.Texture {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.generateMipmaps = false;
   texture.minFilter = THREE.LinearFilter;
   texture.needsUpdate = true;
 
   const image = texture.image as { width?: number; height?: number } | undefined;
-  if (!image?.width || !image.height || image.width <= MAX_TEXTURE_WIDTH) {
+  if (!image?.width || !image.height || Math.max(image.width, image.height) <= limit) {
     return texture;
   }
 
-  const scale = MAX_TEXTURE_WIDTH / image.width;
+  const scale = limit / Math.max(image.width, image.height);
   const canvas = document.createElement('canvas');
-  canvas.width = MAX_TEXTURE_WIDTH;
+  canvas.width = Math.round(image.width * scale);
   canvas.height = Math.round(image.height * scale);
   const ctx = canvas.getContext('2d');
   if (!ctx) return texture;
@@ -71,94 +51,14 @@ function prepareTexture(texture: THREE.Texture): THREE.Texture {
   optimized.generateMipmaps = false;
   optimized.minFilter = THREE.LinearFilter;
   optimized.needsUpdate = true;
-  texture.dispose();
   return optimized;
-}
-
-type TextureState =
-  | { status: 'loading'; progress: number }
-  | { status: 'ready'; texture: THREE.Texture }
-  | { status: 'error'; message: string };
-
-function usePanoramaTexture(url: string) {
-  const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<TextureState>(() => {
-    const cached = textureCache.get(optimizedPanoramaUrl(url));
-    return cached ? { status: 'ready', texture: cached } : { status: 'loading', progress: 0 };
-  });
-
-  useEffect(() => {
-    const source = optimizedPanoramaUrl(url);
-    const cached = textureCache.get(source);
-    if (cached) {
-      setState({ status: 'ready', texture: cached });
-      return;
-    }
-
-    let cancelled = false;
-    let settled = false;
-    setState({ status: 'loading', progress: 0 });
-
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-
-    const timeout = window.setTimeout(() => {
-      if (!cancelled && !settled) {
-        settled = true;
-        setState({
-          status: 'error',
-          message: 'La imagen 360° tardó demasiado en cargar. Revisa tu conexión e inténtalo de nuevo.',
-        });
-      }
-    }, LOAD_TIMEOUT_MS);
-
-    loader.load(
-      source,
-      (texture) => {
-        if (cancelled) {
-          texture.dispose();
-          return;
-        }
-        settled = true;
-        window.clearTimeout(timeout);
-        const ready = prepareTexture(texture);
-        textureCache.set(source, ready);
-        setState({ status: 'ready', texture: ready });
-      },
-      (event) => {
-        if (cancelled || settled) return;
-        if (event.lengthComputable && event.total > 0) {
-          setState({
-            status: 'loading',
-            progress: Math.min(99, Math.round((event.loaded / event.total) * 100)),
-          });
-        }
-      },
-      () => {
-        if (cancelled) return;
-        settled = true;
-        window.clearTimeout(timeout);
-        setState({
-          status: 'error',
-          message: 'No se pudo cargar la imagen 360°. Revisa tu conexión e inténtalo de nuevo.',
-        });
-      },
-    );
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [url, attempt]);
-
-  const retry = useCallback(() => setAttempt((value) => value + 1), []);
-  return { state, retry };
 }
 
 export type PanoramaControls = {
   zoomIn: () => void;
   zoomOut: () => void;
   reset: () => void;
+  setPitch: (pitch: number) => void;
 };
 
 interface PanoramaSceneProps {
@@ -188,11 +88,11 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1100);
-    camera.position.set(0, 0, 0.1);
+    camera.position.set(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: false,
+      powerPreference: 'low-power',
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NoToneMapping;
@@ -204,9 +104,13 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
     renderer.domElement.setAttribute('aria-label', 'Vista panorámica 360 grados. Usa las flechas para girar y las teclas más y menos para acercar.');
     host.appendChild(renderer.domElement);
 
-    const geometry = new THREE.SphereGeometry(500, 64, 40);
+    const image = texture.image as { width: number; height: number };
+    const vertical = partialVerticalFov(image.width, image.height);
+    const geometry = new THREE.SphereGeometry(500, 64, 48, 0, Math.PI * 2, (90 - vertical / 2) * Math.PI / 180, vertical * Math.PI / 180);
     geometry.scale(-1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const gpuTexture = prepareTexture(texture, Math.min(MAX_TEXTURE_WIDTH, renderer.capabilities.maxTextureSize));
+    gpuTexture.wrapS = THREE.RepeatWrapping;
+    const material = new THREE.MeshBasicMaterial({ map: gpuTexture });
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
@@ -245,7 +149,7 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
       if (!nextWidth || !nextHeight) return;
       width = nextWidth;
       height = nextHeight;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -291,7 +195,7 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
       const sensitivity = 0.16 * (fov / 75);
       lon -= deltaX * sensitivity;
-      lat = Math.max(-85, Math.min(85, lat + deltaY * sensitivity));
+      lat = clampPitch(lat + deltaY * sensitivity);
       targetLon = lon;
       targetLat = lat;
       velocityLon = -deltaX * sensitivity * 0.55;
@@ -301,6 +205,10 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
     const endPointer = (event: PointerEvent) => {
       pointers.delete(event.pointerId);
+      if (pointers.size === 1) {
+        const remaining = Array.from(pointers.values())[0];
+        pointerX = remaining.x; pointerY = remaining.y; velocityLon = 0; velocityLat = 0;
+      }
       if (pointers.size < 2) pinchStartDistance = 0;
       if (pointers.size === 0) {
         dragging = false;
@@ -321,8 +229,10 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
       const step = fov / 18;
       if (event.key === 'ArrowLeft') { lon += step; targetLon = lon; }
       else if (event.key === 'ArrowRight') { lon -= step; targetLon = lon; }
-      else if (event.key === 'ArrowUp') { lat = Math.max(-85, lat - step); targetLat = lat; }
-      else if (event.key === 'ArrowDown') { lat = Math.min(85, lat + step); targetLat = lat; }
+      else if (event.key === 'ArrowUp') { lat = clampPitch(lat + step); targetLat = lat; }
+      else if (event.key === 'ArrowDown') { lat = clampPitch(lat - step); targetLat = lat; }
+      else if (event.key === 'Home') { lat = 90; targetLat = lat; }
+      else if (event.key === 'End') { lat = -90; targetLat = lat; }
       else if (event.key === '+' || event.key === '=') targetFov = clampFov(targetFov - 8);
       else if (event.key === '-' || event.key === '_') targetFov = clampFov(targetFov + 8);
       else if (event.key === '0') { lon = 0; lat = 0; targetLon = 0; targetLat = 0; targetFov = 75; }
@@ -333,10 +243,11 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
     const onDeviceOrientation = (event: DeviceOrientationEvent) => {
       if (!gyroRef.current) return;
-      if (event.alpha === null || event.beta === null) return;
+      if (event.alpha === null || event.beta === null || event.gamma === null) return;
       const orientation = (screen.orientation?.angle ?? 0) as number;
-      targetLon = -event.alpha - orientation;
-      targetLat = Math.max(-80, Math.min(80, (event.beta || 0) - 90));
+      const pose = devicePose(event.alpha, event.beta, event.gamma, orientation);
+      targetLon = pose.yaw;
+      targetLat = pose.pitch;
       lon = targetLon;
       lat = targetLat;
       markInteraction();
@@ -359,7 +270,7 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
       if (!dragging) {
         if (Math.abs(velocityLon) > 0.01 || Math.abs(velocityLat) > 0.01) {
           lon += velocityLon;
-          lat = Math.max(-85, Math.min(85, lat + velocityLat));
+          lat = clampPitch(lat + velocityLat);
           velocityLon *= 0.93;
           velocityLat *= 0.93;
           targetLon = lon;
@@ -379,6 +290,7 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
       if (width > 0 && height > 0) {
         const phi = THREE.MathUtils.degToRad(90 - lat);
         const theta = THREE.MathUtils.degToRad(lon);
+        camera.up.set(-Math.cos(theta) * Math.sin(THREE.MathUtils.degToRad(lat)), Math.cos(THREE.MathUtils.degToRad(lat)), -Math.sin(theta) * Math.sin(THREE.MathUtils.degToRad(lat)));
         camera.lookAt(
           500 * Math.sin(phi) * Math.cos(theta),
           500 * Math.cos(phi),
@@ -389,12 +301,14 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
           camera.updateProjectionMatrix();
         }
         renderer.render(scene, camera);
+        renderer.domElement.dataset.pitch = lat.toFixed(2);
       }
 
       frameId = requestAnimationFrame(animate);
     };
 
     controlsRef.current = {
+      setPitch: (pitch: number) => { lat = clampPitch(pitch); targetLat = lat; velocityLat = 0; markInteraction(); },
       zoomIn: () => { targetFov = clampFov(targetFov - 10); markInteraction(); },
       zoomOut: () => { targetFov = clampFov(targetFov + 10); markInteraction(); },
       reset: () => {
@@ -428,7 +342,9 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
       controlsRef.current = null;
       geometry.dispose();
       material.dispose();
+      if (gpuTexture !== texture) gpuTexture.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
       renderer.domElement.remove();
     };
     // onInteraction is intentionally read through a ref-like closure: it only
@@ -441,14 +357,15 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
 type Viewer360Props = {
   url: string;
+  previewUrl?: string;
   className?: string;
   caption?: string | null;
   /** Show the full control HUD. Disable for small thumbnails. */
   controls?: boolean;
 };
 
-export function Viewer360({ url, className = '', caption, controls = true }: Viewer360Props) {
-  const { state, retry } = usePanoramaTexture(url);
+export function Viewer360({ url, previewUrl, className = '', caption, controls = true }: Viewer360Props) {
+  const { state, retry, coverage, upgrading } = useSphereTexture(url, previewUrl);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<PanoramaControls | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
@@ -513,6 +430,9 @@ export function Viewer360({ url, className = '', caption, controls = true }: Vie
       ref={wrapperRef}
       className={`swiper-no-swiping relative h-full w-full touch-none select-none overflow-hidden bg-black ${className}`}
     >
+      {state.status === 'ready' && <p className="pointer-events-none absolute left-2 bottom-14 z-10 max-w-[70%] rounded bg-black/80 px-2 py-1 text-[11px] text-white">
+        {coverage !== null ? `Cobertura geométrica estimada: ${coverage.toFixed(1)}% · ${coverage > 99.5 ? '360° × 180°' : 'parcial; zonas negras sin captura'}` : 'Cobertura no documentada: puede ser parcial o un panorama horizontal antiguo.'}{upgrading && ' · Mejorando detalle…'}
+      </p>}
       {state.status === 'ready' && (
         <PanoramaScene
           texture={state.texture}

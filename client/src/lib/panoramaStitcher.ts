@@ -227,43 +227,8 @@ export function drawPanoramaFrame(
   if (x + frameWidth > width) context.drawImage(scratch, x - width, y);
 }
 
-function stretchRow(
-  context: CanvasRenderingContext2D,
-  row: number,
-  width: number,
-  targetHeight: number,
-  toTop: boolean,
-) {
-  if (targetHeight < 1) return;
-
-  const strip = document.createElement("canvas");
-  strip.width = width;
-  strip.height = 1;
-  const stripContext = strip.getContext("2d");
-  if (!stripContext) return;
-
-  stripContext.drawImage(context.canvas, 0, row, width, 1, 0, 0, width, 1);
-
-  context.save();
-  // El filtro suaviza las estrías verticales del cielo y del suelo.
-  context.filter = "blur(18px)";
-  const targetY = toTop ? 0 : context.canvas.height - targetHeight;
-  context.drawImage(strip, 0, 0, width, 1, 0, targetY, width, targetHeight);
-  context.restore();
-}
-
-/**
- * El barrido solo cubre una banda horizontal. Estiramos la primera y la última
- * fila hacia los polos para que la esfera no muestre negro arriba ni abajo.
- */
-export function fillPanoramaPoles(context: CanvasRenderingContext2D, vFovDeg: number): void {
-  const height = context.canvas.height;
-  const width = context.canvas.width;
-  const band = panoramaBand(vFovDeg, height);
-
-  if (band.top > 1) stretchRow(context, band.top, width, band.top, true);
-  if (height - band.bottom > 1) stretchRow(context, band.bottom - 1, width, height - band.bottom, false);
-}
+/** Legacy API: missing poles are never synthesized. Use the spherical capture worker. */
+export function fillPanoramaPoles(_context: CanvasRenderingContext2D, _vFovDeg: number): void {}
 
 export function createPanoramaCanvas(
   width = PANORAMA_WIDTH,
