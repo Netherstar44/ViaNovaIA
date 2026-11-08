@@ -1,5 +1,7 @@
 node_modules
 dist
+.tools
+*.apk
 .DS_Store
 server/public
 vite.config.ts.*
