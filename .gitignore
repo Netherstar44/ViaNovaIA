@@ -1,4 +1,6 @@
 node_modules
+client/public/face-models/
+face-calibration.local.json
 dist
 .tools
 *.apk

@@ -18,6 +18,7 @@ export interface LocationItem {
   panoramaCaption?: string;
   contact?: string;
   parentHotelId?: string | null;
+  responsibleVerified?: boolean;
 }
 
 // Datos de ejemplo — Neiva, Huila, Colombia

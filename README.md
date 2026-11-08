@@ -1175,3 +1175,7 @@ ViaNovaIA aspira a ser el **sistema operativo de viajes locales de Colombia**: u
 - **Honestidad:** no prometer disponibilidad instantánea, cobertura nacional ni posiciones SEO que el producto aún no puede sostener.
 
 **Lo que no es:** no es una OTA con confirmación instantánea, no es un motor de reservas global y no sustituye la operación real de los proveedores. Es una capa de planificación, descubrimiento y coordinación.
+# Verificación de identidad y captura esférica
+
+La integración facial de desarrollo, sus límites y requisitos están en [docs/identity-verification.md](docs/identity-verification.md). No hay umbral de reconocimiento habilitado sin calibración ni cambios automáticos de producción.
+

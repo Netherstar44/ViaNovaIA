@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Car, Star, Phone, MapPin, User, Loader2 } from "lucide-react";
 import { StarDisplay, ReviewList } from "./ReviewSystem";
+import { IdentityBadge } from "./identity/IdentityBadge";
 
 interface TaxiProfileProps {
   username: string;
@@ -47,10 +48,10 @@ export default function TaxiProfile({ username, compact = false }: TaxiProfilePr
         className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30"
       >
         <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <Car className="h-5 w-5 text-primary" />
+          {profile.avatarUrl ? <img src={profile.avatarUrl} alt="Foto de perfil del conductor" className="h-10 w-10 rounded-full object-cover" /> : <Car className="h-5 w-5 text-primary" />}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate notranslate">{profile.name || username}</p>
+          <IdentityBadge identity={taxiData?.identity} label="Conductor" />
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {taxiData?.vehicleType && <span>{taxiData.vehicleType}</span>}
             {taxiData?.plate && (
@@ -89,7 +90,7 @@ export default function TaxiProfile({ username, compact = false }: TaxiProfilePr
             <User className="h-8 w-8 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold truncate notranslate">{profile.name || username}</h3>
+            <IdentityBadge identity={taxiData?.identity} label="Conductor" />
             <p className="text-sm text-muted-foreground">@{username}</p>
             <div className="flex items-center gap-2 mt-2">
               <StarDisplay rating={profile.averageRating} size={18} />

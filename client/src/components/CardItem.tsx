@@ -55,6 +55,7 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
         {item.priceRange && (
            <div className="text-[14px] text-muted-foreground mt-1 truncate">{item.priceRange} • {t(`categories.${item.category}`)}</div>
         )}
+        {item.responsibleVerified && <p className="text-xs text-foreground">✓ Verificado: identidad del responsable</p>}
       </div>
       
       <div className="flex-grow px-1">

@@ -11,7 +11,7 @@ export function redactForLog(value: unknown, depth = 0): unknown {
     for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
       if (SENSITIVE_KEYS.test(key)) {
         output[key] = "[REDACTED]";
-      } else if (/token|secret|password|email|phone/i.test(key)) {
+      } else if (/token|secret|password|email|phone|jpeg|image|descriptor|template|landmark|biometric|sealed|documentRef/i.test(key)) {
         output[key] = "[REDACTED]";
       } else {
         output[key] = redactForLog(entry, depth + 1);

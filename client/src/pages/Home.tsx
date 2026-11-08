@@ -338,6 +338,7 @@ export default function Home() {
                 hasAR: false,
                 contact: undefined,
                 parentHotelId: s.parentHotelId || undefined,
+                responsibleVerified: s.responsibleVerified === true,
               });
             }
           }

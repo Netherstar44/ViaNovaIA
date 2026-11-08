@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PaymentMethods from "@/components/PaymentMethods";
+import { IdentityVerification } from "@/components/identity/IdentityVerification";
 import { ReviewList } from "@/components/ReviewSystem";
 
 const ROLES: { value: UserRole; label: string; icon: React.ReactElement; desc: string; color: string; fields: string[] }[] = [
@@ -270,6 +271,7 @@ export default function AccountSettings() {
                     </Button>
                   </Link>
                   
+                  <IdentityVerification />
                   <div className="pt-2 border-t border-border/30">
                     <span className="text-xs text-muted-foreground block mb-2">Rol Activo</span>
                     <div className="relative">

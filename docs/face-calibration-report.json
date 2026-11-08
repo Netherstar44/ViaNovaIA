@@ -1,0 +1,10 @@
+{
+  "status": "awaiting-authorized-dataset",
+  "model": "face-api-1.7.15-recognition-v1-landmark68",
+  "selectedThreshold": null,
+  "genuineComparisons": 0,
+  "impostorComparisons": 0,
+  "FAR": null,
+  "FRR": null,
+  "reason": "No hay un conjunto facial autorizado y etiquetado en el repositorio. Las pruebas con motor simulado no miden exactitud biométrica."
+}

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage, getDb } from "../storage.js";
 import { databaseTimestampToIso } from "../time.js";
 import { registerTaxiRoutes } from "./taxi.routes.js";
+import { registerIdentityRoutes, identities } from "../identity/routes.js";
 import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
@@ -1149,7 +1150,10 @@ export async function registerRoutes(app: Express): Promise<Express> {
         return res.status(400).json({ message: "Categoría inválida" });
       }
       const list = await storage.listServicesByCategory(category);
-      res.json({ services: list });
+      const services = await Promise.all(list.map(async service => ({ ...service,
+        responsibleVerified: await identities.public(service.providerUsername).then(identity => identity.verified).catch(() => false),
+      })));
+      res.json({ services });
     } catch (err) {
       next(err);
     }
@@ -3047,6 +3051,7 @@ ${analyticsContext}`;
   });
 
   // ── Módulo Taxi ────────────────────────────────────────────────────────────
+  registerIdentityRoutes(app);
   registerTaxiRoutes(app);
 
   return app;

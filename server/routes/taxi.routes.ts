@@ -9,6 +9,7 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getDb } from "../storage.js";
 import { databaseTimestampToIso } from "../time.js";
+import { identities, requireCurrentIdentity } from "../identity/routes.js";
 import {
   isValidUsername,
   loadUserRoles,
@@ -230,19 +231,9 @@ async function ensureTaxiSchemaMiddleware(_req: any, _res: any, next: any) {
   }
 }
 
-/** Nombre visible del usuario; no expone teléfono, placa ni otros datos. */
-async function getUserDisplayName(username: string): Promise<string | null> {
-  const result = await getDb().execute(
-    sql`SELECT name FROM users WHERE username = ${username} LIMIT 1`
-  );
-  const row = (result as any).rows?.[0] ?? (result as any)[0];
-  const name = row?.name;
-  return typeof name === "string" ? name : null;
-}
-
 export function registerTaxiRoutes(app: Express): void {
-  app.use("/api/taxi", ensureTaxiSchemaMiddleware);
-  app.use("/api/rides", ensureTaxiSchemaMiddleware);
+  app.use("/api/taxi", requireAuth, ensureTaxiSchemaMiddleware);
+  app.use("/api/rides", requireAuth, ensureTaxiSchemaMiddleware);
 
   // ── RIDES ──────────────────────────────────────────────────────────────────
 
@@ -268,10 +259,10 @@ export function registerTaxiRoutes(app: Express): void {
    * Solicitudes pendientes que ve el taxista
    * Query: taxiUsername (para excluir rides que ya rechazó — futuro)
    */
-  app.get("/api/rides/nearby", requireAuth, requireRole("taxi", "admin"), async (_req, res, next) => {
+  app.get("/api/rides/nearby", requireAuth, requireRole("taxi", "admin"), requireCurrentIdentity(), async (req: any, res, next) => {
     try {
       const pending = await getPendingRides();
-      res.json({ rides: pending });
+      res.json({ rides: await Promise.all(pending.map(async ride => ({ ...ride, travelerIdentity: await identities.public(ride.travelerUsername, true) }))) });
     } catch (err) {
       next(err);
     }
@@ -294,7 +285,7 @@ export function registerTaxiRoutes(app: Express): void {
         return res.status(403).json({ message: "No puedes ver este viaje" });
       }
 
-      res.json({ ride });
+      res.json({ ride: { ...ride, driverIdentity: ride.taxiUsername ? await identities.public(ride.taxiUsername) : null, travelerIdentity: await identities.public(ride.travelerUsername, true) } });
     } catch (err) {
       next(err);
     }
@@ -314,7 +305,10 @@ export function registerTaxiRoutes(app: Express): void {
   app.patch("/api/rides/:id", requireAuth, async (req: any, res, next) => {
     try {
       const { id } = req.params;
-      const { status } = patchRideSchema.parse(req.body);
+      const parsedStatus = patchRideSchema.safeParse(req.body);
+      if (!parsedStatus.success) return res.status(400).json({ message: "Estado inválido" });
+      const { status } = parsedStatus.data;
+      if (status === "accepted" && !(await identities.public(req.user.username)).verified) return res.status(403).json({ message: "Verificación vencida. Verifica tu identidad antes de aceptar." });
 
       const ride = await getRideById(id);
       if (!ride) return res.status(404).json({ message: "Viaje no encontrado" });
@@ -371,6 +365,8 @@ export function registerTaxiRoutes(app: Express): void {
           UPDATE rides
           SET status = 'accepted'::ride_status, taxi_username = ${req.user.username}
           WHERE id = ${id} AND status = 'pending'::ride_status AND taxi_username IS NULL
+            AND EXISTS (SELECT 1 FROM identity_verifications iv WHERE iv.username = ${req.user.username}
+              AND iv.valid_until > now() AND (iv.method = 'manual' OR iv.template_expires > now()))
           RETURNING *
         `);
         updated = ((rows as any).rows ?? (rows as any))[0];
@@ -450,7 +446,7 @@ export function registerTaxiRoutes(app: Express): void {
         getActiveTaxiRide(username),
         getTaxiRideHistory(username),
       ]);
-      res.json({ activeRide: activeRide ?? null, history });
+      res.json({ activeRide: activeRide ? { ...activeRide, travelerIdentity: await identities.public(activeRide.travelerUsername, true) } : null, history });
     } catch (err) {
       next(err);
     }
@@ -468,7 +464,7 @@ export function registerTaxiRoutes(app: Express): void {
         getActiveTravelerRide(username),
         getTravelerRideHistory(username),
       ]);
-      res.json({ activeRide: activeRide ?? null, history });
+      res.json({ activeRide: activeRide ? { ...activeRide, driverIdentity: activeRide.taxiUsername ? await identities.public(activeRide.taxiUsername) : null } : null, history });
     } catch (err) {
       next(err);
     }
@@ -515,7 +511,9 @@ export function registerTaxiRoutes(app: Express): void {
         }
       }
 
+      if (isAvailable && !(await identities.public(targetUsername)).verified) return res.status(403).json({ message: "Verifica tu identidad al iniciar el turno." });
       await setTaxiAvailability(targetUsername, isAvailable, lat, lng);
+      if (!isAvailable) await identities.endShift(targetUsername);
       res.json({ ok: true, isAvailable });
     } catch (err) {
       if (err instanceof z.ZodError)
@@ -531,29 +529,9 @@ export function registerTaxiRoutes(app: Express): void {
    */
   app.get("/api/taxi/nearby", requireAuth, async (_req, res, next) => {
     try {
-      const drivers = await getAvailableTaxis();
-      const usernames = drivers.map((driver) => driver.username).filter(Boolean);
-
-      // Nombres en una sola consulta; el resto se limita a campos públicos.
-      let namesByUsername = new Map<string, string | null>();
-      if (usernames.length > 0) {
-        const result = await getDb().execute(
-          sql`SELECT username, name FROM users WHERE username IN (${sql.join(
-            usernames.map((username) => sql`${username}`),
-            sql`, `,
-          )})`
-        );
-        const rows = (result as any).rows ?? (result as any);
-        if (Array.isArray(rows)) {
-          namesByUsername = new Map(
-            rows.map((row: any): [string, string | null] => [
-              String(row.username),
-              typeof row.name === "string" ? row.name : null,
-            ])
-          );
-        }
-      }
-
+      const candidates = await getAvailableTaxis();
+      const checked = await Promise.all(candidates.map(async driver => ({ ...driver, identity: await identities.public(driver.username) })));
+      const drivers = checked.filter(driver => driver.identity.verified);
       // Solo campos públicos: nunca teléfono ni placa; coordenadas aproximadas (~1 km).
       const approx = (value: string | null): number | null => {
         const numeric = Number(value);
@@ -561,7 +539,8 @@ export function registerTaxiRoutes(app: Express): void {
       };
       const publicDrivers = drivers.map((driver) => ({
         username: driver.username,
-        name: namesByUsername.get(driver.username) ?? null,
+        name: driver.identity.name,
+        identity: driver.identity,
         vehicleType: driver.vehicleType,
         isAvailable: true, // getAvailableTaxis solo devuelve taxistas disponibles
         lat: approx(driver.lat),
@@ -590,8 +569,9 @@ export function registerTaxiRoutes(app: Express): void {
 
       const isSelf = req.user.username === username;
       const isAdmin = req.user.role === "admin";
+      const identity = await identities.public(username);
       if (isSelf || isAdmin) {
-        return res.json({ profile });
+        return res.json({ profile: { ...profile, isAvailable: profile.isAvailable && identity.verified, identity } });
       }
 
       // El teléfono solo se comparte cuando el viajero tiene un viaje aceptado
@@ -604,9 +584,11 @@ export function registerTaxiRoutes(app: Express): void {
       return res.json({
         profile: {
           username,
-          name: await getUserDisplayName(username),
+          name: identity.name,
+          identity,
           vehicleType: profile.vehicleType,
-          isAvailable: profile.isAvailable,
+          isAvailable: profile.isAvailable && identity.verified,
+          plate: sharesContact ? profile.plate : null,
           phone: sharesContact ? profile.phone : null,
         },
       });

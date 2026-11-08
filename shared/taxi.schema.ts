@@ -139,7 +139,10 @@ export const withdrawSchema = z.object({
 
 // ── TypeScript Types ──────────────────────────────────────────────────────────
 
-export type Ride = typeof rides.$inferSelect;
+export type Ride = typeof rides.$inferSelect & {
+  driverIdentity?: import("./identity").PublicIdentity | null;
+  travelerIdentity?: import("./identity").PublicIdentity | null;
+};
 export type Earning = typeof earnings.$inferSelect;
 export type Withdrawal = typeof withdrawals.$inferSelect;
 export type InsertRide = z.infer<typeof insertRideSchema>;

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
+import { IdentityApproval } from "@/components/identity/IdentityApproval";
 import { Users, ShieldAlert, Activity, AlertTriangle, ArrowLeft, BarChart3 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        <IdentityApproval />
         {isLoading ? (
           <div className="flex justify-center p-12"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>
         ) : (

@@ -165,7 +165,7 @@ export default function TaxiOrderPanel({
           .filter((d: any) => d.lat && d.lng)
           .map((d: any) => ({
             id: `taxi-${d.username}`,
-            name: d.username,
+            name: d.identity?.name ?? "Sin nombre aprobado",
             lat: parseFloat(d.lat),
             lng: parseFloat(d.lng),
             plate: d.plate || 'N/A',
@@ -201,7 +201,7 @@ export default function TaxiOrderPanel({
             setPhase('tracking');
             toast({
               title: '🚕 ¡Taxi confirmado!',
-              description: `${data.activeRide.taxiUsername} aceptó tu carrera`,
+              description: `${data.activeRide.driverIdentity?.name ?? "Tu conductor"} aceptó tu carrera`,
             });
           }
         } else if (data.history) {
@@ -468,7 +468,7 @@ export default function TaxiOrderPanel({
                 <div>
                   <p className="font-bold">{statusConfig[rideStatus]?.label}</p>
                   {taxiDriver && (
-                    <p className="text-xs opacity-80">Conductor: {taxiDriver}</p>
+                    <p className="text-xs opacity-80">Conductor asignado. Consulta su identidad verificada a continuación.</p>
                   )}
                 </div>
               </div>
