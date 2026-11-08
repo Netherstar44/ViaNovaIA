@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import "./styles/fonts.css";
 import "./index.css";
 import "./styles/glass.css";
 import "./i18n";

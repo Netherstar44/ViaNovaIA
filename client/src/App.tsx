@@ -43,8 +43,8 @@ function PageLoader() {
   return <AppLoader variant="route" />;
 }
 
-const BOOT_MIN_MS = 1400;
-const BOOT_MAX_MS = 2400;
+const BOOT_MIN_MS = 450;
+const BOOT_MAX_MS = 1100;
 
 /**
  * Shows the brand splash while fonts, the shell chunk and first paint settle.
@@ -65,8 +65,8 @@ function BootGate({ children, splash = true }: { children: React.ReactNode; spla
   useEffect(() => {
     if (!splash) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const minimum = reducedMotion ? 450 : BOOT_MIN_MS;
-    const maximum = reducedMotion ? 900 : BOOT_MAX_MS;
+    const minimum = reducedMotion ? 250 : BOOT_MIN_MS;
+    const maximum = reducedMotion ? 650 : BOOT_MAX_MS;
     const startedAt = performance.now();
     let settled = false;
     let hideTimer = 0;
@@ -79,10 +79,12 @@ function BootGate({ children, splash = true }: { children: React.ReactNode; spla
     };
 
     const hardStop = window.setTimeout(() => setBooting(false), maximum);
-    const onLoad = () => finish();
+    const onReady = () => finish();
 
-    if (document.readyState === "complete") finish();
-    else window.addEventListener("load", onLoad, { once: true });
+    // No esperar a window.load: las fotos del hero no deben retener el splash.
+    // Con el DOM listo (y las fuentes resueltas) la app ya es interactiva.
+    if (document.readyState !== "loading") finish();
+    else document.addEventListener("DOMContentLoaded", onReady, { once: true });
 
     const fonts = document.fonts;
     if (fonts?.ready) void fonts.ready.then(finish).catch(finish);
@@ -90,13 +92,13 @@ function BootGate({ children, splash = true }: { children: React.ReactNode; spla
     return () => {
       window.clearTimeout(hideTimer);
       window.clearTimeout(hardStop);
-      window.removeEventListener("load", onLoad);
+      document.removeEventListener("DOMContentLoaded", onReady);
     };
   }, [splash]);
 
   useEffect(() => {
     if (!splash || booting) return;
-    const teardown = window.setTimeout(() => setSplashLayer(false), 700);
+    const teardown = window.setTimeout(() => setSplashLayer(false), 400);
     return () => window.clearTimeout(teardown);
   }, [booting, splash]);
 
@@ -149,7 +151,33 @@ function ChatbotHost() {
   );
 }
 
+function prefetchPrimaryRoutes() {
+  const run = () => {
+    void import("@/pages/ProductStore");
+    void import("@/pages/SocialFeed");
+    void import("@/pages/Profile");
+    void import("@/pages/Login");
+  };
+
+  const w = window as Window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+
+  if (w.requestIdleCallback) {
+    const id = w.requestIdleCallback(run, { timeout: 800 });
+    return () => w.cancelIdleCallback?.(id);
+  }
+
+  const timer = window.setTimeout(run, 200);
+  return () => window.clearTimeout(timer);
+}
+
 function Router() {
+  // Adelanta las pestañas del dock mientras termina el splash: el primer tap
+  // no debe quedarse en blanco esperando el chunk de la ruta.
+  useEffect(() => prefetchPrimaryRoutes(), []);
+
   return (
     <>
       <SmoothScroll />

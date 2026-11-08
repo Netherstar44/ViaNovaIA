@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import logoMark from '@/assets/vianova-mark.png';
+import logoMark from '@/assets/vianova-mark.webp';
 import '@/styles/app-loader.css';
 
 const WORDMARK = [

@@ -177,19 +177,25 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" sizes="180x180" href="/brand-apple-touch-icon.png" />
 
+  <!-- Fuentes y primer héroe se piden en paralelo al HTML, no cuando React
+       monta: el primer pintado no espera a Google Fonts ni al JS. -->
+  <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/poppins-800.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" as="image" type="image/avif"
+    imagesrcset="/images/colombia/cocora-hero-900.avif 900w, /images/colombia/cocora-hero.avif 1920w"
+    imagesizes="100vw" fetchpriority="high" />
+
   <!-- New brand mark. ThemeFavicon swaps this at runtime for the active palette. -->
   <link id="theme-favicon" rel="icon" type="image/png" sizes="192x192" href="/brand-icon-192.png" />
 
   <!-- Fonts: Poppins for headings, Inter for UI -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+  <!-- La API del APK vive en este origen; adelantar el TLS acelera el primer
+       /api/auth/me. En web es el mismo origen y no añade trabajo. -->
+  <link rel="preconnect" href="https://via-nova-ia.vercel.app" crossorigin>
   <link rel="dns-prefetch" href="https://images.unsplash.com">
+  <!-- El mapa se monta al hacer scroll, así que no abrimos su conexión antes. -->
   <link rel="dns-prefetch" href="https://tiles.openfreemap.org">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap"
-    rel="stylesheet">
 </head>
 
 <body>

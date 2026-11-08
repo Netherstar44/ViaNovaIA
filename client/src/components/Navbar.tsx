@@ -5,10 +5,10 @@ import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 // Logos sin fondo, recortados al arte visible (para el Navbar)
-import logoPrincipal from "../assets/brand-mark-principal.png";
-import logoOcean   from "../assets/brand-mark-ocean.png";
-import logoForest  from "../assets/brand-mark-forest.png";
-import logoSunset  from "../assets/brand-mark-sunset.png";
+import logoPrincipal from "../assets/brand-mark-principal.webp";
+import logoOcean   from "../assets/brand-mark-ocean.webp";
+import logoForest  from "../assets/brand-mark-forest.webp";
+import logoSunset  from "../assets/brand-mark-sunset.webp";
 import {
   DropdownMenu,
   DropdownMenuContent,
