@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLoader from "@/components/AppLoader";
 import SmoothScroll from "@/components/SmoothScroll";
 import AiOrb from "@/components/AiOrb";
+import SystemBarsSync from "@/components/SystemBarsSync";
 
 // Carga diferida por ruta: el catálogo inicial no descarga dashboards, taxi,
 // social, administración ni el visor 3D hasta que el usuario los visita.
@@ -228,6 +229,7 @@ function App() {
       themes={["light", "dark", "sunset", "ocean", "forest"]}
     >
       <ThemeFavicon />
+      <SystemBarsSync />
       <LiquidGlassDefs />
       <SeoManager />
       <BootGate splash={!isPrerenderedGuide}>

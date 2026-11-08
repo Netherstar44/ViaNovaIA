@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
     CapacitorHttp: {
       enabled: true,
     },
+    // Insets nativos: la WebView queda entre las barras y el color de estas
+    // lo pinta ThemeBars con el --bg del tema activo.
+    SystemBars: {
+      style: "DEFAULT",
+      insetsHandling: "native",
+    },
   }
 };
 
