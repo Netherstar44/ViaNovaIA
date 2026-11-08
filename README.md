@@ -1181,3 +1181,5 @@ La integración facial de desarrollo, sus límites y requisitos están en [docs/
 
 El diagnóstico, la captura y la evidencia del visor esférico están en [docs/spherical-capture.md](docs/spherical-capture.md). Las zonas no capturadas se declaran; una imagen 2:1 no demuestra por sí sola cobertura completa.
 
+La auditoría del catálogo, la conexión de sus archivos y el estado real de la base están en [docs/catalog-media-audit.md](docs/catalog-media-audit.md). El catálogo ya no incorpora sitios ni reservas de demostración del frontend.
+
