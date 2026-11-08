@@ -1,0 +1,454 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #08080a;
+      color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .bg {
+      position: absolute;
+      inset: -2%;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.995) 0%, rgba(8,8,10,.965) 38%, rgba(8,8,10,.68) 72%, rgba(8,8,10,.56) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.55), rgba(8,8,10,.20) 40%, rgba(8,8,10,.88) 100%),
+        url("assets/img/hotel-plaza.jpg") center / cover no-repeat;
+    }
+    .glow {
+      position: absolute;
+      right: 80px;
+      top: -160px;
+      width: 980px;
+      height: 780px;
+      background: radial-gradient(ellipse at 48% 42%, rgba(255,191,0,.14), rgba(255,138,42,.04) 40%, transparent 70%);
+    }
+    .glow-low {
+      position: absolute;
+      left: 420px;
+      bottom: -280px;
+      width: 900px;
+      height: 700px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,138,42,.10), transparent 68%);
+    }
+    .brand-mini { position: absolute; left: 120px; top: 70px; display: flex; align-items: center; gap: 13px; }
+    .brand-mini img { width: 46px; height: 42px; object-fit: contain; }
+    .brand-mini .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 27px; letter-spacing: -.05em; }
+    .brand-mini .wm span { color: #ffbf00; }
+    .copy { position: absolute; left: 120px; top: 188px; width: 560px; }
+    .kicker {
+      display: flex; align-items: center; gap: 13px;
+      font-size: 16px; font-weight: 700; letter-spacing: .19em;
+      color: rgba(247,244,237,.64);
+    }
+    .kicker::before { content: ""; width: 44px; height: 2px; background: #ffbf00; box-shadow: 0 0 12px rgba(255,191,0,.55); }
+    .headline {
+      margin-top: 26px;
+      font-family: "Poppins", sans-serif; font-weight: 800;
+      font-size: 102px; line-height: .93; letter-spacing: -.06em;
+    }
+    .headline .gold { color: #ffbf00; }
+    .subline {
+      margin-top: 23px; font-size: 35px; line-height: 1.24; letter-spacing: -.03em;
+      color: rgba(247,244,237,.72); max-width: 500px;
+    }
+    .benefits { margin-top: 44px; display: flex; flex-direction: column; gap: 16px; }
+    .benefit { display: flex; align-items: center; gap: 13px; font-size: 23px; color: rgba(247,244,237,.72); }
+    .benefit .b {
+      width: 25px; height: 25px; border-radius: 50%;
+      display: grid; place-items: center;
+      color: #171105; font-size: 14px; font-weight: 800;
+      background: #ffbf00;
+      box-shadow: 0 0 16px rgba(255,191,0,.24);
+    }
+    .benefit.on { color: #fffdf7; }
+    .note { position: absolute; left: 122px; bottom: 68px; font-size: 14px; letter-spacing: .03em; color: rgba(247,244,237,.38); }
+    .phone-wrap {
+      position: absolute; left: 690px; top: 82px;
+      width: 520px; height: 916px;
+      transform-origin: 50% 50%;
+    }
+    .phone {
+      position: absolute; inset: 0;
+      border-radius: 58px;
+      background: #060607;
+      border: 10px solid #242428;
+      box-shadow:
+        0 56px 120px rgba(0,0,0,.72),
+        0 0 0 1px rgba(255,255,255,.10),
+        inset 0 1px 0 rgba(255,255,255,.25);
+      overflow: hidden;
+    }
+    .screen {
+      position: absolute; inset: 10px;
+      border-radius: 46px;
+      overflow: hidden;
+      background: #0d0d10;
+    }
+    .island {
+      position: absolute; left: 50%; top: 15px;
+      width: 118px; height: 28px;
+      margin-left: -59px;
+      border-radius: 16px;
+      background: #030304;
+      z-index: 5;
+    }
+    .status {
+      position: absolute; left: 24px; right: 22px; top: 13px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; font-weight: 600; color: rgba(247,244,237,.88);
+      z-index: 4;
+    }
+    .status .icons { display: flex; align-items: center; gap: 5px; }
+    .status .bars { display: flex; align-items: flex-end; gap: 2px; height: 11px; }
+    .status .bars i { width: 2px; background: currentColor; border-radius: 1px; }
+    .status .bar1 { height: 4px; } .status .bar2 { height: 6px; } .status .bar3 { height: 8px; } .status .bar4 { height: 10px; }
+    .status .batt { width: 18px; height: 9px; border: 1px solid currentColor; border-radius: 2px; position: relative; }
+    .status .batt::after { content: ""; position: absolute; left: 2px; top: 1px; bottom: 1px; width: 12px; background: currentColor; border-radius: 1px; }
+    .phone-head {
+      position: absolute; left: 0; right: 0; top: 50px;
+      height: 74px;
+      padding: 0 18px;
+      display: flex; align-items: center; gap: 11px;
+      border-bottom: 1px solid rgba(255,255,255,.075);
+      background: linear-gradient(180deg, rgba(255,191,0,.05), transparent);
+    }
+    .back { color: rgba(247,244,237,.62); font-size: 25px; font-weight: 300; }
+    .p-orb {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: grid; place-items: center;
+      color: #ffbf00; font-size: 14px;
+      background: radial-gradient(circle at 35% 30%, #4b3405, #151003 68%);
+      box-shadow: inset 0 0 0 1.5px rgba(255,191,0,.55), 0 0 14px rgba(255,191,0,.16);
+    }
+    .p-name { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -.03em; }
+    .p-name span { color: #ffbf00; }
+    .p-sub { margin-top: 1px; font-size: 12px; color: rgba(255,191,0,.74); }
+    .p-menu { margin-left: auto; color: rgba(247,244,237,.46); font-size: 21px; letter-spacing: 2px; }
+    .chat {
+      position: absolute; left: 0; right: 0; top: 124px; bottom: 82px;
+      padding: 16px 16px 0;
+      display: flex; flex-direction: column; gap: 10px;
+      overflow: hidden;
+    }
+    .p-bubble {
+      max-width: 385px;
+      padding: 12px 15px;
+      border-radius: 17px;
+      font-size: 17px; line-height: 1.32; letter-spacing: -.015em;
+      color: rgba(247,244,237,.90);
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+    }
+    .p-bubble.me {
+      align-self: flex-end;
+      color: #171105; font-weight: 600;
+      background: linear-gradient(145deg, #ffd66b, #ffbf00 60%, #efa400);
+      border-color: rgba(255,224,138,.65);
+    }
+    .p-hotel {
+      margin-left: 0;
+      width: 420px;
+      padding: 9px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+      display: flex; gap: 10px; align-items: center;
+    }
+    .p-hotel .img { width: 106px; height: 78px; border-radius: 11px; background: url('assets/img/hotel-plaza-card.jpg') center / cover; flex: 0 0 auto; }
+    .p-hotel .txt { min-width: 0; }
+    .p-hotel .nm { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .p-hotel .meta { margin-top: 3px; font-size: 12px; color: rgba(247,244,237,.52); }
+    .p-hotel .go {
+      margin-top: 7px; height: 28px; width: 104px;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 800; letter-spacing: .02em;
+      color: #171105;
+      background: #ffbf00;
+      box-shadow: 0 5px 12px rgba(255,191,0,.15);
+    }
+    .p-hotel .go { position: relative; }
+    .p-hotel .go span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .p-hotel .go .go1 { opacity: 0; }
+    .rec-bar {
+      position: absolute; left: 16px; right: 16px; bottom: 88px;
+      height: 38px;
+      display: flex; align-items: center; gap: 9px;
+      padding: 0 12px;
+      border-radius: 12px;
+      background: rgba(255,191,0,.10);
+      border: 1px solid rgba(255,191,0,.30);
+      color: rgba(255,214,107,.95);
+      font-size: 12px; font-weight: 600;
+      z-index: 3;
+    }
+    .rec-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 10px rgba(255,191,0,.7); }
+    .rec-bar .wave { margin-left: auto; display: flex; align-items: center; gap: 3px; height: 18px; }
+    .rec-bar .wave i { width: 3px; border-radius: 2px; background: rgba(255,191,0,.75); height: 7px; }
+    .p-input {
+      position: absolute; left: 13px; right: 13px; bottom: 13px;
+      height: 56px; border-radius: 28px;
+      padding: 0 8px 0 17px;
+      display: flex; align-items: center; gap: 9px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+    }
+    .p-input .ph { flex: 1; font-size: 15px; color: rgba(247,244,237,.60); }
+    .p-input .mic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; color: rgba(247,244,237,.55); }
+    .p-input .sendb { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #171105; background: linear-gradient(145deg, #ffd66b, #ffbf00); }
+    .p-input .sendb svg { width: 17px; height: 17px; }
+    .p-toast {
+      position: absolute; left: 30px; right: 30px; bottom: 150px;
+      padding: 15px 17px;
+      border-radius: 15px;
+      display: flex; align-items: center; gap: 11px;
+      background: rgba(18,18,20,.96);
+      border: 1px solid rgba(255,191,0,.38);
+      box-shadow: 0 20px 50px rgba(0,0,0,.55);
+      z-index: 6;
+    }
+    .p-toast .tick { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #ffbf00; color: #171105; font-size: 16px; font-weight: 800; }
+    .p-toast .tt { font-size: 15px; font-weight: 700; }
+    .p-toast .ts { margin-top: 2px; font-size: 11px; color: rgba(247,244,237,.70); }
+
+    .side { position: absolute; left: 1270px; width: 500px; }
+    .card {
+      position: absolute;
+      left: 1270px; width: 500px;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(255,191,0,.10), transparent 40%),
+        linear-gradient(180deg, rgba(23,23,26,.97), rgba(14,14,16,.98));
+      box-shadow: 0 30px 72px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1);
+    }
+    .card .inner { padding: 20px 22px; }
+    .card .lab { font-size: 12px; font-weight: 700; letter-spacing: .17em; color: rgba(255,191,0,.78); }
+    .dates { position: absolute; top: 120px; height: 250px; }
+    .dates .big { margin-top: 8px; font-family: "Poppins", sans-serif; font-weight: 700; font-size: 44px; letter-spacing: -.05em; line-height: 1; }
+    .dates .sub { margin-top: 5px; font-size: 18px; color: rgba(247,244,237,.70); }
+    .cal { margin-top: 14px; display: flex; gap: 6px; }
+    .cal .d { width: 58px; height: 55px; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.025); }
+    .cal .d .wd { font-size: 10px; font-weight: 700; letter-spacing: .08em; color: rgba(247,244,237,.62); }
+    .cal .d .dd { font-size: 17px; font-weight: 600; color: rgba(247,244,237,.76); }
+    .cal .d.on { background: linear-gradient(180deg, rgba(255,191,0,.2), rgba(255,191,0,.08)); border-color: rgba(255,191,0,.48); }
+    .cal .d.on .dd { color: #ffbf00; }
+    .cal .d.on .wd { color: rgba(255,214,107,.68); }
+    .booking { position: absolute; top: 400px; height: 330px; }
+    .booking .img { height: 148px; background: url('assets/img/hotel-plaza-card.jpg') center / cover; }
+    .booking .body { padding: 15px 22px 19px; }
+    .booking .nm { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 27px; letter-spacing: -.035em; }
+    .booking .meta { margin-top: 3px; font-size: 17px; color: rgba(247,244,237,.68); }
+    .booking .row { margin-top: 13px; display: flex; align-items: center; gap: 10px; }
+    .booking .chip { height: 28px; padding: 0 10px; display: flex; align-items: center; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: rgba(255,214,107,.9); background: rgba(255,191,0,.09); border: 1px solid rgba(255,191,0,.26); }
+    .booking .st { position: relative; margin-left: auto; width: 164px; height: 18px; font-size: 13px; font-weight: 700; color: rgba(255,191,0,.9); }
+    .booking .st span { position: absolute; right: 0; top: 0; white-space: nowrap; }
+    .booking .st .st1 { opacity: 0; color: #8ff0b3; }
+    .voice { position: absolute; top: 760px; height: 240px; }
+    .voice .head { display: flex; align-items: center; gap: 9px; }
+    .voice .mic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #171105; background: #ffbf00; }
+    .voice .wave { margin-top: 16px; height: 40px; display: flex; align-items: center; gap: 4px; }
+    .voice .wave i { width: 4px; border-radius: 3px; background: rgba(255,191,0,.76); transform-origin: center; height: 12px; }
+    .voice .tr { margin-top: 12px; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; color: rgba(247,244,237,.88); }
+    .voice .tr .w { opacity: 0; }
+    .voice .added { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(143,240,179,.92); }
+    .voice .added .a { width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center; background: #1d3d2a; color: #8ff0b3; font-size: 11px; font-weight: 800; border: 1px solid rgba(143,240,179,.3); }
+    .demo-note { position: absolute; left: 1274px; top: 1022px; font-size: 12px; letter-spacing: .12em; color: rgba(247,244,237,.26); }
+    .mic-ring { position: absolute; left: 1106px; top: 929px; width: 56px; height: 56px; border-radius: 50%; border: 1px solid rgba(255,191,0,.8); opacity: 0; }
+    .toast-glow { position: absolute; left: 1286px; top: 438px; width: 468px; height: 250px; border-radius: 26px; border: 1px solid rgba(255,191,0,.62); opacity: 0; }
+    .end-flash { position: absolute; left: 1440px; top: 160px; width: 240px; height: 760px; border-radius: 32px; border: 1px solid rgba(255,191,0,.6); opacity: 0; }
+  </style>
+  <div id="root" data-composition-id="s04" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="glow" data-layout-ignore></div>
+    <div class="glow-low" data-layout-ignore></div>
+
+    <div class="brand-mini" id="s04-brand">
+      <img src="assets/img/logo-mark.png" alt="ViaNova" />
+      <div class="wm">VIANova <span>IA</span></div>
+    </div>
+    <div class="copy">
+      <div class="kicker" id="s04-kicker">RESERVA</div>
+      <h1 class="headline" id="s04-headline">Fechas<br /><span class="gold">y voz.</span></h1>
+      <div class="subline" id="s04-subline">Reserva sin salir de la conversación.</div>
+      <div class="benefits" id="s04-benefits">
+        <div class="benefit" id="s04-b1"><span class="b">✓</span> Fechas y huéspedes</div>
+        <div class="benefit" id="s04-b2"><span class="b">✓</span> Solicitud directa</div>
+        <div class="benefit" id="s04-b3"><span class="b">✓</span> Notas de voz</div>
+      </div>
+    </div>
+    <div class="note" data-layout-ignore>Vista de demostración · Datos de ejemplo</div>
+
+    <div class="phone-wrap" id="s04-phone" data-layout-allow-overflow>
+      <div class="phone">
+        <div class="screen">
+          <div class="island"></div>
+          <div class="status" data-layout-ignore>
+            <span>9:41</span>
+            <span class="icons"><span class="bars"><i class="bar1"></i><i class="bar2"></i><i class="bar3"></i><i class="bar4"></i></span><span class="batt"></span></span>
+          </div>
+          <div class="phone-head">
+            <div class="back">‹</div>
+            <div class="p-orb">✦</div>
+            <div>
+              <div class="p-name">VIANova <span>AI</span></div>
+              <div class="p-sub">Asistente de viaje</div>
+            </div>
+            <div class="p-menu" data-layout-ignore>···</div>
+          </div>
+          <div class="chat">
+            <div class="p-bubble" id="s04-m1">Claro. Reviso disponibilidad para el 13 de noviembre.</div>
+            <div class="p-bubble me" id="s04-m2">Para 2 noches, 2 personas.</div>
+            <div class="p-bubble" id="s04-m3">Encontré esta opción:</div>
+            <div class="p-hotel" id="s04-hotel">
+              <div class="img"></div>
+              <div class="txt">
+                <div class="nm">Hotel Plaza Neiva</div>
+                <div class="meta">Centro · Neiva<br />2 noches · 2 huéspedes</div>
+                <div class="go" id="s04-go"><span class="go0">Solicitar reserva</span><span class="go1">Enviada ✓</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="rec-bar" id="s04-recbar" style="opacity:0">
+            <span class="dot"></span> Grabando nota de voz
+            <span class="wave"><i style="height:7px"></i><i style="height:12px"></i><i style="height:18px"></i><i style="height:11px"></i><i style="height:16px"></i><i style="height:8px"></i><i style="height:14px"></i></span>
+          </div>
+          <div class="p-input">
+            <div class="ph">Escribe o dicta…</div>
+            <div class="mic" id="s04-mic">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <rect x="9" y="2.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path>
+              </svg>
+            </div>
+            <div class="sendb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L10.5 13.5M21 3l-6.8 18-4.2-7.5L2.5 9.3 21 3z"></path></svg>
+            </div>
+          </div>
+          <div class="p-toast" id="s04-ptoast" style="opacity:0">
+            <div class="tick">✓</div>
+            <div><div class="tt">Solicitud enviada</div><div class="ts">Hotel Plaza Neiva · 13–15 nov</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mic-ring" id="s04-micring" data-layout-ignore></div>
+
+    <div class="card dates" id="s04-dates">
+      <div class="inner">
+        <div class="lab">TUS FECHAS</div>
+        <div class="big">13 – 15 nov</div>
+        <div class="sub">2 noches · 2 huéspedes</div>
+        <div class="cal">
+          <div class="d"><span class="wd">L</span><span class="dd">09</span></div>
+          <div class="d"><span class="wd">M</span><span class="dd">10</span></div>
+          <div class="d"><span class="wd">X</span><span class="dd">11</span></div>
+          <div class="d"><span class="wd">J</span><span class="dd">12</span></div>
+          <div class="d on"><span class="wd">V</span><span class="dd">13</span></div>
+          <div class="d on"><span class="wd">S</span><span class="dd">14</span></div>
+          <div class="d on"><span class="wd">D</span><span class="dd">15</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card booking" id="s04-booking">
+      <div class="img"></div>
+      <div class="body">
+        <div class="nm">Hotel Plaza Neiva</div>
+        <div class="meta">Centro · Neiva</div>
+        <div class="row"><div class="chip">13–15 NOV</div><div class="st" id="s04-status" data-layout-allow-overlap><span class="st0">Consulta disponibilidad</span><span class="st1">Solicitud enviada</span></div></div>
+      </div>
+    </div>
+
+    <div class="card voice" id="s04-voice">
+      <div class="inner">
+        <div class="head"><div class="mic">●</div><div class="lab">NOTA DE VOZ</div></div>
+        <div class="wave" id="s04-wave">
+          <i style="height:11px"></i><i style="height:18px"></i><i style="height:28px"></i><i style="height:14px"></i><i style="height:24px"></i><i style="height:33px"></i><i style="height:19px"></i><i style="height:12px"></i><i style="height:25px"></i><i style="height:30px"></i><i style="height:16px"></i><i style="height:22px"></i><i style="height:29px"></i><i style="height:15px"></i><i style="height:10px"></i><i style="height:21px"></i><i style="height:27px"></i><i style="height:13px"></i>
+        </div>
+        <div class="tr" id="s04-tr">
+          <span class="w">Agrega</span> <span class="w">una</span> <span class="w">cena</span> <span class="w">típica</span> <span class="w">cerca</span> <span class="w">del</span> <span class="w">hotel.</span>
+        </div>
+        <div class="added" id="s04-added"><span class="a">✓</span> Agregado a tu itinerario</div>
+      </div>
+    </div>
+    <div class="demo-note" data-layout-ignore>DEMO · DATOS DE EJEMPLO</div>
+    <div class="toast-glow" id="s04-toastglow" data-layout-ignore></div>
+    <div class="end-flash" id="s04-endflash" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl4 = gsap.timeline({ paused: true });
+
+    tl4.fromTo("#s04-brand", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+    tl4.fromTo("#s04-kicker", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.02);
+    tl4.fromTo("#s04-headline", { opacity: .5, y: 16, filter: "blur(4px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.72, ease: "power4.out" }, 0.04);
+    tl4.fromTo("#s04-subline", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.32);
+    tl4.fromTo("#s04-benefits", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.55);
+
+    tl4.fromTo("#s04-phone", { opacity: 0, y: 52, rotation: -5 }, { opacity: 1, y: 0, rotation: -3, duration: 0.85, ease: "power4.out" }, 0.05);
+    tl4.fromTo("#s04-dates", { opacity: 0, x: 30, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.65, ease: "power3.out" }, 0.5);
+    tl4.fromTo("#s04-booking", { opacity: 0, x: 30, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.65, ease: "power3.out" }, 0.95);
+    tl4.fromTo("#s04-voice", { opacity: 0, x: 30, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.65, ease: "power3.out" }, 4.35);
+
+    tl4.fromTo("#s04-m1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.4);
+    tl4.fromTo("#s04-m2", { opacity: 0, y: 10, scale: .98 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.2)" }, 0.92);
+    tl4.fromTo("#s04-m3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.4);
+    tl4.fromTo("#s04-hotel", { opacity: 0, y: 12, scale: .98 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" }, 1.75);
+    tl4.fromTo("#s04-go", { opacity: 0, scale: .85 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.5)" }, 2.1);
+
+    tl4.fromTo("#s04-mic", { scale: 1, color: "rgba(247,244,237,.55)" }, { scale: 1.12, color: "#ffbf00", duration: 0.35, ease: "power2.out" }, 3.65);
+    tl4.fromTo("#s04-micring", { opacity: 0, scale: .7 }, { opacity: .9, scale: 1.3, duration: 0.5, ease: "power2.out" }, 3.65);
+    tl4.fromTo("#s04-micring", { opacity: .9, scale: 1.3 }, { opacity: 0, scale: 1.7, duration: 0.6, ease: "power2.out", immediateRender: false }, 4.16);
+    tl4.fromTo("#s04-recbar", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 4.35);
+    tl4.fromTo("#s04-recbar", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power2.in", immediateRender: false }, 6.2);
+    tl4.fromTo("#s04-b3", { color: "rgba(247,244,237,.72)" }, { color: "#fffdf7", duration: 0.3, ease: "power2.out" }, 4.4);
+
+    tl4.fromTo("#s04-wave i", { scaleY: .35 }, { scaleY: 1, duration: 0.32, ease: "sine.inOut", stagger: 0.035, repeat: 1, yoyo: true }, 4.55);
+    tl4.fromTo("#s04-tr .w", { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.055, ease: "none" }, 5.55);
+    tl4.fromTo("#s04-added", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 6.7);
+    tl4.fromTo("#s04-b2", { color: "rgba(247,244,237,.72)" }, { color: "#fffdf7", duration: 0.3, ease: "power2.out" }, 6.8);
+
+    tl4.fromTo("#s04-go", { scale: 1, backgroundColor: "#ffbf00" }, { scale: .95, backgroundColor: "#ffe08a", duration: 0.12, ease: "power2.inOut", immediateRender: false }, 7.9);
+    tl4.fromTo("#s04-go", { scale: .95 }, { scale: 1, duration: 0.25, ease: "back.out(1.4)", immediateRender: false }, 8.02);
+    tl4.fromTo("#s04-go", { color: "#171105" }, { color: "#8ff0b3", backgroundColor: "#1d3d2a", duration: 0.3, ease: "power2.out", immediateRender: false }, 8.08);
+    tl4.fromTo("#s04-go .go0", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power2.in", immediateRender: false }, 8.06);
+    tl4.fromTo("#s04-go .go1", { opacity: 0 }, { opacity: 1, duration: 0.24, ease: "power2.out", immediateRender: false }, 8.1);
+    tl4.fromTo("#s04-ptoast", { opacity: 0, y: 12, scale: .97 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power3.out" }, 8.35);
+    tl4.fromTo("#s04-status .st0", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power2.in" }, 8.33);
+    tl4.fromTo("#s04-status .st1", { opacity: 0, y: 3 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" }, 8.36);
+    tl4.fromTo("#s04-toastglow", { opacity: 0, scale: .8 }, { opacity: .8, scale: 1, duration: 0.45, ease: "power2.out" }, 8.45);
+    tl4.fromTo("#s04-toastglow", { opacity: .8, scale: 1 }, { opacity: 0, scale: 1.3, duration: 0.6, ease: "power2.out", immediateRender: false }, 9.0);
+    tl4.fromTo("#s04-b1", { color: "rgba(247,244,237,.72)" }, { color: "#fffdf7", duration: 0.3, ease: "power2.out" }, 8.5);
+
+    tl4.fromTo("#s04-phone", { rotation: -3 }, { rotation: -1.4, scale: 1.015, duration: 1.4, ease: "power2.inOut", immediateRender: false }, 9.3);
+    tl4.fromTo("#s04-booking", { x: 0, y: 0 }, { x: -8, y: -6, scale: 1.02, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 9.3);
+    tl4.fromTo("#s04-endflash", { opacity: 0, scale: .7 }, { opacity: .75, scale: 1, duration: 0.5, ease: "power2.out" }, 9.7);
+    tl4.fromTo("#s04-endflash", { opacity: .75, scale: 1 }, { opacity: 0, scale: 1.3, duration: 0.65, ease: "power2.out", immediateRender: false }, 10.2);
+
+    window.__timelines["s04"] = tl4;
+  </script>
+</template>

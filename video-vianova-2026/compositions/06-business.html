@@ -1,0 +1,322 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      background: #efe4d2;
+      color: #1c1914;
+      font-family: "Inter", sans-serif;
+    }
+    .bg {
+      position: absolute; inset: -3%;
+      background:
+        radial-gradient(ellipse at 86% 6%, rgba(255,255,255,.88), transparent 44%),
+        radial-gradient(ellipse at 8% 88%, rgba(255,191,0,.14), transparent 52%),
+        linear-gradient(160deg, #f7eedf 0%, #efe3d0 46%, #e8dac3 100%);
+    }
+    .bg::after {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(120,100,70,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120,100,70,.055) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: radial-gradient(ellipse at 60% 40%, #000 0%, transparent 72%);
+    }
+    .sun {
+      position: absolute; right: -110px; top: -170px;
+      width: 720px; height: 720px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,191,0,.24), rgba(255,191,0,.05) 55%, transparent 70%);
+    }
+    .brand-mini { position: absolute; left: 120px; top: 70px; display: flex; align-items: center; gap: 13px; z-index: 5; }
+    .brand-mini .logoimg {
+      width: 46px; height: 42px; border-radius: 11px;
+      background: #1c1914 url("assets/img/logo-mark.png") center / 82% no-repeat;
+      box-shadow: 0 8px 20px rgba(60,40,10,.16);
+    }
+    .brand-mini .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 27px; letter-spacing: -.05em; color: #1c1914; }
+    .brand-mini .wm span { color: #7a4e00; }
+
+    .copy { position: absolute; left: 120px; top: 196px; width: 520px; z-index: 5; }
+    .kicker { display: flex; align-items: center; gap: 13px; font-size: 15px; font-weight: 800; letter-spacing: .2em; color: #7a4e00; }
+    .kicker::before { content: ""; width: 42px; height: 2px; background: #a66f00; }
+    .headline {
+      margin-top: 23px;
+      font-family: "Poppins", sans-serif; font-weight: 800;
+      font-size: 91px; line-height: .93; letter-spacing: -.062em; color: #1c1914;
+    }
+    .headline .gold { color: #a66f00; }
+    .subline { margin-top: 23px; font-size: 30px; line-height: 1.28; letter-spacing: -.025em; color: #5c5347; }
+    .features { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
+    .feat { display: flex; align-items: center; gap: 11px; font-size: 18px; font-weight: 600; color: #3d372f; }
+    .feat .tick { width: 23px; height: 23px; border-radius: 50%; display: grid; place-items: center; color: #fffdf7; background: #7a4e00; font-size: 11px; font-weight: 900; }
+    .note { position: absolute; left: 122px; bottom: 66px; font-size: 13px; letter-spacing: .04em; color: #6b6154; z-index: 5; }
+    .note b { color: #3d372f; }
+
+    .toast {
+      position: absolute; right: 86px; top: 22px; width: 476px; height: 84px;
+      border-radius: 17px; display: flex; align-items: center; gap: 13px; padding: 0 16px;
+      background: #fffdf7; border: 1px solid #e4d8c2;
+      box-shadow: 0 20px 50px rgba(62,45,18,.16), inset 0 1px 0 #fff;
+      z-index: 20;
+    }
+    .toast .dot { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fffdf7; background: #2f6b4f; font-size: 18px; font-weight: 900; flex: 0 0 auto; }
+    .toast .tt { font-size: 17px; font-weight: 750; letter-spacing: -.015em; color: #1c1914; }
+    .toast .ts { margin-top: 2px; font-size: 12.5px; color: #5a5145; }
+    .toast .chip { margin-left: auto; height: 25px; padding: 0 8px; display: flex; align-items: center; border-radius: 7px; color: #7a4e00; background: #fff0cb; border: 1px solid #e4c884; font-size: 9px; font-weight: 900; letter-spacing: .11em; }
+    .toast .go { margin-left: 2px; font-size: 12px; font-weight: 800; color: #6b3f00; }
+
+    .dash {
+      position: absolute; left: 700px; top: 118px; width: 1100px; height: 864px;
+      border-radius: 24px; overflow: hidden; display: flex;
+      background: #fbf5e9; border: 1px solid #e3d7c2;
+      box-shadow: 0 46px 100px rgba(63,44,15,.22), 0 2px 0 rgba(255,255,255,.7) inset;
+      z-index: 10;
+    }
+    .side {
+      width: 206px; flex: 0 0 206px; padding: 22px 16px;
+      background: linear-gradient(180deg, #1b1814, #141210);
+      color: #f7f4ed; position: relative;
+    }
+    .side::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(255,191,0,.13), transparent 48%); pointer-events: none; }
+    .side-brand { display: flex; align-items: center; gap: 9px; padding: 0 4px; }
+    .side-brand .logoimg { width: 34px; height: 31px; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+    .side-brand .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -.05em; }
+    .side-brand .wm span { color: #ffbf00; }
+    .side-brand .biz { margin-left: auto; font-size: 8px; font-weight: 900; letter-spacing: .12em; color: #ffcf5c; border: 1px solid rgba(255,191,0,.36); border-radius: 5px; padding: 3px 4px; }
+    .hotel { margin-top: 24px; padding: 10px; border-radius: 13px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.09); display: flex; gap: 9px; align-items: center; }
+    .hotel .thumb { width: 38px; height: 38px; border-radius: 9px; background: url("assets/img/hotel-plaza-card.jpg") center / cover; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(255,191,0,.25); }
+    .hotel .nm { font-size: 11.5px; font-weight: 700; line-height: 1.18; color: #fffdf7; }
+    .hotel .rl { margin-top: 2px; font-size: 9.5px; color: rgba(247,244,237,.85); }
+    .nav { margin-top: 26px; display: flex; flex-direction: column; gap: 4px; }
+    .navitem { height: 39px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border-radius: 9px; color: rgba(247,244,237,.66); font-size: 12px; font-weight: 600; letter-spacing: .01em; }
+    .navitem svg { width: 16px; height: 16px; opacity: .82; }
+    .navitem.on { color: #171105; background: #ffbf00; box-shadow: 0 9px 22px rgba(255,191,0,.16); }
+    .navitem.on svg { opacity: 1; }
+    .navitem .new { margin-left: auto; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; color: #171105; background: #ffcf5c; font-size: 8px; font-weight: 900; }
+    .side-foot { position: absolute; left: 16px; right: 16px; bottom: 18px; font-size: 9px; letter-spacing: .1em; color: rgba(247,244,237,.66); }
+    .side-foot b { color: rgba(255,207,92,.8); }
+
+    .main { flex: 1; min-width: 0; padding: 24px 26px; position: relative; }
+    .dhead { height: 66px; display: flex; align-items: flex-start; }
+    .dhead .t { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 25px; letter-spacing: -.045em; color: #1c1914; }
+    .dhead .s { margin-top: 2px; font-size: 11.5px; color: #6b6154; }
+    .dhead .right { margin-left: auto; display: flex; align-items: center; gap: 10px; padding-top: 3px; }
+    .demochip { height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 6px; border-radius: 8px; color: #7a4e00; background: #fff0cb; border: 1px solid #e4c884; font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+    .demochip .dot { width: 6px; height: 6px; border-radius: 50%; background: #b07a00; }
+    .hava { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fffdf7; background: #1b1814; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+
+    .kpis { margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .kpi { height: 96px; border-radius: 13px; padding: 14px 15px; background: #fffaf0; border: 1px solid #e8ddcb; position: relative; overflow: hidden; }
+    .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d9c9ad; }
+    .kpi.hot::before { background: #b07a00; }
+    .kpi .lab { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; color: #6b6154; text-transform: uppercase; }
+    .kpi .val { margin-top: 5px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: -.045em; color: #1c1914; }
+    .kpi .sub { margin-top: 5px; font-size: 10px; color: #6b6154; }
+    .kpi .sub b { color: #2f6b4f; }
+
+    .mid { margin-top: 14px; display: flex; gap: 14px; }
+    .chartcard, .occcard { position: relative; height: 262px; border-radius: 14px; background: #fffaf0; border: 1px solid #e8ddcb; padding: 17px 18px; }
+    .chartcard { width: 532px; }
+    .occcard { width: 296px; }
+    .cardtl { font-size: 14px; font-weight: 750; letter-spacing: -.02em; color: #1c1914; }
+    .cardsub { margin-top: 2px; font-size: 10.5px; color: #6b6154; }
+    .chart { position: absolute; left: 18px; right: 18px; top: 64px; bottom: 16px; }
+    .gridline { position: absolute; left: 0; right: 0; height: 1px; background: #efe6d6; }
+    .bars { position: absolute; left: 0; right: 0; bottom: 23px; top: 6px; display: flex; align-items: flex-end; gap: 18px; padding: 0 10px; }
+    .bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 7px; }
+    .bar .b { width: 100%; max-width: 35px; border-radius: 6px 6px 3px 3px; background: linear-gradient(180deg, #ffd15c, #b07a00); transform-origin: bottom center; box-shadow: 0 6px 14px rgba(176,122,0,.14); }
+    .bar .v { font-size: 10px; font-weight: 800; color: #7a4e00; }
+    .bar .d { position: absolute; bottom: 0; font-size: 10px; font-weight: 600; color: #6b6154; }
+    .chart .bar { position: relative; }
+    .chart .bar .d { position: absolute; bottom: -18px; }
+    .donutwrap { position: absolute; left: 0; right: 0; top: 60px; display: flex; justify-content: center; }
+    .donut { position: relative; width: 152px; height: 152px; }
+    .donut svg { width: 152px; height: 152px; transform: rotate(-90deg); }
+    .donut .track { fill: none; stroke: #efe4d2; stroke-width: 14; }
+    .donut .val { fill: none; stroke: #b07a00; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 386; stroke-dashoffset: 85; }
+    .donut .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut .center .n { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -.05em; color: #1c1914; }
+    .donut .center .l { margin-top: 2px; font-size: 10px; font-weight: 700; letter-spacing: .08em; color: #6b6154; }
+    .occnote { position: absolute; left: 18px; right: 18px; bottom: 18px; text-align: center; font-size: 10px; color: #6b6154; }
+    .occnote b { color: #2f6b4f; }
+
+    .tablecard { margin-top: 14px; height: 300px; border-radius: 14px; background: #fffaf0; border: 1px solid #e8ddcb; padding: 16px 18px; position: relative; overflow: hidden; }
+    .tablehead { display: flex; align-items: center; }
+    .tablehead .tl { font-size: 14px; font-weight: 750; color: #1c1914; }
+    .tablehead .see { margin-left: auto; font-size: 10.5px; font-weight: 700; color: #8a5a00; }
+    .thead { margin-top: 12px; display: grid; grid-template-columns: 124px 1fr 122px 114px; gap: 12px; padding: 0 10px 8px; border-bottom: 1px solid #eee4d3; }
+    .thead div { font-size: 9px; font-weight: 800; letter-spacing: .09em; color: #5c5347; text-transform: uppercase; }
+    .trows { position: relative; }
+    .trow { height: 47px; display: grid; grid-template-columns: 124px 1fr 122px 114px; gap: 12px; align-items: center; padding: 0 10px; border-bottom: 1px solid #f1e9db; }
+    .trow .id { font-size: 12px; font-weight: 750; color: #1c1914; }
+    .trow .guest { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #3d372f; }
+    .trow .guest .av { width: 24px; height: 24px; border-radius: 50%; background: #f3e6cd; border: 1px solid #e2cfa8; display: grid; place-items: center; color: #8a5a00; font-size: 9px; font-weight: 900; }
+    .trow .stay { font-size: 11.5px; color: #5c5347; }
+    .pill { justify-self: start; height: 24px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border-radius: 7px; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; }
+    .pill.ok { color: #2f6b4f; background: #e5f2e7; border: 1px solid #cfe4d3; }
+    .pill.wait { color: #7a4e00; background: #fff0cb; border: 1px solid #e4c884; }
+    .pill.new { color: #7a4e00; background: #ffe3a0; border: 1px solid #e1b95a; }
+    .rownew { position: relative; opacity: 0; transform: translateY(8px); background: #fff7e2; }
+    .rownew::before { content: ""; position: absolute; left: 0; width: 3px; height: 47px; background: #b07a00; }
+    .tablefoot { position: absolute; left: 18px; right: 18px; bottom: 8px; font-size: 9px; letter-spacing: .06em; color: #6b6154; text-align: right; }
+
+    .flash { position: absolute; inset: 0; background: #b07a00; opacity: 0; pointer-events: none; z-index: 60; }
+  </style>
+  <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="sun" data-layout-ignore></div>
+
+    <div class="brand-mini" id="s06-brand">
+      <div class="logoimg"></div>
+      <div class="wm">VIANova <span>IA</span></div>
+    </div>
+    <div class="copy">
+      <div class="kicker" id="s06-kicker">PARA NEGOCIOS</div>
+      <h1 class="headline" id="s06-headline">Tu negocio.<br /><span class="gold">En control.</span></h1>
+      <div class="subline" id="s06-subline">Reservas, experiencias y clientes en un solo panel.</div>
+      <div class="features" id="s06-features">
+        <div class="feat"><span class="tick">✓</span> Reservas y disponibilidad</div>
+        <div class="feat"><span class="tick">✓</span> Experiencias y reseñas</div>
+        <div class="feat"><span class="tick">✓</span> Mensajes en un solo lugar</div>
+      </div>
+    </div>
+    <div class="note" data-layout-ignore>Vista de demostración · <b>Datos de ejemplo</b></div>
+
+    <div class="toast" id="s06-toast">
+      <div class="dot">✓</div>
+      <div><div class="tt">Nuevo pedido</div><div class="ts">Habitación doble · 2 noches</div></div>
+      <div class="chip">DEMO</div>
+      <div class="go">Ver</div>
+    </div>
+
+    <div class="dash" id="s06-dash">
+      <aside class="side">
+        <div class="side-brand"><div class="logoimg"></div><div class="wm">VIANova <span>IA</span></div><div class="biz">BIZ</div></div>
+        <div class="hotel">
+          <div class="thumb"></div>
+          <div><div class="nm">Hotel Plaza Neiva</div><div class="rl">Neiva · Demo</div></div>
+        </div>
+        <div class="nav" id="s06-nav">
+          <div class="navitem on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg> Panel</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M7 3v4M17 3v4M3 10h18"></path></svg> Reservas <span class="new">4</span></div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m15 9-4.5 1.5L9 15l4.5-1.5L15 9Z"></path></svg> Experiencias</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 8.7 8.7 0 0 1-3.8-.9L3 21l1.9-4.7A8.4 8.4 0 1 1 21 11.5Z"></path></svg> Mensajes</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"></path></svg> Reseñas</div>
+          <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 8a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 3.6h.1A1.7 1.7 0 0 0 10.7 2V2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.6 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg> Ajustes</div>
+        </div>
+        <div class="side-foot">PANEL DE NEGOCIO · <b>DEMO</b></div>
+      </aside>
+
+      <main class="main">
+        <div class="dhead">
+          <div><div class="t">Panel de tu negocio</div><div class="s">Hotel Plaza Neiva · Neiva, Huila</div></div>
+          <div class="right"><div class="demochip"><span class="dot"></span> DATOS DE DEMOSTRACIÓN</div><div class="hava">HP</div></div>
+        </div>
+
+        <div class="kpis" id="s06-kpis">
+          <div class="kpi hot"><div class="lab">Reservas</div><div class="val">12</div><div class="sub"><b>+3</b> esta semana</div></div>
+          <div class="kpi"><div class="lab">Ocupación</div><div class="val">78%</div><div class="sub">Habitaciones demo</div></div>
+          <div class="kpi"><div class="lab">Ingresos</div><div class="val">$2.4M</div><div class="sub">COP · demo</div></div>
+          <div class="kpi"><div class="lab">Reseñas</div><div class="val">4.8</div><div class="sub">Promedio demo</div></div>
+        </div>
+
+        <div class="mid">
+          <div class="chartcard">
+            <div class="cardtl">Reservas por día</div>
+            <div class="cardsub">Últimos 7 días · datos demo</div>
+            <div class="chart">
+              <div class="gridline" style="top:0"></div>
+              <div class="gridline" style="top:33%"></div>
+              <div class="gridline" style="top:66%"></div>
+              <div class="gridline" style="top:99%"></div>
+              <div class="bars" id="s06-bars">
+                <div class="bar"><div class="v" style="opacity:0">2</div><div class="b" data-h="30" style="height:30%"></div><div class="d">L</div></div>
+                <div class="bar"><div class="v" style="opacity:0">4</div><div class="b" data-h="55" style="height:55%"></div><div class="d">M</div></div>
+                <div class="bar"><div class="v" style="opacity:0">3</div><div class="b" data-h="42" style="height:42%"></div><div class="d">M</div></div>
+                <div class="bar"><div class="v" style="opacity:0">6</div><div class="b" data-h="76" style="height:76%"></div><div class="d">J</div></div>
+                <div class="bar"><div class="v" style="opacity:0">5</div><div class="b" data-h="64" style="height:64%"></div><div class="d">V</div></div>
+                <div class="bar"><div class="v" style="opacity:0">8</div><div class="b" data-h="95" style="height:95%"></div><div class="d">S</div></div>
+                <div class="bar"><div class="v" style="opacity:0">7</div><div class="b" data-h="84" style="height:84%"></div><div class="d">D</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="occcard">
+            <div class="cardtl">Ocupación</div>
+            <div class="cardsub">Este mes · demo</div>
+            <div class="donutwrap">
+              <div class="donut">
+                <svg viewBox="0 0 152 152"><circle class="track" cx="76" cy="76" r="61"></circle><circle class="val" id="s06-donut" cx="76" cy="76" r="61"></circle></svg>
+                <div class="center"><div class="n">78%</div><div class="l">OCUPACIÓN</div></div>
+              </div>
+            </div>
+            <div class="occnote"><b>22 de 28</b> habitaciones demo</div>
+          </div>
+        </div>
+
+        <div class="tablecard">
+          <div class="tablehead"><div class="tl">Reservas recientes</div><div class="see">Ver todas →</div></div>
+          <div class="thead"><div>Reserva</div><div>Huésped</div><div>Estancia</div><div>Estado</div></div>
+          <div class="trows">
+            <div class="trow"><div class="id">#1042</div><div class="guest"><span class="av">V</span> Viajero demo</div><div class="stay">2 noches</div><div class="pill ok">Confirmada</div></div>
+            <div class="trow"><div class="id">#1041</div><div class="guest"><span class="av">V</span> Viajero demo</div><div class="stay">3 noches</div><div class="pill wait">Pendiente</div></div>
+            <div class="trow"><div class="id">#1040</div><div class="guest"><span class="av">V</span> Viajero demo</div><div class="stay">1 noche</div><div class="pill ok">Confirmada</div></div>
+            <div class="trow rownew" id="s06-rownew"><div class="id">#1043</div><div class="guest"><span class="av">V</span> Viajero demo</div><div class="stay">2 noches</div><div class="pill new">Nueva</div></div>
+          </div>
+          <div class="tablefoot" data-layout-ignore>Datos de demostración · No son reservas reales</div>
+        </div>
+      </main>
+    </div>
+    <div class="flash" id="s06-flash" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl6 = gsap.timeline({ paused: true });
+
+    tl6.fromTo("#s06-brand", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+    tl6.fromTo("#s06-kicker", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 0.02);
+    tl6.fromTo("#s06-headline", { opacity: .4, y: 18, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.75, ease: "power4.out" }, 0.04);
+    tl6.fromTo("#s06-subline", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.25);
+    tl6.fromTo("#s06-features", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.42);
+
+    tl6.fromTo("#s06-dash", { opacity: 0, y: 36, scale: .985 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "power3.out" }, 0.04);
+    tl6.fromTo("#s06-nav .navitem", { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out", stagger: 0.045 }, 0.38);
+    tl6.fromTo("#s06-kpis .kpi", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out", stagger: 0.05 }, 0.22);
+    tl6.fromTo("#s06-bars .b", { scaleY: 0 }, { scaleY: 1, duration: 0.55, ease: "power3.out", stagger: 0.04 }, 0.3);
+    tl6.fromTo("#s06-bars .v", { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: 0.28, ease: "power2.out", stagger: 0.04 }, 0.55);
+    tl6.fromTo("#s06-donut", { strokeDashoffset: 386 }, { strokeDashoffset: 85, duration: 1.0, ease: "power2.inOut" }, 0.38);
+    tl6.fromTo(".trow:not(.rownew)", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.32, ease: "power2.out", stagger: 0.05 }, 0.42);
+
+    tl6.fromTo("#s06-toast", { opacity: 0, x: 36, y: -3 }, { opacity: 1, x: 0, y: 0, duration: 0.28, ease: "power3.out" }, 0.1);
+    tl6.fromTo("#s06-toast", { opacity: 1, x: 0 }, { opacity: 0, x: 38, duration: 0.4, ease: "power2.in", immediateRender: false }, 4.25);
+
+    tl6.fromTo("#s06-rownew", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 3.05);
+    tl6.fromTo("#s06-flash", { opacity: 0 }, { opacity: .08, duration: .08, ease: "power2.out" }, 3.05);
+    tl6.fromTo("#s06-flash", { opacity: .08 }, { opacity: 0, duration: .45, ease: "power2.out", immediateRender: false }, 3.13);
+    tl6.to("#s06-dash", { scale: 1.008, duration: 2.4, ease: "power2.inOut" }, 5.4);
+    tl6.to("#s06-dash", { opacity: 0, duration: .45, ease: "power2.in" }, 7.55);
+    tl6.fromTo(".copy, .brand-mini, .note", { opacity: 1 }, { opacity: 0, duration: .4, ease: "power2.in", immediateRender: false }, 7.6);
+
+    window.__timelines["s06"] = tl6;
+  </script>
+</template>

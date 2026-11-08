@@ -1,0 +1,7 @@
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s01.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s02.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s03.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s04.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s05.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s06.mp4'
+file '/root/projects/ViaNovaIA/video-vianova-2026/renders/parts/s07.mp4'

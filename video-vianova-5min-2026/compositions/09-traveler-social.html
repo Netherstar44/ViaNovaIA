@@ -1,0 +1,89 @@
+<template>
+  <style>
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-400.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Poppins"; src: url("assets/fonts/poppins-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Poppins"; src: url("assets/fonts/poppins-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #08080a; color: #f7f4ed; font-family: "Inter", sans-serif; }
+    .bg { position: absolute; inset: -3%; background: radial-gradient(ellipse at 76% 34%, rgba(255,191,0,.15), transparent 50%), radial-gradient(ellipse at 16% 92%, rgba(255,138,42,.05), transparent 56%), linear-gradient(155deg, #0c0c0f 0%, #08080a 58%, #090807 100%); }
+    .bg::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 70px 70px; mask-image: radial-gradient(ellipse at 70% 50%, #000 0%, transparent 68%); }
+    .glow { position: absolute; right: -200px; top: -220px; width: 1200px; height: 980px; background: radial-gradient(ellipse at 50% 50%, rgba(255,191,0,.17), transparent 70%); }
+    .thread { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 1; }
+    .thread path { fill: none; stroke: rgba(255,191,0,.2); stroke-width: 1.2; stroke-dasharray: 3 9; }
+    .brand { position: absolute; left: 120px; top: 92px; display: flex; align-items: center; gap: 15px; z-index: 10; }
+    .brand .markwrap { position: relative; width: 68px; height: 62px; }
+    .brand .logoimg { position: absolute; inset: 0; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+    .brand .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 41px; letter-spacing: -.06em; line-height: 1; }
+    .brand .wm span { color: #ffbf00; }
+    .kicker { position: absolute; left: 120px; top: 205px; font-size: 12px; font-weight: 800; letter-spacing: .22em; color: rgba(247,244,237,.52); z-index: 10; }
+    .headline { position: absolute; left: 120px; top: 235px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 76px; line-height: .95; letter-spacing: -.058em; z-index: 10; }
+    .headline .gold { color: #ffbf00; }
+    .sub { position: absolute; left: 122px; top: 475px; width: 560px; font-size: 28px; line-height: 1.28; letter-spacing: -.025em; color: rgba(247,244,237,.82); z-index: 10; }
+    .bullets { position: absolute; left: 120px; top: 600px; width: 580px; display: grid; gap: 16px; z-index: 10; }
+    .bullets .b { display: flex; gap: 13px; align-items: flex-start; font-size: 22px; line-height: 1.28; letter-spacing: -.02em; color: rgba(247,244,237,.88); }
+    .bullets .dot { width: 9px; height: 9px; margin-top: 9px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 12px rgba(255,191,0,.65); flex: 0 0 auto; }
+    .phone { position: absolute; left: 1370px; top: 150px; width: 330px; height: 680px; border-radius: 44px; border: 7px solid #111113; background: #000; box-shadow: 0 46px 90px rgba(0,0,0,.66), 0 0 0 1px rgba(255,255,255,.13); z-index: 6; overflow: hidden; }
+    .phone .screen { position: absolute; inset: 3px; border-radius: 36px; overflow: hidden; background: url("assets/img/phone-home.jpg") top center / cover no-repeat; }
+    .phone .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.62) 72%, rgba(0,0,0,.82)); }
+    .phone .island { position: absolute; left: 50%; top: 10px; width: 86px; height: 20px; margin-left: -43px; border-radius: 12px; background: #000; z-index: 4; }
+    .card { position: absolute; left: 18px; right: 18px; border-radius: 18px; padding: 14px 16px; background: rgba(10,10,12,.78); border: 1px solid rgba(255,191,0,.35); box-shadow: 0 16px 34px rgba(0,0,0,.45); z-index: 5; }
+    .card .t { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+    .card .x { margin-top: 4px; font-size: 13px; line-height: 1.3; color: rgba(247,244,237,.74); }
+    .c1 { top: 120px; } .c2 { top: 252px; } .c3 { top: 384px; } .c4 { top: 516px; }
+    .steps { position: absolute; left: 760px; top: 520px; width: 540px; display: grid; gap: 12px; z-index: 9; }
+    .step { height: 74px; display: flex; align-items: center; gap: 16px; border-radius: 18px; padding: 0 20px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.035); }
+    .step .n { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,191,0,.12); color: #ffbf00; font-weight: 900; font-size: 16px; }
+    .step .st { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 21px; letter-spacing: -.025em; }
+    .step .sx { font-size: 14px; color: rgba(247,244,237,.68); margin-top: 2px; }
+    .note { position: absolute; left: 120px; bottom: 34px; font-size: 11px; letter-spacing: .16em; color: rgba(247,244,237,.34); z-index: 10; }
+  </style>
+  <div id="root" data-composition-id="s09" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="glow" data-layout-ignore></div>
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore><path id="s09-thread" d="M 430 120 C 650 150 700 260 760 330" /></svg>
+    <div class="brand" id="s09-brand"><div class="markwrap"><div class="logoimg"></div></div><div class="wm">VIANova <span>IA</span></div></div>
+    <div class="kicker" id="s09-kicker">VIAJERO + SOCIAL</div>
+    <div class="headline" id="s09-headline">Viaja. Guarda.<br /><span class="gold">Comparte.</span></div>
+    <div class="sub" id="s09-sub">De la primera idea a la primera historia del viaje.</div>
+    <div class="bullets" id="s09-bullets">
+      <div class="b" id="s09-b1"><span class="dot"></span><span>Chat y notas de voz para armar el itinerario.</span></div>
+      <div class="b" id="s09-b2"><span class="dot"></span><span>Mapa y 360° para decidir con imágenes reales.</span></div>
+      <div class="b" id="s09-b3"><span class="dot"></span><span>Social para guardar, publicar y seguir rutas.</span></div>
+    </div>
+    <div class="steps" id="s09-steps">
+      <div class="step" id="s09-st1"><div class="n">1</div><div><div class="st">Planifica</div><div class="sx">Conversación, voz y fechas.</div></div></div>
+      <div class="step" id="s09-st2"><div class="n">2</div><div><div class="st">Descubre</div><div class="sx">Mapa, lugares y 360°.</div></div></div>
+      <div class="step" id="s09-st3"><div class="n">3</div><div><div class="st">Reserva</div><div class="sx">Hotel, mesa o transporte.</div></div></div>
+      <div class="step" id="s09-st4"><div class="n">4</div><div><div class="st">Social</div><div class="sx">Guarda, comenta y publica.</div></div></div>
+    </div>
+    <div class="phone" id="s09-phone">
+      <div class="screen"></div><div class="shade"></div><div class="island"></div>
+      <div class="card c1" id="s09-c1"><div class="t">Itinerario</div><div class="x">Neiva · Tatacoa · 3 días</div></div>
+      <div class="card c2" id="s09-c2"><div class="t">Nota de voz</div><div class="x">“Agrega una noche extra.”</div></div>
+      <div class="card c3" id="s09-c3"><div class="t">Reserva enviada</div><div class="x">Hotel y taxi confirmados.</div></div>
+      <div class="card c4" id="s09-c4"><div class="t">Guardado</div><div class="x">Ruta lista para compartir.</div></div>
+    </div>
+    <div class="note" data-layout-ignore>ROL VIAJERO · FLUJO COMPLETO EN UNA CUENTA</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl9 = gsap.timeline({ paused: true });
+    tl9.fromTo("#s09-thread", { strokeDasharray: 360, strokeDashoffset: 360 }, { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut" }, 0.2);
+    tl9.fromTo("#s09-brand", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
+    tl9.fromTo("#s09-kicker", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.2);
+    tl9.fromTo("#s09-headline", { opacity: .45, y: 18, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power4.out" }, 0.25);
+    tl9.fromTo("#s09-sub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.5);
+    tl9.fromTo("#s09-bullets .b", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.12 }, 0.65);
+    tl9.fromTo("#s09-steps .step", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out", stagger: 0.1 }, 0.9);
+    tl9.fromTo("#s09-phone", { opacity: 0, y: 42, scale: .96 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 1.1);
+    tl9.fromTo("#s09-phone .card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out", stagger: 0.35 }, 1.5);
+    ["#s09-st1","#s09-st2","#s09-st3","#s09-st4"].forEach((sel, i) => {
+      const t = 4 + i * 13;
+      tl9.fromTo(sel, { borderColor: "rgba(255,255,255,.14)", backgroundColor: "rgba(255,255,255,.035)" }, { borderColor: "rgba(255,191,0,.85)", backgroundColor: "rgba(255,191,0,.10)", duration: 0.45, ease: "power2.out" }, t);
+      tl9.fromTo(sel, { borderColor: "rgba(255,191,0,.85)" }, { borderColor: "rgba(255,255,255,.14)", duration: 0.6, ease: "power2.out", immediateRender: false }, t + 8);
+    });
+    tl9.fromTo("#s09-phone", { scale: 1 }, { scale: 1.012, duration: 18, ease: "sine.inOut", immediateRender: false }, 10);
+    tl9.fromTo("#s09-phone", { scale: 1.012 }, { scale: 1, duration: 18, ease: "sine.inOut", immediateRender: false }, 30);
+    window.__timelines["s09"] = tl9;
+  </script>
+</template>

@@ -1,0 +1,285 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #08080a;
+      color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .bg-wrap { position: absolute; inset: -3%; }
+    .bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.97) 0%, rgba(8,8,10,.86) 36%, rgba(8,8,10,.48) 72%, rgba(8,8,10,.72) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.18) 0%, rgba(8,8,10,.16) 55%, rgba(8,8,10,.92) 100%),
+        url("assets/img/hero-cartagena.jpg") center / cover no-repeat;
+    }
+    .glow-a {
+      position: absolute;
+      left: -240px;
+      top: -280px;
+      width: 1050px;
+      height: 900px;
+      background: radial-gradient(circle at 42% 42%, rgba(255,191,0,.20), rgba(255,191,0,.055) 38%, transparent 69%);
+    }
+    .glow-b {
+      position: absolute;
+      right: -240px;
+      bottom: -300px;
+      width: 1000px;
+      height: 780px;
+      background: radial-gradient(circle at 55% 45%, rgba(255,138,42,.13), transparent 66%);
+    }
+    .brand {
+      position: absolute;
+      left: 120px;
+      top: 74px;
+      display: flex;
+      align-items: center;
+      gap: 17px;
+    }
+    .brand img { width: 58px; height: 52px; object-fit: contain; }
+    .wordmark {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 34px;
+      letter-spacing: -0.055em;
+      white-space: nowrap;
+    }
+    .wordmark span { color: #ffbf00; }
+    .kicker {
+      position: absolute;
+      left: 122px;
+      top: 154px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: .19em;
+      color: rgba(247,244,237,.56);
+    }
+    .kicker .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #ffbf00;
+      box-shadow: 0 0 14px rgba(255,191,0,.74);
+    }
+    .headline {
+      position: absolute;
+      left: 120px;
+      top: 260px;
+      width: 1370px;
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 94px;
+      line-height: 1.015;
+      letter-spacing: -0.045em;
+      text-shadow: 0 10px 34px rgba(0,0,0,.34);
+    }
+    .headline .line { display: block; }
+    .headline .gold { color: #ffbf00; }
+    .composer {
+      position: absolute;
+      left: 120px;
+      top: 636px;
+      width: 1120px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 0 22px 0 28px;
+      border-radius: 26px;
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.035)),
+        rgba(16,16,18,.88);
+      box-shadow:
+        0 34px 80px rgba(0,0,0,.52),
+        inset 0 1px 0 rgba(255,255,255,.15),
+        0 0 0 1px rgba(255,191,0,.045);
+    }
+    .spark {
+      width: 44px; height: 44px;
+      display: grid; place-items: center;
+      border-radius: 14px;
+      color: #ffbf00;
+      font-size: 22px;
+      background: radial-gradient(circle at 38% 30%, rgba(255,224,130,.28), rgba(255,191,0,.10));
+      box-shadow: inset 0 0 0 1px rgba(255,191,0,.22);
+    }
+    .prompt {
+      position: relative;
+      flex: 1;
+      font-size: 29px;
+      font-weight: 500;
+      letter-spacing: -0.018em;
+      color: #f8f5ed;
+      white-space: nowrap;
+    }
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      color: rgba(247,244,237,.34);
+    }
+    .typed .ch { display: inline; opacity: 0; }
+    .caret {
+      display: inline-block;
+      width: 3px;
+      height: 36px;
+      margin-left: 3px;
+      vertical-align: -7px;
+      border-radius: 2px;
+      background: #ffbf00;
+      box-shadow: 0 0 16px rgba(255,191,0,.65);
+    }
+    .send {
+      width: 58px; height: 58px;
+      flex: 0 0 auto;
+      border-radius: 18px;
+      display: grid; place-items: center;
+      color: #151006;
+      font-size: 30px;
+      font-weight: 700;
+      background: linear-gradient(145deg, #ffe08a, #ffbf00 58%, #e38d00);
+      box-shadow: 0 12px 28px rgba(255,191,0,.24), inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .send-ring {
+      position: absolute;
+      left: 1158px;
+      top: 653px;
+      width: 62px;
+      height: 62px;
+      border-radius: 19px;
+      border: 1px solid rgba(255,191,0,.8);
+      opacity: 0;
+    }
+    .hint {
+      position: absolute;
+      left: 122px;
+      top: 758px;
+      font-size: 28px;
+      letter-spacing: -0.01em;
+      color: rgba(247,244,237,.50);
+    }
+    .hint b { color: rgba(255,191,0,.92); font-weight: 600; }
+    .thread {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      opacity: .9;
+    }
+    .thread path {
+      fill: none;
+      stroke: #ffbf00;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      opacity: .5;
+    }
+    .corner {
+      position: absolute;
+      right: 120px;
+      top: 82px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      letter-spacing: .16em;
+      font-weight: 600;
+      color: rgba(247,244,237,.46);
+    }
+    .corner::before {
+      content: "";
+      width: 30px; height: 1px;
+      background: rgba(255,191,0,.7);
+    }
+    .light-leak {
+      position: absolute;
+      right: -80px; top: -100px;
+      width: 720px; height: 520px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,214,107,.13), transparent 68%);
+    }
+  </style>
+  <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
+    <div class="bg-wrap" data-layout-allow-overflow><div class="bg"></div></div>
+    <div class="glow-a" data-layout-ignore></div>
+    <div class="glow-b" data-layout-ignore></div>
+    <div class="light-leak" data-layout-ignore></div>
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path id="s01-thread" d="M -40 820 C 330 782 510 706 704 636 S 1186 526 1540 612 S 1810 720 1970 690" />
+    </svg>
+    <div class="brand" id="s01-brand">
+      <img src="assets/img/logo-mark.png" alt="ViaNova" />
+      <div class="wordmark">VIANova <span>IA</span></div>
+    </div>
+    <div class="kicker" id="s01-kicker" data-layout-ignore><span class="dot"></span> PLANIFICADOR DE VIAJES CON IA</div>
+    <div class="corner" id="s01-corner" data-layout-ignore>H U I L A &nbsp;·&nbsp; C O L O M B I A</div>
+    <h1 class="headline" id="s01-headline">
+      <span class="line">Tu próximo viaje</span>
+      <span class="line">empieza con una <span class="gold">frase</span>.</span>
+    </h1>
+    <div class="composer" id="s01-composer">
+      <div class="spark">✦</div>
+      <div class="prompt">
+        <span class="typed" id="s01-typed"><span class="ch">Q</span><span class="ch">u</span><span class="ch">i</span><span class="ch">e</span><span class="ch">r</span><span class="ch">o</span><span class="ch"> </span><span class="ch">c</span><span class="ch">o</span><span class="ch">n</span><span class="ch">o</span><span class="ch">c</span><span class="ch">e</span><span class="ch">r</span><span class="ch"> </span><span class="ch">e</span><span class="ch">l</span><span class="ch"> </span><span class="ch">H</span><span class="ch">u</span><span class="ch">i</span><span class="ch">l</span><span class="ch">a</span><span class="ch"> </span><span class="ch">e</span><span class="ch">n</span><span class="ch"> </span><span class="ch">3</span><span class="ch"> </span><span class="ch">d</span><span class="ch">í</span><span class="ch">a</span><span class="ch">s</span><span class="ch">.</span><span class="caret" id="s01-caret"></span></span>
+      </div>
+      <div class="send" id="s01-send">↑</div>
+    </div>
+    <div class="send-ring" id="s01-ring"></div>
+    <div class="hint" id="s01-hint">Escribe. <b>ViaNovaIA</b> hace el resto.</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl1 = gsap.timeline({ paused: true });
+
+    tl1.fromTo("#s01-brand", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 0.15);
+    tl1.fromTo("#s01-corner", { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" }, 0.35);
+    tl1.fromTo("#s01-thread", { strokeDasharray: 2600, strokeDashoffset: 2600 }, { strokeDashoffset: 0, duration: 2.5, ease: "power2.inOut" }, 0.1);
+
+    tl1.fromTo("#s01-kicker", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.55, ease: "power2.out" }, 0.45);
+    tl1.fromTo("#s01-composer", { opacity: 0, y: 28, scale: 0.975 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power4.out" }, 0.18);
+
+    tl1.fromTo("#s01-typed .ch", { opacity: 0 }, { opacity: 1, duration: 0.012, ease: "none", stagger: 0.026 }, 0.68);
+    tl1.fromTo("#s01-caret", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.64);
+    tl1.fromTo("#s01-caret", { opacity: 1 }, { opacity: 0.15, duration: 0.26, ease: "sine.inOut", repeat: 3, yoyo: true, immediateRender: false }, 1.05);
+
+    tl1.fromTo("#s01-send", { opacity: 0, scale: 0.55 }, { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.35)" }, 1.82);
+    tl1.fromTo("#s01-ring", { opacity: 0, scale: 0.7 }, { opacity: 0.9, scale: 1.35, duration: 0.5, ease: "power2.out" }, 2.52);
+    tl1.fromTo("#s01-ring", { opacity: 0.9, scale: 1.35 }, { opacity: 0, scale: 1.7, duration: 0.5, ease: "power2.out", immediateRender: false }, 3.04);
+
+    tl1.fromTo("#s01-headline .line:nth-child(1)", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.78, ease: "power4.out" }, 2.55);
+    tl1.fromTo("#s01-headline .line:nth-child(2)", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.78, ease: "power4.out" }, 2.72);
+    tl1.fromTo("#s01-hint", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 3.15);
+
+    tl1.fromTo("#s01-composer", { y: 0, scale: 1 }, { y: -8, scale: 1.009, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 4.05);
+    tl1.fromTo("#s01-brand", { scale: 1 }, { scale: 1.012, duration: 1.2, ease: "sine.inOut" }, 4.1);
+
+    window.__timelines["s01"] = tl1;
+  </script>
+</template>

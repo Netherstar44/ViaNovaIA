@@ -1,0 +1,398 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      background: #08080a; color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .layer { position: absolute; inset: 0; }
+    .move-layer { z-index: 1; }
+    .social-layer { z-index: 2; opacity: 0; display: none; }
+
+    .move-bg {
+      position: absolute; inset: -3%;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.985) 0%, rgba(8,8,10,.90) 30%, rgba(8,8,10,.12) 66%, rgba(8,8,10,.34) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.50) 0%, rgba(8,8,10,.02) 40%, rgba(8,8,10,.70) 100%),
+        url("assets/img/map-neiva-bright.jpg") center / cover no-repeat;
+    }
+    .social-bg {
+      position: absolute; inset: -3%;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.97) 0%, rgba(8,8,10,.90) 31%, rgba(8,8,10,.38) 70%, rgba(8,8,10,.50) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.44) 0%, rgba(8,8,10,.10) 42%, rgba(8,8,10,.82) 100%),
+        url("assets/img/tatacoa.jpg") center / cover no-repeat;
+    }
+    .glow {
+      position: absolute; right: 80px; top: -140px;
+      width: 980px; height: 760px;
+      background: radial-gradient(ellipse at 48% 42%, rgba(255,191,0,.15), rgba(255,138,42,.04) 40%, transparent 70%);
+    }
+    .brand-mini { position: absolute; left: 120px; top: 70px; display: flex; align-items: center; gap: 13px; z-index: 10; }
+    .brand-mini .logoimg { width: 46px; height: 42px; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+    .brand-mini .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 27px; letter-spacing: -.05em; }
+    .brand-mini .wm span { color: #ffbf00; }
+    .copy { position: absolute; left: 120px; top: 188px; width: 660px; }
+    .kicker {
+      display: flex; align-items: center; gap: 13px;
+      font-size: 16px; font-weight: 700; letter-spacing: .19em;
+      color: rgba(247,244,237,.66);
+    }
+    .kicker::before { content: ""; width: 44px; height: 2px; background: #ffbf00; box-shadow: 0 0 12px rgba(255,191,0,.55); }
+    .headline {
+      margin-top: 25px;
+      font-family: "Poppins", sans-serif; font-weight: 800;
+      font-size: 118px; line-height: .9; letter-spacing: -.062em;
+    }
+    .headline .gold { color: #ffbf00; }
+    .headline.social { font-size: 108px; }
+    .headline.social .gold { font-size: 82px; letter-spacing: -.055em; }
+    .subline { margin-top: 22px; font-size: 37px; line-height: 1.22; letter-spacing: -.03em; color: rgba(247,244,237,.74); }
+    .steprail { position: absolute; left: 120px; bottom: 132px; width: 520px; z-index: 10; }
+    .step { display: flex; align-items: center; gap: 14px; height: 44px; color: rgba(247,244,237,.54); font-size: 17px; font-weight: 600; letter-spacing: .02em; }
+    .step .n { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); font-size: 11px; color: rgba(247,244,237,.64); }
+    .step.on { color: #fffdf7; }
+    .step.on .n { border-color: rgba(255,191,0,.7); color: #171105; background: #ffbf00; }
+    .stepline { position: absolute; left: 13px; top: 38px; width: 1px; height: 26px; background: linear-gradient(180deg, rgba(255,191,0,.5), rgba(255,191,0,.08)); }
+    .note { position: absolute; left: 122px; bottom: 66px; font-size: 14px; letter-spacing: .03em; color: rgba(247,244,237,.4); z-index: 10; }
+    .map-meta { position: absolute; right: 120px; top: 74px; display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 600; letter-spacing: .16em; color: rgba(247,244,237,.46); z-index: 8; }
+    .compass { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,191,0,.36); display: grid; place-items: center; color: rgba(255,191,0,.8); font-size: 11px; font-weight: 700; }
+    .compass i { position: absolute; width: 2px; height: 14px; top: 6px; border-radius: 2px; background: #ffbf00; transform-origin: 50% 16px; transform: rotate(24deg); box-shadow: 0 0 8px rgba(255,191,0,.6); }
+    .route { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 3; }
+    .route .halo { fill: none; stroke: rgba(255,191,0,.17); stroke-width: 13; stroke-linecap: round; }
+    .route .line { fill: none; stroke: #ffbf00; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 10 10; filter: drop-shadow(0 0 7px rgba(255,191,0,.55)); }
+    .pin { position: absolute; width: 25px; height: 25px; margin-left: -12.5px; margin-top: -12.5px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 0 7px rgba(255,191,0,.13), 0 0 22px rgba(255,191,0,.55); z-index: 5; }
+    .pin::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: #171105; }
+    .pin .plabel { position: absolute; left: 24px; top: -2px; padding: 8px 11px; border-radius: 10px; background: rgba(10,10,12,.92); border: 1px solid rgba(255,191,0,.28); box-shadow: 0 12px 30px rgba(0,0,0,.42); white-space: nowrap; }
+    .pin .plabel .n { font-size: 18px; font-weight: 600; letter-spacing: -.02em; color: rgba(247,244,237,.96); }
+    .pin .plabel .s { margin-top: 1px; font-size: 12px; color: rgba(255,191,0,.8); }
+    .pin-left .plabel { left: auto; right: 24px; text-align: right; }
+    .car {
+      position: absolute; left: 800px; top: 760px;
+      width: 44px; height: 44px; margin-left: -22px; margin-top: -22px;
+      border-radius: 50%; display: grid; place-items: center;
+      color: #171105; background: #ffbf00;
+      box-shadow: 0 0 0 8px rgba(255,191,0,.13), 0 0 30px rgba(255,191,0,.6);
+      z-index: 7;
+    }
+    .car svg { width: 23px; height: 23px; }
+    .car-ring { position: absolute; left: 800px; top: 760px; width: 76px; height: 76px; margin-left: -38px; margin-top: -38px; border-radius: 50%; border: 1px solid rgba(255,191,0,.65); z-index: 4; }
+
+    .taxi-card {
+      position: absolute; left: 1270px; top: 218px; width: 520px; height: 624px;
+      border-radius: 26px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(ellipse at 8% 0%, rgba(255,191,0,.12), transparent 42%),
+        linear-gradient(180deg, rgba(23,23,26,.97), rgba(13,13,15,.985));
+      box-shadow: 0 38px 92px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.12);
+      z-index: 9;
+    }
+    .taxi-head { height: 92px; padding: 0 23px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid rgba(255,255,255,.09); }
+    .car-orb { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #171105; background: #ffbf00; box-shadow: 0 0 22px rgba(255,191,0,.24); }
+    .car-orb svg { width: 24px; height: 24px; }
+    .taxi-head .tt { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -.035em; }
+    .taxi-head .ts { margin-top: 2px; font-size: 14px; color: rgba(247,244,237,.66); }
+    .demo-chip { margin-left: auto; height: 26px; padding: 0 9px; display: flex; align-items: center; border-radius: 8px; font-size: 10px; font-weight: 800; letter-spacing: .09em; color: rgba(255,214,107,.9); background: rgba(255,191,0,.09); border: 1px solid rgba(255,191,0,.25); white-space: nowrap; }
+    .ride { padding: 23px 24px 0; }
+    .rrow { position: relative; display: flex; gap: 13px; min-height: 70px; }
+    .rrow .dot { width: 13px; height: 13px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto; background: #ffbf00; box-shadow: 0 0 0 4px rgba(255,191,0,.10); }
+    .rrow.dest .dot { background: #f7f4ed; box-shadow: 0 0 0 4px rgba(247,244,237,.08); }
+    .rline { position: absolute; left: 6px; top: 21px; width: 1px; height: 44px; background: linear-gradient(180deg, rgba(255,191,0,.6), rgba(255,191,0,.12)); }
+    .rrow .rl { font-size: 11px; font-weight: 700; letter-spacing: .14em; color: rgba(247,244,237,.56); }
+    .rrow .rn { margin-top: 2px; font-size: 21px; font-weight: 600; letter-spacing: -.025em; color: rgba(247,244,237,.95); }
+    .rrow .rs { margin-top: 2px; font-size: 13px; color: rgba(247,244,237,.64); }
+    .statusbox { margin: 18px 24px 0; padding: 15px 16px; border-radius: 15px; border: 1px solid rgba(255,191,0,.24); background: linear-gradient(90deg, rgba(255,191,0,.09), rgba(255,191,0,.025)); }
+    .statusrow { display: flex; align-items: center; gap: 10px; }
+    .statusdot { width: 8px; height: 8px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 11px rgba(255,191,0,.7); }
+    .statusdot.green { background: #8ff0b3; box-shadow: 0 0 11px rgba(143,240,179,.6); }
+    .statusrow .st { position: relative; width: 240px; height: 22px; font-size: 18px; font-weight: 650; letter-spacing: -.01em; color: #fffdf7; }
+    .statusrow .st span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+    .statusrow .st .st1 { opacity: 0; color: #d9ffe6; }
+    .statusbar { margin-top: 12px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.09); overflow: hidden; }
+    .statusbar .fill { height: 100%; width: 100%; border-radius: 3px; background: linear-gradient(90deg, #ffbf00, #ff8a2a); transform-origin: left center; transform: scaleX(.12); box-shadow: 0 0 12px rgba(255,191,0,.4); }
+    .statusnote { margin-top: 9px; font-size: 12px; color: rgba(247,244,237,.64); }
+    .taxi-btn { position: absolute; left: 24px; right: 24px; bottom: 58px; height: 54px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 9px; color: #171105; font-size: 18px; font-weight: 800; letter-spacing: -.01em; background: linear-gradient(145deg, #ffd66b, #ffbf00 62%, #eaa000); box-shadow: 0 14px 30px rgba(255,191,0,.15), inset 0 1px 0 rgba(255,255,255,.5); }
+    .taxi-btn svg { width: 18px; height: 18px; }
+    .taxi-foot { position: absolute; left: 24px; right: 24px; bottom: 20px; font-size: 11px; letter-spacing: .07em; color: rgba(247,244,237,.62); text-align: center; }
+    .btn-ring { position: absolute; left: 1294px; top: 730px; width: 472px; height: 54px; border-radius: 16px; border: 1px solid rgba(255,191,0,.9); opacity: 0; z-index: 10; }
+
+    .thread { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 4; pointer-events: none; }
+    .thread path { fill: none; stroke: rgba(255,191,0,.55); stroke-width: 1.6; stroke-dasharray: 7 8; filter: drop-shadow(0 0 6px rgba(255,191,0,.3)); }
+    .social-head { position: absolute; right: 120px; top: 74px; display: flex; align-items: center; gap: 11px; font-size: 14px; font-weight: 700; letter-spacing: .15em; color: rgba(247,244,237,.62); z-index: 12; }
+    .social-head .badge { width: 31px; height: 31px; border-radius: 9px; display: grid; place-items: center; color: #171105; background: #ffbf00; font-size: 13px; font-weight: 900; }
+    .post {
+      position: absolute; left: 948px; top: 108px; width: 654px; height: 864px;
+      border-radius: 27px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18);
+      background: linear-gradient(180deg, rgba(22,22,25,.985), rgba(12,12,14,.995));
+      box-shadow: 0 46px 110px rgba(0,0,0,.66), inset 0 1px 0 rgba(255,255,255,.13);
+      z-index: 10;
+    }
+    .post-head { height: 86px; padding: 0 22px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .pavatar { width: 47px; height: 47px; border-radius: 50%; overflow: hidden; background: url("assets/img/logo-mark.png") center / cover no-repeat, #171105; box-shadow: 0 0 0 1px rgba(255,191,0,.4); }
+    .pname { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -.035em; }
+    .pname span { color: #ffbf00; }
+    .ploc { margin-top: 1px; font-size: 13px; color: rgba(247,244,237,.66); }
+    .follow { margin-left: auto; height: 34px; padding: 0 13px; display: flex; align-items: center; border-radius: 11px; font-size: 12px; font-weight: 800; letter-spacing: .05em; color: #ffbf00; border: 1px solid rgba(255,191,0,.35); background: rgba(255,191,0,.06); }
+    .post-img { position: absolute; left: 0; right: 0; top: 86px; height: 394px; overflow: hidden; background: #0b0b0c; }
+    .post-img .img { position: absolute; left: -18px; top: -12px; width: 690px; height: 420px; background: url("assets/img/tatacoa.jpg") center / cover no-repeat; }
+    .post-img .shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, rgba(8,8,10,.76)); }
+    .post-img .locchip { position: absolute; left: 18px; bottom: 16px; height: 34px; padding: 0 12px; display: flex; align-items: center; gap: 7px; border-radius: 10px; background: rgba(8,8,10,.78); border: 1px solid rgba(255,255,255,.17); color: rgba(247,244,237,.9); font-size: 13px; font-weight: 600; }
+    .post-img .realchip { position: absolute; right: 18px; bottom: 16px; height: 28px; padding: 0 10px; display: flex; align-items: center; border-radius: 8px; color: rgba(255,214,107,.9); background: rgba(8,8,10,.72); border: 1px solid rgba(255,191,0,.26); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+    .post-body { position: absolute; left: 0; right: 0; top: 480px; bottom: 0; padding: 19px 22px; }
+    .caption { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -.04em; color: #fffdf7; }
+    .caption span { color: #ffbf00; }
+    .desc { margin-top: 4px; font-size: 18px; line-height: 1.3; color: rgba(247,244,237,.68); }
+    .actions { margin-top: 19px; display: flex; align-items: center; gap: 13px; }
+    .act { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: rgba(247,244,237,.72); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.035); }
+    .act svg { width: 21px; height: 21px; }
+    .act.like { color: #ffbf00; border-color: rgba(255,191,0,.48); background: rgba(255,191,0,.08); }
+    .act.like.on { color: #171105; background: #ffbf00; box-shadow: 0 0 26px rgba(255,191,0,.3); }
+    .act.save.on { color: #171105; background: #ffbf00; border-color: #ffbf00; }
+    .likes { position: relative; margin-left: 2px; font-size: 16px; font-weight: 600; color: rgba(247,244,237,.86); }
+    .likes .c0 { color: #ffbf00; }
+    .likes .c1 { position: absolute; left: 0; top: 0; opacity: 0; color: #ffbf00; }
+    .share-cta { position: absolute; left: 22px; right: 22px; bottom: 88px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #ffbf00; font-size: 16px; font-weight: 700; letter-spacing: -.01em; border: 1px solid rgba(255,191,0,.42); background: rgba(255,191,0,.06); }
+    .share-cta svg { width: 18px; height: 18px; }
+    .savedtoast { position: absolute; left: 22px; right: 22px; bottom: 18px; height: 55px; border-radius: 14px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: rgba(20,20,23,.98); border: 1px solid rgba(255,191,0,.4); box-shadow: 0 14px 34px rgba(0,0,0,.4); }
+    .savedtoast .tick { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; background: #ffbf00; color: #171105; font-size: 14px; font-weight: 900; }
+    .savedtoast .tt { font-size: 14px; font-weight: 700; }
+    .savedtoast .ts { margin-top: 1px; font-size: 11px; color: rgba(247,244,237,.68); }
+    .social-note { position: absolute; left: 952px; bottom: 42px; font-size: 11px; letter-spacing: .13em; color: rgba(247,244,237,.3); z-index: 12; }
+    .like-ring { position: absolute; left: 956px; top: 672px; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(255,191,0,.8); opacity: 0; z-index: 12; }
+    .wipe { position: absolute; inset: 0; z-index: 40; background: linear-gradient(100deg, #ffbf00, #ffd66b 42%, #eaa000); transform: translateX(-102%); }
+    .wipe .mark { position: absolute; left: 50%; top: 50%; width: 150px; height: 140px; margin-left: -75px; margin-top: -70px; opacity: .25; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+  </style>
+  <div id="root" data-composition-id="s05" data-width="1920" data-height="1080">
+    <div class="layer move-layer" id="s05-move">
+      <div class="move-bg" data-layout-allow-overflow></div>
+      <div class="glow" data-layout-ignore></div>
+      <div class="map-meta" data-layout-ignore>NEIVA · HUILA <div class="compass">N<i></i></div></div>
+
+      <svg class="route" viewBox="0 0 1920 1080" data-layout-ignore>
+        <path class="halo" id="s05-routehalo" d="M 800 760 C 860 735 900 690 965 678 S 1060 662 1115 640" />
+        <path class="line" id="s05-route" d="M 800 760 C 860 735 900 690 965 678 S 1060 662 1115 640" />
+      </svg>
+      <div class="pin" id="s05-pin-airport" style="left:800px;top:760px" data-layout-allow-overflow>
+        <div class="plabel"><div class="n">Aeropuerto Benito Salas</div><div class="s">Origen · Neiva</div></div>
+      </div>
+      <div class="pin pin-left" id="s05-pin-hotel" style="left:1115px;top:640px" data-layout-allow-overflow>
+        <div class="plabel"><div class="n">Hotel Plaza Neiva</div><div class="s">Destino · Centro</div></div>
+      </div>
+      <div class="car-ring" id="s05-carring" data-layout-ignore></div>
+      <div class="car" id="s05-car" data-layout-ignore>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M4 17l1.4-6.2A2 2 0 0 1 7.35 9h9.3a2 2 0 0 1 1.95 1.55L20 17M6 17v2M18 17v2M7.5 13h9"></path><circle cx="7.5" cy="17" r="1.2"></circle><circle cx="16.5" cy="17" r="1.2"></circle></svg>
+      </div>
+
+      <div class="brand-mini" id="s05-brand">
+        <div class="logoimg"></div>
+        <div class="wm">VIANova <span>IA</span></div>
+      </div>
+      <div class="copy" id="s05-copy-move">
+        <div class="kicker" id="s05-kicker-move">EN MOVIMIENTO</div>
+        <h1 class="headline" id="s05-headline-move">Muévete.</h1>
+        <div class="subline" id="s05-subline-move">Tu viaje, en movimiento.</div>
+      </div>
+      <div class="steprail" id="s05-steps-move">
+        <div class="step on"><span class="n">01</span> Muévete</div>
+        <div class="stepline"></div>
+        <div class="step"><span class="n">02</span> Comparte</div>
+      </div>
+      <div class="note" data-layout-ignore>Vista de demostración · Ruta y estado de ejemplo</div>
+
+      <div class="taxi-card" id="s05-taxi">
+        <div class="taxi-head">
+          <div class="car-orb">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M4 17l1.4-6.2A2 2 0 0 1 7.35 9h9.3a2 2 0 0 1 1.95 1.55L20 17M6 17v2M18 17v2M7.5 13h9"></path><circle cx="7.5" cy="17" r="1.2"></circle><circle cx="16.5" cy="17" r="1.2"></circle></svg>
+          </div>
+          <div><div class="tt">Tu viaje</div><div class="ts">Taxi · Neiva</div></div>
+          <div class="demo-chip">DEMO</div>
+        </div>
+        <div class="ride">
+          <div class="rrow">
+            <span class="dot"></span><span class="rline"></span>
+            <div><div class="rl">ORIGEN</div><div class="rn">Aeropuerto Benito Salas</div><div class="rs">Neiva, Huila</div></div>
+          </div>
+          <div class="rrow dest">
+            <span class="dot"></span>
+            <div><div class="rl">DESTINO</div><div class="rn">Hotel Plaza Neiva</div><div class="rs">Centro · Neiva</div></div>
+          </div>
+        </div>
+        <div class="statusbox">
+          <div class="statusrow"><span class="statusdot" id="s05-dot"></span><div class="st" id="s05-status" data-layout-allow-overlap><span class="st0">Viaje solicitado</span><span class="st1">Conductor en camino</span></div></div>
+          <div class="statusbar"><div class="fill" id="s05-fill"></div></div>
+          <div class="statusnote">Estado de demostración · Sin conductor real</div>
+        </div>
+        <div class="taxi-btn" id="s05-share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
+          Compartir viaje
+        </div>
+        <div class="taxi-foot">RUTA DEMO · DATOS DE EJEMPLO</div>
+      </div>
+      <div class="btn-ring" id="s05-btnring" data-layout-ignore></div>
+    </div>
+
+    <div class="layer social-layer" id="s05-social">
+      <div class="social-bg" data-layout-allow-overflow></div>
+      <div class="social-head"><span class="badge">V</span> VIASOCIAL · COMUNIDAD</div>
+      <div class="brand-mini" id="s05-brand-social">
+        <div class="logoimg"></div>
+        <div class="wm">VIANova <span>IA</span></div>
+      </div>
+      <div class="copy" id="s05-copy-social">
+        <div class="kicker" id="s05-kicker-social">COMUNIDAD</div>
+        <h1 class="headline social" id="s05-headline-social">Comparte.<br /><span class="gold">Lo que vives.</span></h1>
+        <div class="subline" id="s05-subline-social">Una comunidad que viaja contigo.</div>
+      </div>
+      <div class="steprail" id="s05-steps-social">
+        <div class="step"><span class="n">01</span> Muévete</div>
+        <div class="stepline"></div>
+        <div class="step on"><span class="n">02</span> Comparte</div>
+      </div>
+      <div class="note" data-layout-ignore>Vista de demostración · Publicación de ejemplo</div>
+
+      <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore>
+        <path id="s05-thread" d="M 646 872 C 760 854 846 786 948 740" />
+      </svg>
+
+      <div class="post" id="s05-post">
+        <div class="post-head">
+          <div class="pavatar"></div>
+          <div><div class="pname">ViaNova <span>Social</span></div><div class="ploc">Tatacoa, Huila · Demo</div></div>
+          <div class="follow">Comunidad</div>
+        </div>
+        <div class="post-img">
+          <div class="img" id="s05-postimg"></div>
+          <div class="shade"></div>
+          <div class="locchip">⌖ Tatacoa, Huila</div>
+          <div class="realchip">FOTO REAL</div>
+        </div>
+        <div class="post-body">
+          <div class="caption">Tatacoa, <span>Huila.</span></div>
+          <div class="desc">Un paisaje que no se parece a nada.</div>
+          <div class="actions">
+            <div class="act like" id="s05-like">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.8-7.7 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path></svg>
+            </div>
+            <div class="act" data-layout-ignore><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.3 8.7 8.7 0 0 1-3.8-.9L3 21l1.9-4.7A8.4 8.4 0 1 1 21 11.5Z"></path></svg></div>
+            <div class="act" data-layout-ignore><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg></div>
+            <div class="act save" id="s05-save" data-layout-ignore><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+            <div class="likes" id="s05-likes"><span class="c0">0</span><span class="c1">1</span> me gusta</div>
+          </div>
+          <div class="share-cta" id="s05-cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg> Comparte tu viaje</div>
+          <div class="savedtoast" id="s05-toast" style="opacity:0">
+            <div class="tick">✓</div>
+            <div><div class="tt">Guardado en tu viaje</div><div class="ts">Tatacoa, Huila · Demo</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="like-ring" id="s05-likering" data-layout-ignore></div>
+      <div class="social-note" data-layout-ignore>PUBLICACIÓN DEMO · DATOS DE EJEMPLO</div>
+    </div>
+
+    <div class="wipe" id="s05-wipe" data-layout-ignore>
+      <div class="mark"><img src="assets/img/logo-mark.png" alt="" /></div>
+    </div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl5 = gsap.timeline({ paused: true });
+
+    tl5.fromTo("#s05-move", { scale: 1.025 }, { scale: 1, duration: 1.4, ease: "power2.out" }, 0);
+    tl5.fromTo("#s05-brand", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0);
+    tl5.fromTo("#s05-kicker-move", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 0.02);
+    tl5.fromTo("#s05-headline-move", { opacity: .45, y: 16, filter: "blur(4px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7, ease: "power4.out" }, 0.04);
+    tl5.fromTo("#s05-subline-move", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.24);
+    tl5.fromTo("#s05-steps-move", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.42);
+    tl5.fromTo("#s05-taxi", { opacity: 0, x: 34, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.65, ease: "power3.out" }, 0.2);
+
+    tl5.fromTo("#s05-routehalo", { strokeDasharray: 900, strokeDashoffset: 900 }, { strokeDashoffset: 0, duration: 2.0, ease: "power2.inOut" }, 0.4);
+    tl5.fromTo("#s05-route", { strokeDasharray: 900, strokeDashoffset: 900 }, { strokeDashoffset: 0, duration: 2.0, ease: "power2.inOut" }, 0.4);
+    tl5.fromTo("#s05-pin-airport", { opacity: 0, scale: .5, y: -12 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.7)" }, 0.45);
+    tl5.fromTo("#s05-pin-hotel", { opacity: 0, scale: .5, y: -12 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.7)" }, 0.7);
+    tl5.fromTo("#s05-pin-airport .plabel, #s05-pin-hotel .plabel", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.72);
+
+    tl5.fromTo("#s05-car", { opacity: 0, scale: .7 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.5)" }, 0.75);
+    tl5.fromTo("#s05-carring", { opacity: 0, scale: .7 }, { opacity: .9, scale: 1, duration: 0.45, ease: "power2.out" }, 0.75);
+    tl5.to("#s05-car", { x: 100, y: -55, duration: 1.15, ease: "sine.inOut" }, 1.0);
+    tl5.to("#s05-car", { x: 205, y: -82, duration: 1.1, ease: "sine.inOut" }, 2.15);
+    tl5.to("#s05-car", { x: 315, y: -120, duration: 1.25, ease: "sine.inOut" }, 3.25);
+    tl5.to("#s05-carring", { x: 100, y: -55, duration: 1.15, ease: "sine.inOut" }, 1.0);
+    tl5.to("#s05-carring", { x: 205, y: -82, duration: 1.1, ease: "sine.inOut" }, 2.15);
+    tl5.to("#s05-carring", { x: 315, y: -120, duration: 1.25, ease: "sine.inOut" }, 3.25);
+    tl5.to("#s05-carring", { opacity: 0, scale: 1.7, duration: .55, ease: "power2.out" }, 4.5);
+
+    tl5.fromTo("#s05-fill", { scaleX: .12 }, { scaleX: .62, duration: 2.1, ease: "power2.inOut" }, 0.8);
+    tl5.fromTo("#s05-fill", { scaleX: .62 }, { scaleX: .94, duration: 1.6, ease: "power2.inOut", immediateRender: false }, 3.0);
+    tl5.fromTo("#s05-status .st0", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power2.in" }, 2.25);
+    tl5.fromTo("#s05-status .st1", { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 2.28);
+    tl5.fromTo("#s05-dot", { backgroundColor: "#ffbf00" }, { backgroundColor: "#8ff0b3", boxShadow: "0 0 11px rgba(143,240,179,.6)", duration: .3, ease: "power2.out" }, 2.26);
+    tl5.fromTo("#s05-share", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 1.7);
+    tl5.fromTo("#s05-share", { scale: 1 }, { scale: .96, duration: .12, ease: "power2.inOut", immediateRender: false }, 4.55);
+    tl5.fromTo("#s05-share", { scale: .96 }, { scale: 1, duration: .25, ease: "back.out(1.5)", immediateRender: false }, 4.67);
+    tl5.fromTo("#s05-btnring", { opacity: 0, scale: .75 }, { opacity: .9, scale: 1.03, duration: .45, ease: "power2.out" }, 4.58);
+    tl5.fromTo("#s05-btnring", { opacity: .9, scale: 1.03 }, { opacity: 0, scale: 1.25, duration: .55, ease: "power2.out", immediateRender: false }, 5.04);
+
+    tl5.fromTo("#s05-wipe", { xPercent: -102 }, { xPercent: 0, duration: 0.38, ease: "power3.inOut" }, 5.15);
+    tl5.set("#s05-social", { display: "block" }, 5.45);
+    tl5.fromTo("#s05-social", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 5.45);
+    tl5.fromTo("#s05-wipe", { xPercent: 0 }, { xPercent: 102, duration: 0.45, ease: "power3.inOut", immediateRender: false }, 5.55);
+    tl5.set("#s05-wipe", { display: "none" }, 5.99);
+    tl5.set("#s05-move", { display: "none" }, 5.45);
+
+    tl5.fromTo("#s05-brand-social", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.62);
+    tl5.fromTo("#s05-kicker-social", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, 5.65);
+    tl5.fromTo("#s05-headline-social", { opacity: .45, y: 16, filter: "blur(4px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7, ease: "power4.out" }, 5.68);
+    tl5.fromTo("#s05-subline-social", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.92);
+    tl5.fromTo("#s05-steps-social", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 6.05);
+    tl5.fromTo("#s05-post", { opacity: 0, x: 34, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.65, ease: "power3.out" }, 5.7);
+    tl5.fromTo("#s05-postimg", { scale: 1.02, x: -8 }, { scale: 1.06, x: 8, duration: 5.0, ease: "sine.inOut" }, 6.0);
+    tl5.fromTo("#s05-thread", { strokeDasharray: 360, strokeDashoffset: 360 }, { strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut" }, 6.15);
+
+    tl5.fromTo("#s05-like", { scale: 1 }, { scale: .84, duration: .13, ease: "power2.in" }, 6.8);
+    tl5.fromTo("#s05-like", { scale: .84 }, { scale: 1.15, duration: .28, ease: "back.out(2)", immediateRender: false }, 6.93);
+    tl5.fromTo("#s05-like", { backgroundColor: "rgba(255,191,0,.08)", color: "#ffbf00" }, { backgroundColor: "#ffbf00", color: "#171105", duration: .28, ease: "power2.out", immediateRender: false }, 6.93);
+    tl5.fromTo("#s05-like path", { fill: "none" }, { fill: "#171105", duration: .22, ease: "power2.out", immediateRender: false }, 6.93);
+    tl5.fromTo("#s05-likering", { opacity: 0, scale: .6 }, { opacity: .9, scale: 1.1, duration: .45, ease: "power2.out" }, 6.96);
+    tl5.fromTo("#s05-likering", { opacity: .9, scale: 1.1 }, { opacity: 0, scale: 1.7, duration: .55, ease: "power2.out", immediateRender: false }, 7.42);
+    tl5.fromTo("#s05-likes", { opacity: 0, y: 5 }, { opacity: 1, y: 0, duration: .3, ease: "power2.out" }, 7.08);
+    tl5.fromTo("#s05-likes .c0", { opacity: 1 }, { opacity: 0, duration: .12, ease: "power2.in" }, 7.08);
+    tl5.fromTo("#s05-likes .c1", { opacity: 0 }, { opacity: 1, duration: .18, ease: "power2.out" }, 7.12);
+    tl5.fromTo("#s05-like", { scale: 1.15 }, { scale: 1, duration: .3, ease: "power2.out", immediateRender: false }, 7.22);
+
+    tl5.fromTo("#s05-save", { backgroundColor: "rgba(255,255,255,.035)", color: "rgba(247,244,237,.72)" }, { backgroundColor: "#ffbf00", color: "#171105", duration: .3, ease: "power2.out" }, 7.75);
+    tl5.fromTo("#s05-save path", { fill: "none" }, { fill: "#171105", duration: .25, ease: "power2.out", immediateRender: false }, 7.75);
+    tl5.fromTo("#s05-toast", { opacity: 0, y: 10, scale: .98 }, { opacity: 1, y: 0, scale: 1, duration: .4, ease: "power3.out" }, 7.95);
+    tl5.fromTo("#s05-toast", { opacity: 1, y: 0 }, { opacity: 0, y: 6, duration: .35, ease: "power2.in", immediateRender: false }, 10.1);
+    tl5.fromTo("#s05-cta", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: .4, ease: "power3.out" }, 8.7);
+    tl5.fromTo("#s05-cta", { scale: 1 }, { scale: .97, duration: .15, ease: "power2.inOut", immediateRender: false }, 9.35);
+    tl5.fromTo("#s05-cta", { scale: .97 }, { scale: 1, duration: .3, ease: "back.out(1.5)", immediateRender: false }, 9.5);
+    tl5.fromTo("#s05-post", { x: 0, y: 0 }, { x: -8, y: -6, scale: 1.012, duration: 1.5, ease: "power2.inOut", immediateRender: false }, 9.6);
+    tl5.fromTo("#s05-social", { scale: 1 }, { scale: 1.03, duration: 2.0, ease: "power2.inOut" }, 9.8);
+
+    window.__timelines["s05"] = tl5;
+  </script>
+</template>

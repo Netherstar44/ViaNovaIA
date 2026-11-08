@@ -1,0 +1,122 @@
+<template>
+  <style>
+    @font-face { font-family: "Inter"; src: url("assets/fonts/inter-400.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Poppins"; src: url("assets/fonts/poppins-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Poppins"; src: url("assets/fonts/poppins-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root { position: absolute; inset: 0; overflow: hidden; background: #08080a; color: #f7f4ed; font-family: "Inter", sans-serif; }
+    .bg { position: absolute; inset: -3%; background: radial-gradient(ellipse at 76% 34%, rgba(255,191,0,.15), transparent 50%), radial-gradient(ellipse at 16% 92%, rgba(255,138,42,.05), transparent 56%), linear-gradient(155deg, #0c0c0f 0%, #08080a 58%, #090807 100%); }
+    .bg::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 70px 70px; mask-image: radial-gradient(ellipse at 70% 50%, #000 0%, transparent 68%); }
+    .glow { position: absolute; right: -200px; top: -220px; width: 1200px; height: 980px; background: radial-gradient(ellipse at 50% 50%, rgba(255,191,0,.17), transparent 70%); }
+    .thread { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 1; }
+    .thread path { fill: none; stroke: rgba(255,191,0,.2); stroke-width: 1.2; stroke-dasharray: 3 9; }
+    .brand { position: absolute; left: 120px; top: 92px; display: flex; align-items: center; gap: 15px; z-index: 10; }
+    .brand .markwrap { position: relative; width: 68px; height: 62px; }
+    .brand .logoimg { position: absolute; inset: 0; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+    .brand .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 41px; letter-spacing: -.06em; line-height: 1; }
+    .brand .wm span { color: #ffbf00; }
+    .kicker { position: absolute; left: 120px; top: 205px; font-size: 12px; font-weight: 800; letter-spacing: .22em; color: rgba(247,244,237,.52); z-index: 10; }
+    .headline { position: absolute; left: 120px; top: 235px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 76px; line-height: .95; letter-spacing: -.058em; z-index: 10; }
+    .headline .gold { color: #ffbf00; }
+    .sub { position: absolute; left: 122px; top: 475px; width: 560px; font-size: 28px; line-height: 1.28; letter-spacing: -.025em; color: rgba(247,244,237,.82); z-index: 10; }
+    .bullets { position: absolute; left: 120px; top: 600px; width: 580px; display: grid; gap: 16px; z-index: 10; }
+    .bullets .b { display: flex; gap: 13px; align-items: flex-start; font-size: 22px; line-height: 1.28; letter-spacing: -.02em; color: rgba(247,244,237,.88); }
+    .bullets .dot { width: 9px; height: 9px; margin-top: 9px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 12px rgba(255,191,0,.65); flex: 0 0 auto; }
+    .dash { position: absolute; left: 760px; top: 110px; width: 620px; height: 360px; border-radius: 22px; padding: 22px; background: #fff6e3; color: #1c1914; border: 1px solid #e6cd99; box-shadow: 0 34px 74px rgba(0,0,0,.5); z-index: 8; }
+    .dash .dh { display: flex; justify-content: space-between; align-items: center; }
+    .dash .dt { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 21px; letter-spacing: -.03em; }
+    .dash .db { font-size: 10px; font-weight: 900; letter-spacing: .12em; color: #87652d; }
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .kpi { border-radius: 14px; padding: 12px; background: #fffdf7; border: 1px solid #e8d5a8; }
+    .kpi .kl { font-size: 9px; font-weight: 900; letter-spacing: .12em; color: #87652d; }
+    .kpi .kv { margin-top: 3px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -.03em; }
+    .rows { margin-top: 14px; display: grid; gap: 8px; }
+    .row { height: 38px; border-radius: 11px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; background: #fffdf7; border: 1px solid #e8d5a8; font-size: 13px; font-weight: 700; }
+    .pill { height: 22px; padding: 0 9px; display: inline-flex; align-items: center; border-radius: 999px; background: #e9f7ee; color: #1e6b3a; font-size: 10px; font-weight: 900; letter-spacing: .06em; }
+    .phone { position: absolute; left: 1420px; top: 120px; width: 330px; height: 680px; border-radius: 44px; border: 7px solid #111113; background: #0c0c0f; box-shadow: 0 46px 90px rgba(0,0,0,.66), 0 0 0 1px rgba(255,255,255,.13); z-index: 7; overflow: hidden; }
+    .phone .screen { position: absolute; inset: 3px; border-radius: 36px; overflow: hidden; background: url("assets/img/phone-home.jpg") top center / cover no-repeat; }
+    .phone .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.28), rgba(0,0,0,.78) 70%, rgba(0,0,0,.9)); }
+    .phone .island { position: absolute; left: 50%; top: 10px; width: 86px; height: 20px; margin-left: -43px; border-radius: 12px; background: #000; z-index: 5; }
+    .ringwrap { position: absolute; left: 50%; top: 78px; width: 150px; height: 150px; margin-left: -75px; z-index: 5; }
+    .ringwrap svg { width: 150px; height: 150px; transform: rotate(-90deg); }
+    .ringwrap .track { fill: none; stroke: rgba(255,255,255,.16); stroke-width: 10; }
+    .ringwrap .val { fill: none; stroke: #ffbf00; stroke-width: 10; stroke-linecap: round; stroke-dasharray: 415; stroke-dashoffset: 415; }
+    .ringwrap .pct { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 34px; letter-spacing: -.04em; }
+    .ringwrap .pct small { display: block; margin-top: 2px; text-align: center; font-family: "Inter", sans-serif; font-size: 9px; font-weight: 900; letter-spacing: .14em; color: rgba(247,244,237,.62); }
+    .steps { position: absolute; left: 22px; right: 22px; bottom: 22px; display: grid; gap: 9px; z-index: 6; }
+    .step { display: flex; gap: 10px; align-items: center; border-radius: 13px; padding: 10px 12px; background: rgba(10,10,12,.74); border: 1px solid rgba(255,255,255,.13); }
+    .step .ck { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255,191,0,.55); color: #ffbf00; font-size: 12px; font-weight: 900; flex: 0 0 auto; }
+    .step .st { font-size: 13px; font-weight: 800; letter-spacing: -.01em; }
+    .beta { position: absolute; right: 16px; top: 56px; z-index: 7; height: 24px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; background: #ffbf00; color: #171105; font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+    .note { position: absolute; left: 120px; bottom: 34px; font-size: 11px; letter-spacing: .16em; color: rgba(247,244,237,.34); z-index: 10; }
+  </style>
+  <div id="root" data-composition-id="s10" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="glow" data-layout-ignore></div>
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore><path id="s10-thread" d="M 430 120 C 650 150 700 260 760 330" /></svg>
+    <div class="brand" id="s10-brand"><div class="markwrap"><div class="logoimg"></div></div><div class="wm">VIANova <span>IA</span></div></div>
+    <div class="kicker" id="s10-kicker">NEGOCIOS + CAPTURA 360°</div>
+    <div class="headline" id="s10-headline">Tu negocio,<br /><span class="gold">en control.</span></div>
+    <div class="sub" id="s10-sub">Gestiona pedidos y muestra tu lugar como se vive.</div>
+    <div class="bullets" id="s10-bullets">
+      <div class="b" id="s10-b1"><span class="dot"></span><span>Panel con reservas, disponibilidad y mensajes.</span></div>
+      <div class="b" id="s10-b2"><span class="dot"></span><span>Captura 360° con el celular, guiada paso a paso.</span></div>
+      <div class="b" id="s10-b3"><span class="dot"></span><span>Si no hay panorama 2:1, ViaNova no lo finge.</span></div>
+    </div>
+    <div class="dash" id="s10-dash">
+      <div class="dh"><div class="dt">Panel del negocio</div><div class="db">DATOS DE EJEMPLO</div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="kl">RESERVAS</div><div class="kv">12</div></div>
+        <div class="kpi"><div class="kl">OCUPACIÓN</div><div class="kv">78%</div></div>
+        <div class="kpi"><div class="kl">MENSAJES</div><div class="kv">4</div></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>#1042 · Viajero demo</span><span class="pill">CONFIRMADO</span></div>
+        <div class="row"><span>#1041 · Viajero demo</span><span class="pill">PENDIENTE</span></div>
+        <div class="row"><span>#1043 · Viajero demo</span><span class="pill">NUEVO</span></div>
+      </div>
+    </div>
+    <div class="phone" id="s10-phone">
+      <div class="screen"></div><div class="shade"></div><div class="island"></div>
+      <div class="beta" id="s10-beta">BETA</div>
+      <div class="ringwrap" id="s10-ringwrap">
+        <svg viewBox="0 0 150 150"><circle class="track" cx="75" cy="75" r="66"></circle><circle class="val" id="s10-ring" cx="75" cy="75" r="66"></circle></svg>
+        <div class="pct"><div id="s10-pct">0°<small>COBERTURA</small></div></div>
+      </div>
+      <div class="steps" id="s10-steps">
+        <div class="step" id="s10-st1"><div class="ck">1</div><div class="st">Cámara y horizontal</div></div>
+        <div class="step" id="s10-st2"><div class="ck">2</div><div class="st">Horizonte al centro</div></div>
+        <div class="step" id="s10-st3"><div class="ck">3</div><div class="st">Gira despacio 360°</div></div>
+        <div class="step" id="s10-st4"><div class="ck">4</div><div class="st">Guardar panorama</div></div>
+        <div class="step" id="s10-st5"><div class="ck">5</div><div class="st">Subir al perfil</div></div>
+      </div>
+    </div>
+    <div class="note" data-layout-ignore>HOTELES Y EDIFICACIONES · CAPTURA GUIADA CON EL CELULAR</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl10 = gsap.timeline({ paused: true });
+    tl10.fromTo("#s10-thread", { strokeDasharray: 360, strokeDashoffset: 360 }, { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut" }, 0.2);
+    tl10.fromTo("#s10-brand", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.1);
+    tl10.fromTo("#s10-kicker", { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.2);
+    tl10.fromTo("#s10-headline", { opacity: .45, y: 18, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power4.out" }, 0.25);
+    tl10.fromTo("#s10-sub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.5);
+    tl10.fromTo("#s10-bullets .b", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out", stagger: 0.12 }, 0.65);
+    tl10.fromTo("#s10-dash", { opacity: 0, y: 30, scale: .985 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 0.9);
+    tl10.fromTo("#s10-phone", { opacity: 0, y: 42, scale: .96 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 1.2);
+    tl10.fromTo("#s10-beta", { opacity: 0, scale: .7 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.5)" }, 2.2);
+    tl10.fromTo("#s10-ring", { strokeDashoffset: 415 }, { strokeDashoffset: 8, duration: 34, ease: "none" }, 3.0);
+    const pctObj = { v: 0 };
+    tl10.to(pctObj, { v: 360, duration: 34, ease: "none", onUpdate: () => { document.getElementById("s10-pct").innerHTML = Math.round(pctObj.v) + "°<small>COBERTURA</small>"; } }, 3.0);
+    ["#s10-st1","#s10-st2","#s10-st3","#s10-st4","#s10-st5"].forEach((sel, i) => {
+      const t = 4 + i * 7;
+      tl10.fromTo(sel + " .ck", { backgroundColor: "rgba(255,191,0,0)", color: "#ffbf00" }, { backgroundColor: "#ffbf00", color: "#171105", duration: 0.35, ease: "power2.out" }, t);
+      tl10.fromTo(sel, { borderColor: "rgba(255,255,255,.13)" }, { borderColor: "rgba(255,191,0,.75)", duration: 0.4, ease: "power2.out" }, t);
+    });
+    tl10.fromTo("#s10-dash", { scale: 1 }, { scale: 1.008, duration: 22, ease: "sine.inOut", immediateRender: false }, 8);
+    tl10.fromTo("#s10-dash", { scale: 1.008 }, { scale: 1, duration: 18, ease: "sine.inOut", immediateRender: false }, 32);
+    tl10.fromTo("#s10-phone", { scale: 1 }, { scale: 1.01, duration: 20, ease: "sine.inOut", immediateRender: false }, 10);
+    tl10.fromTo("#s10-phone", { scale: 1.01 }, { scale: 1, duration: 18, ease: "sine.inOut", immediateRender: false }, 33);
+    window.__timelines["s10"] = tl10;
+  </script>
+</template>

@@ -1,0 +1,569 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #08080a;
+      color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .world { position: absolute; inset: 0; transform-origin: 55% 50%; }
+    .map {
+      position: absolute;
+      inset: -3%;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.975) 0%, rgba(8,8,10,.86) 30%, rgba(8,8,10,.20) 66%, rgba(8,8,10,.34) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.40) 0%, rgba(8,8,10,.02) 38%, rgba(8,8,10,.66) 100%),
+        url("assets/img/map-neiva-bright.jpg") center / cover no-repeat;
+    }
+    .map-shade {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 320px;
+      background: linear-gradient(180deg, transparent, rgba(8,8,10,.92));
+    }
+    .glow {
+      position: absolute;
+      right: 120px;
+      top: -140px;
+      width: 900px;
+      height: 720px;
+      background: radial-gradient(ellipse at 46% 44%, rgba(255,191,0,.15), rgba(255,138,42,.04) 38%, transparent 70%);
+    }
+    .brand-mini {
+      position: absolute;
+      left: 120px;
+      top: 70px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+    .brand-mini img { width: 46px; height: 42px; object-fit: contain; }
+    .brand-mini .wm {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 27px;
+      letter-spacing: -.05em;
+    }
+    .brand-mini .wm span { color: #ffbf00; }
+    .copy { position: absolute; left: 120px; top: 190px; width: 650px; }
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .19em;
+      color: rgba(247,244,237,.64);
+    }
+    .kicker::before {
+      content: "";
+      width: 44px; height: 2px;
+      background: #ffbf00;
+      box-shadow: 0 0 12px rgba(255,191,0,.55);
+    }
+    .headline {
+      margin-top: 26px;
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 112px;
+      line-height: .91;
+      letter-spacing: -.058em;
+    }
+    .headline .gold { color: #ffbf00; }
+    .subline {
+      margin-top: 22px;
+      font-size: 38px;
+      line-height: 1.2;
+      letter-spacing: -.03em;
+      color: rgba(247,244,237,.72);
+    }
+    .filters {
+      position: absolute;
+      left: 120px;
+      top: 646px;
+      display: flex;
+      gap: 9px;
+    }
+    .filter {
+      height: 46px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      border-radius: 23px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(14,14,16,.68);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -.01em;
+      color: rgba(247,244,237,.68);
+      white-space: nowrap;
+    }
+    .filter.on {
+      color: #171105;
+      font-weight: 700;
+      border-color: rgba(255,224,138,.8);
+      background: linear-gradient(145deg, #ffd66b, #ffbf00 62%, #eaa000);
+      box-shadow: 0 10px 24px rgba(255,191,0,.13), inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .note {
+      position: absolute;
+      left: 122px;
+      bottom: 66px;
+      font-size: 14px;
+      letter-spacing: .03em;
+      color: rgba(247,244,237,.38);
+    }
+    .map-meta {
+      position: absolute;
+      right: 120px;
+      top: 74px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .16em;
+      color: rgba(247,244,237,.46);
+    }
+    .compass {
+      position: relative;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,191,0,.36);
+      display: grid;
+      place-items: center;
+      color: rgba(255,191,0,.8);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .compass i {
+      position: absolute;
+      width: 2px; height: 14px;
+      top: 6px;
+      border-radius: 2px;
+      background: #ffbf00;
+      transform-origin: 50% 16px;
+      transform: rotate(24deg);
+      box-shadow: 0 0 8px rgba(255,191,0,.6);
+    }
+    .route {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+    }
+    .route .halo {
+      fill: none;
+      stroke: rgba(255,191,0,.16);
+      stroke-width: 12;
+      stroke-linecap: round;
+    }
+    .route .line {
+      fill: none;
+      stroke: #ffbf00;
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 7px rgba(255,191,0,.55));
+    }
+    .pin {
+      position: absolute;
+      width: 28px; height: 28px;
+      margin-left: -14px;
+      margin-top: -14px;
+      border-radius: 50%;
+      background: #ffbf00;
+      box-shadow: 0 0 0 7px rgba(255,191,0,.12), 0 0 24px rgba(255,191,0,.6);
+      z-index: 4;
+    }
+    .pin::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: #171105;
+    }
+    .pin .pulse {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 42px; height: 42px;
+      margin-left: -21px;
+      margin-top: -21px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,191,0,.7);
+      opacity: 0;
+    }
+    .pin-label {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      padding: 9px 13px;
+      border-radius: 11px;
+      background: rgba(10,10,12,.90);
+      border: 1px solid rgba(255,191,0,.30);
+      box-shadow: 0 12px 30px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.08);
+      white-space: nowrap;
+      z-index: 5;
+    }
+    .pin-label .n {
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: rgba(247,244,237,.95);
+    }
+    .pin-label .s {
+      margin-top: 1px;
+      font-size: 14px;
+      color: rgba(255,191,0,.74);
+      letter-spacing: .02em;
+    }
+    .pin-label.left { left: auto; right: 24px; text-align: right; }
+    .pin-label.tatacoa { top: 28px; left: 28px; }
+    .rail {
+      position: absolute;
+      left: 720px;
+      bottom: 64px;
+      display: flex;
+      gap: 30px;
+      z-index: 8;
+    }
+    .place {
+      position: relative;
+      width: 330px;
+      height: 214px;
+      border-radius: 21px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.15);
+      background: #121214;
+      box-shadow: 0 24px 56px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.09);
+    }
+    .place .ph {
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 124px;
+      background-position: center;
+      background-size: cover;
+    }
+    .place .shade {
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 124px;
+      background: linear-gradient(180deg, transparent 34%, rgba(18,18,20,.92));
+    }
+    .place .body { position: absolute; left: 0; right: 0; bottom: 0; height: 94px; padding: 13px 16px 12px; }
+    .place .cat {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      color: rgba(255,191,0,.8);
+    }
+    .place .name {
+      margin-top: 3px;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -.025em;
+      color: rgba(247,244,237,.96);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .place .sub {
+      margin-top: 1px;
+      font-size: 14px;
+      color: rgba(247,244,237,.54);
+    }
+    .place .badge {
+      position: absolute;
+      right: 11px; top: 11px;
+      height: 26px;
+      padding: 0 9px;
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      color: #171105;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      background: #ffbf00;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    }
+    .place.on {
+      border-color: rgba(255,191,0,.85);
+      box-shadow: 0 0 0 1px rgba(255,191,0,.2), 0 0 42px rgba(255,191,0,.16), 0 30px 60px rgba(0,0,0,.5);
+    }
+    .viewer {
+      position: absolute;
+      left: 1000px;
+      top: 224px;
+      width: 760px;
+      height: 474px;
+      border-radius: 25px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.17);
+      background: #111114;
+      box-shadow: 0 38px 96px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.12);
+      z-index: 10;
+    }
+    .viewer-head {
+      height: 76px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.09);
+      background: linear-gradient(180deg, rgba(255,191,0,.07), transparent);
+    }
+    .viewer-head .orb {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 30%, #4b3405, #151003 68%);
+      box-shadow: inset 0 0 0 1.5px rgba(255,191,0,.55);
+      color: #ffbf00;
+      font-size: 16px;
+    }
+    .viewer-head .ttl { font-family: "Poppins", sans-serif; font-weight: 700; font-size: 24px; letter-spacing: -.03em; }
+    .viewer-head .ttl span { color: #ffbf00; }
+    .viewer-head .sub { margin-top: 2px; font-size: 15px; color: rgba(247,244,237,.5); }
+    .viewer-head .close {
+      margin-left: auto;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.12);
+      display: grid;
+      place-items: center;
+      color: rgba(247,244,237,.6);
+      font-size: 22px;
+      line-height: 1;
+    }
+    .viewer-img {
+      position: absolute;
+      left: 0; right: 0; top: 76px;
+      height: 338px;
+      overflow: hidden;
+      background: #09090b;
+    }
+    .pan {
+      position: absolute;
+      left: -46px;
+      top: 0;
+      width: 860px;
+      height: 338px;
+      background: url("assets/img/tatacoa.jpg") center / cover no-repeat;
+    }
+    .viewer-shade {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 144px;
+      background: linear-gradient(180deg, transparent, rgba(8,8,10,.88));
+    }
+    .viewer-foot {
+      position: absolute;
+      left: 22px; right: 22px; bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      color: rgba(247,244,237,.78);
+    }
+    .viewer-foot .drag {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #171105;
+      background: #ffbf00;
+      font-size: 15px;
+    }
+    .viewer-foot .degrees {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      color: rgba(255,191,0,.8);
+    }
+    .hotel-glow {
+      position: absolute;
+      left: 1060px;
+      top: 598px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,191,0,.6);
+      z-index: 3;
+    }
+    .end-flash {
+      position: absolute;
+      left: 1490px;
+      top: 770px;
+      width: 150px;
+      height: 260px;
+      border-radius: 24px;
+      border: 1px solid rgba(255,191,0,.7);
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
+    <div class="world" id="s03-world" data-layout-allow-overflow>
+      <div class="map" data-layout-allow-overflow></div>
+      <div class="map-shade" data-layout-ignore></div>
+      <div class="glow" data-layout-ignore></div>
+      <div class="map-meta" data-layout-ignore>
+        HUILA · COLOMBIA
+        <div class="compass">N<i></i></div>
+      </div>
+
+      <svg class="route" viewBox="0 0 1920 1080" data-layout-ignore>
+        <path class="halo" id="s03-routehalo" d="M 970 665 C 1004 646 1012 618 1040 585 S 1172 474 1246 396 S 1306 344 1330 315" />
+        <path class="line" id="s03-route" d="M 970 665 C 1004 646 1012 618 1040 585 S 1172 474 1246 396 S 1306 344 1330 315" />
+      </svg>
+
+      <div class="pin" id="s03-pin-asadero" style="left:970px;top:665px" data-layout-allow-overflow data-layout-allow-occlusion>
+        <span class="pulse"></span>
+        <div class="pin-label left" data-layout-allow-overflow data-layout-allow-occlusion><div class="n">Asadero El Huilense</div><div class="s">Gastronomía · Neiva</div></div>
+      </div>
+      <div class="pin" id="s03-pin-neiva" style="left:1040px;top:585px" data-layout-allow-overflow data-layout-allow-occlusion>
+        <span class="pulse"></span>
+        <div class="pin-label left" data-layout-allow-overflow data-layout-allow-occlusion><div class="n">Neiva</div><div class="s">Centro histórico</div></div>
+      </div>
+      <div class="pin" id="s03-pin-hotel" style="left:1115px;top:640px" data-layout-allow-overflow data-layout-allow-occlusion>
+        <span class="pulse"></span>
+        <div class="pin-label" data-layout-allow-overflow data-layout-allow-occlusion><div class="n">Hotel Plaza Neiva</div><div class="s">Hotel · Centro</div></div>
+      </div>
+      <div class="pin" id="s03-pin-tatacoa" style="left:1330px;top:315px" data-layout-allow-overflow data-layout-allow-occlusion>
+        <span class="pulse"></span>
+        <div class="pin-label left tatacoa" data-layout-allow-overflow data-layout-allow-occlusion><div class="n">Desierto de la Tatacoa</div><div class="s">Experiencia · 360°</div></div>
+      </div>
+      <div class="hotel-glow" id="s03-hotelglow" data-layout-ignore></div>
+
+      <div class="viewer" id="s03-viewer">
+        <div class="viewer-head">
+          <div class="orb">✦</div>
+          <div>
+            <div class="ttl">Vista <span>360°</span></div>
+            <div class="sub">Desierto de la Tatacoa · Huila</div>
+          </div>
+          <div class="close">×</div>
+        </div>
+        <div class="viewer-img">
+          <div class="pan" id="s03-pan" data-layout-allow-overflow></div>
+          <div class="viewer-shade"></div>
+          <div class="viewer-foot"><span class="drag">↔</span> Arrastra para explorar <span class="degrees">360° · 4K</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-mini" id="s03-brand">
+      <img src="assets/img/logo-mark.png" alt="ViaNova" />
+      <div class="wm">VIANova <span>IA</span></div>
+    </div>
+    <div class="copy">
+      <div class="kicker" id="s03-kicker">DESCUBRE EL HUILA</div>
+      <h1 class="headline" id="s03-headline">Lugares<br /><span class="gold">reales.</span></h1>
+      <div class="subline" id="s03-subline">En un solo mapa.</div>
+    </div>
+    <div class="filters" id="s03-filters">
+      <div class="filter">Hoteles</div>
+      <div class="filter">Sabores</div>
+      <div class="filter on" id="s03-f-experiencias">Experiencias</div>
+      <div class="filter" id="s03-f-360">360°</div>
+    </div>
+    <div class="note" data-layout-ignore>Datos de ejemplo · Mapas © OpenStreetMap</div>
+
+    <div class="rail" id="s03-rail">
+      <div class="place" id="s03-card-tatacoa">
+        <div class="ph" style="background-image:url('assets/img/tatacoa.jpg')"></div>
+        <div class="shade"></div>
+        <div class="badge">360°</div>
+        <div class="body"><div class="cat">EXPERIENCIA</div><div class="name">Desierto de la Tatacoa</div><div class="sub">Miradores y noches estrelladas</div></div>
+      </div>
+      <div class="place" id="s03-card-hotel">
+        <div class="ph" style="background-image:url('assets/img/hotel-plaza-card.jpg')"></div>
+        <div class="shade"></div>
+        <div class="body"><div class="cat">HOTEL</div><div class="name">Hotel Plaza Neiva</div><div class="sub">Centro · Consulta disponibilidad</div></div>
+      </div>
+      <div class="place" id="s03-card-asadero">
+        <div class="ph" style="background-image:url('assets/img/asadero.jpg')"></div>
+        <div class="shade"></div>
+        <div class="body"><div class="cat">GASTRONOMÍA</div><div class="name">Asadero El Huilense</div><div class="sub">Sabor local · Neiva</div></div>
+      </div>
+    </div>
+    <div class="end-flash" id="s03-endflash" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl3 = gsap.timeline({ paused: true });
+
+    tl3.fromTo("#s03-world", { scale: 1.035, x: 10 }, { scale: 1, x: 0, duration: 1.5, ease: "power2.out" }, 0);
+    tl3.fromTo("#s03-brand", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.0);
+    tl3.fromTo("#s03-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.0);
+    tl3.fromTo("#s03-headline", { opacity: .45, y: 16, filter: "blur(4px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.75, ease: "power4.out" }, 0.0);
+    tl3.fromTo("#s03-subline", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.28);
+    tl3.fromTo("#s03-filters", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.45);
+
+    tl3.fromTo("#s03-routehalo", { strokeDasharray: 1800, strokeDashoffset: 1800 }, { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" }, 0.45);
+    tl3.fromTo("#s03-route", { strokeDasharray: 1800, strokeDashoffset: 1800 }, { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" }, 0.45);
+
+    const pins = ["#s03-pin-asadero", "#s03-pin-neiva", "#s03-pin-hotel", "#s03-pin-tatacoa"];
+    pins.forEach((sel, i) => {
+      const t = 0.65 + i * 0.2;
+      tl3.fromTo(sel, { opacity: 0, scale: 0.55, y: -15 }, { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.7)" }, t);
+      tl3.fromTo(sel + " .pin-label", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, t + 0.16);
+      tl3.fromTo(sel + " .pulse", { opacity: 0, scale: 0.6 }, { opacity: 0.9, scale: 1.4, duration: 0.7, ease: "power2.out" }, t + 0.1);
+      tl3.fromTo(sel + " .pulse", { opacity: 0.9, scale: 1.4 }, { opacity: 0, scale: 2.1, duration: 0.8, ease: "power2.out", immediateRender: false }, t + 0.85);
+    });
+
+    tl3.fromTo("#s03-rail", { opacity: 1 }, { opacity: 1, duration: 0.01 }, 1.0);
+    tl3.fromTo("#s03-card-tatacoa", { opacity: 0, y: 34, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 1.0);
+    tl3.fromTo("#s03-card-hotel", { opacity: 0, y: 34, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 1.2);
+    tl3.fromTo("#s03-card-asadero", { opacity: 0, y: 34, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 1.4);
+
+    tl3.fromTo("#s03-viewer", { opacity: 0, y: 26, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: "power4.out" }, 3.1);
+    tl3.fromTo("#s03-pin-neiva .pin-label, #s03-pin-hotel .pin-label, #s03-pin-tatacoa .pin-label", { opacity: 1 }, { opacity: 0, duration: 0.25, ease: "power2.in", immediateRender: false }, 3.0);
+    tl3.fromTo("#s03-card-tatacoa", { scale: 1 }, { scale: 1.035, y: -8, duration: 0.45, ease: "power3.out", immediateRender: false }, 3.1);
+    tl3.fromTo("#s03-pan", { x: -30 }, { x: 44, duration: 4.0, ease: "sine.inOut" }, 3.6);
+    tl3.fromTo("#s03-f-360", { borderColor: "rgba(255,255,255,.16)" }, { borderColor: "rgba(255,191,0,.82)", color: "#ffbf00", duration: 0.35, ease: "power2.inOut" }, 3.15);
+
+    tl3.fromTo("#s03-viewer", { opacity: 1, y: 0, scale: 1 }, { opacity: 0, y: 18, scale: 0.965, duration: 0.5, ease: "power2.in", immediateRender: false }, 6.95);
+    tl3.fromTo("#s03-pin-neiva .pin-label, #s03-pin-hotel .pin-label, #s03-pin-tatacoa .pin-label", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out", immediateRender: false }, 7.25);
+    tl3.fromTo("#s03-card-tatacoa", { scale: 1.035, y: -8 }, { scale: 1, y: 0, duration: 0.4, ease: "power2.inOut", immediateRender: false }, 7.0);
+
+    tl3.fromTo("#s03-card-hotel", { scale: 1 }, { scale: 1.035, y: -8, borderColor: "rgba(255,191,0,.85)", duration: 0.4, ease: "power3.out", immediateRender: false }, 7.55);
+    tl3.fromTo("#s03-hotelglow", { opacity: 0, scale: 0.7 }, { opacity: 0.9, scale: 1, duration: 0.55, ease: "power2.out" }, 7.55);
+    tl3.fromTo("#s03-hotelglow", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.55, duration: 0.7, ease: "power2.out", immediateRender: false }, 8.2);
+    tl3.fromTo("#s03-subline", { opacity: 1 }, { opacity: 0.72, duration: 0.5, ease: "power2.out", immediateRender: false }, 7.7);
+
+    tl3.fromTo("#s03-world", { scale: 1 }, { scale: 1.055, duration: 1.7, ease: "power2.inOut", immediateRender: false }, 9.15);
+    tl3.fromTo("#s03-card-hotel", { scale: 1.035, y: -8 }, { scale: 1.07, y: -14, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 9.15);
+    tl3.fromTo("#s03-endflash", { opacity: 0, scale: 0.7 }, { opacity: 0.9, scale: 1, duration: 0.5, ease: "power2.out" }, 9.3);
+    tl3.fromTo("#s03-endflash", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.3, duration: 0.7, ease: "power2.out", immediateRender: false }, 9.85);
+
+    window.__timelines["s03"] = tl3;
+  </script>
+</template>

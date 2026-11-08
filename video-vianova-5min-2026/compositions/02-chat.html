@@ -1,0 +1,678 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #08080a;
+      color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .bg {
+      position: absolute;
+      inset: -2%;
+      background:
+        linear-gradient(90deg, rgba(8,8,10,.965) 0%, rgba(8,8,10,.83) 42%, rgba(8,8,10,.56) 100%),
+        linear-gradient(180deg, rgba(8,8,10,.24), rgba(8,8,10,.78)),
+        url("assets/img/hero-cocora.jpg") center / cover no-repeat;
+    }
+    .glow {
+      position: absolute;
+      left: 700px;
+      top: -260px;
+      width: 1450px;
+      height: 1100px;
+      background: radial-gradient(ellipse at 50% 45%, rgba(255,191,0,.13), rgba(255,138,42,.045) 34%, transparent 68%);
+    }
+    .glow-low {
+      position: absolute;
+      right: -260px;
+      bottom: -300px;
+      width: 1000px;
+      height: 850px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(255,138,42,.10), transparent 64%);
+    }
+    .brand-mini {
+      position: absolute;
+      left: 120px;
+      top: 70px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+    .brand-mini img { width: 46px; height: 42px; object-fit: contain; }
+    .brand-mini .wm {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 27px;
+      letter-spacing: -.05em;
+    }
+    .brand-mini .wm span { color: #ffbf00; }
+    .copy { position: absolute; left: 120px; top: 178px; width: 700px; }
+    .kicker {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      color: rgba(247,244,237,.62);
+    }
+    .kicker::before {
+      content: "";
+      width: 44px; height: 2px;
+      background: #ffbf00;
+      box-shadow: 0 0 12px rgba(255,191,0,.55);
+    }
+    .headline {
+      margin-top: 28px;
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 118px;
+      line-height: .98;
+      letter-spacing: -.055em;
+    }
+    .headline .gold { color: #ffbf00; }
+    .subline {
+      margin-top: 22px;
+      font-size: 38px;
+      line-height: 1.25;
+      letter-spacing: -.025em;
+      color: rgba(247,244,237,.72);
+      max-width: 620px;
+    }
+    .rule {
+      position: absolute;
+      left: 124px;
+      top: 600px;
+      width: 4px;
+      height: 150px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, rgba(255,191,0,.1), #ffbf00 30%, rgba(255,191,0,.1));
+      box-shadow: 0 0 20px rgba(255,191,0,.25);
+    }
+    .steps {
+      position: absolute;
+      left: 160px;
+      top: 700px;
+      display: flex;
+      gap: 14px;
+    }
+    .step {
+      width: 176px;
+      height: 92px;
+      padding: 15px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(18,18,20,.72);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .step .n {
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: .08em;
+      color: rgba(255,191,0,.64);
+    }
+    .step .t {
+      margin-top: 5px;
+      font-size: 23px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: rgba(247,244,237,.90);
+    }
+    .step.on {
+      border-color: rgba(255,191,0,.78);
+      background: linear-gradient(180deg, rgba(255,191,0,.16), rgba(255,191,0,.055));
+      box-shadow: 0 0 28px rgba(255,191,0,.10), inset 0 1px 0 rgba(255,255,255,.12);
+    }
+    .step.on .n { color: #ffbf00; }
+    .step.on .t { color: #fffdf6; }
+    .thread {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      pointer-events: none;
+      opacity: .55;
+    }
+    .thread path {
+      fill: none;
+      stroke: rgba(255,191,0,.55);
+      stroke-width: 1.8;
+      stroke-linecap: round;
+    }
+    .chat {
+      position: absolute;
+      left: 920px;
+      top: 60px;
+      width: 880px;
+      height: 960px;
+      border-radius: 32px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.15);
+      background:
+        radial-gradient(ellipse at 16% 0%, rgba(255,191,0,.15), transparent 42%),
+        linear-gradient(180deg, #151518 0%, #101012 52%, #0d0d0f 100%);
+      box-shadow:
+        0 36px 100px rgba(0,0,0,.66),
+        0 0 0 1px rgba(255,191,0,.035),
+        inset 0 1px 0 rgba(255,255,255,.13);
+    }
+    .chat-head {
+      height: 126px;
+      padding: 25px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 1px solid rgba(255,255,255,.085);
+      background: linear-gradient(180deg, rgba(255,191,0,.045), transparent);
+    }
+    .orb {
+      position: relative;
+      width: 72px; height: 72px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 36% 30%, #4b3405, #140f03 67%);
+      box-shadow:
+        inset 0 0 0 2px rgba(255,191,0,.66),
+        0 0 0 4px rgba(255,191,0,.05),
+        0 0 34px rgba(255,191,0,.30);
+    }
+    .orb::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,191,0,.35);
+    }
+    .orb .star {
+      color: #ffbf00;
+      font-size: 30px;
+      line-height: 1;
+      text-shadow: 0 0 14px rgba(255,191,0,.65);
+    }
+    .orb .live {
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 17px; height: 17px;
+      border-radius: 50%;
+      background: #57d98b;
+      border: 3px solid #131315;
+      box-shadow: 0 0 12px rgba(87,217,139,.65);
+    }
+    .head-copy { display: flex; flex-direction: column; gap: 5px; }
+    .head-copy .name {
+      font-family: "Poppins", sans-serif;
+      font-weight: 700;
+      font-size: 31px;
+      letter-spacing: -.035em;
+      line-height: 1.05;
+    }
+    .head-copy .name span { color: #ffbf00; }
+    .head-copy .sub {
+      font-size: 19px;
+      font-weight: 500;
+      color: rgba(255,191,0,.82);
+      letter-spacing: -.01em;
+    }
+    .head-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(247,244,237,.62);
+    }
+    .icon-btn {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+    }
+    .icon-btn svg { width: 21px; height: 21px; }
+    .chat-body {
+      position: relative;
+      height: 660px;
+      padding: 26px 28px 0;
+      overflow: hidden;
+    }
+    .messages { display: flex; flex-direction: column; gap: 14px; }
+    .typing-abs { position: absolute; left: 28px; right: 28px; top: 220px; }
+    .row { display: flex; gap: 12px; align-items: flex-start; }
+    .mini-orb {
+      width: 42px; height: 42px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 30%, #4b3405, #151003 68%);
+      box-shadow: inset 0 0 0 1.5px rgba(255,191,0,.55), 0 0 16px rgba(255,191,0,.16);
+      color: #ffbf00;
+      font-size: 17px;
+    }
+    .bubble {
+      max-width: 710px;
+      padding: 17px 21px;
+      border-radius: 20px;
+      font-size: 24px;
+      line-height: 1.36;
+      letter-spacing: -.018em;
+      color: rgba(247,244,237,.91);
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.095);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .row.user { justify-content: flex-end; }
+    .bubble.user {
+      max-width: 590px;
+      color: #171105;
+      font-weight: 600;
+      background: linear-gradient(145deg, #ffd66b, #ffbf00 60%, #efa400);
+      border-color: rgba(255,224,138,.65);
+      box-shadow: 0 18px 36px rgba(255,191,0,.15), inset 0 1px 0 rgba(255,255,255,.56);
+    }
+    .dot-typing {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      height: 30px;
+      padding: 0 3px;
+    }
+    .dot-typing i {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,191,0,.78);
+      display: block;
+    }
+    .ai-words .w { opacity: 0; }
+    .day-list {
+      margin-left: 54px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      width: 742px;
+    }
+    .day {
+      height: 78px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 14px 9px 9px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(255,255,255,.032);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+    }
+    .day .thumb {
+      width: 60px; height: 60px;
+      flex: 0 0 auto;
+      border-radius: 11px;
+      background-position: center;
+      background-size: cover;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+    .day .txt { min-width: 0; }
+    .day .k {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: rgba(255,191,0,.75);
+    }
+    .day .t {
+      margin-top: 2px;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: rgba(247,244,237,.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .day .t small {
+      font-size: 17px;
+      font-weight: 400;
+      color: rgba(247,244,237,.70);
+      margin-left: 8px;
+    }
+    .day .arrow {
+      margin-left: auto;
+      color: rgba(247,244,237,.56);
+      font-size: 21px;
+    }
+    .summary {
+      margin-left: 54px;
+      width: 742px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0 0;
+    }
+    .summary .meta {
+      font-size: 19px;
+      color: rgba(247,244,237,.70);
+      letter-spacing: -.01em;
+    }
+    .summary .cta {
+      margin-left: auto;
+      height: 43px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 12px;
+      color: #171105;
+      font-size: 19px;
+      font-weight: 700;
+      background: linear-gradient(145deg, #ffd66b, #ffbf00 62%, #eea000);
+      box-shadow: 0 10px 24px rgba(255,191,0,.16), inset 0 1px 0 rgba(255,255,255,.48);
+    }
+    .composer {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 158px;
+      padding: 13px 28px 0;
+      border-top: 1px solid rgba(255,255,255,.075);
+      background: linear-gradient(180deg, rgba(13,13,15,.6), #0d0d0f 32%);
+    }
+    .dest {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 15px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.028);
+      width: fit-content;
+      max-width: 100%;
+    }
+    .dest .pin { color: rgba(255,191,0,.82); font-size: 17px; }
+    .dest .lab {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .15em;
+      color: rgba(247,244,237,.62);
+    }
+    .dest .val {
+      position: relative;
+      width: 134px;
+      height: 21px;
+      font-size: 17px;
+      font-weight: 600;
+      color: rgba(247,244,237,.88);
+    }
+    .dest .val span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      white-space: nowrap;
+    }
+    .dest .val .d0 { color: rgba(247,244,237,.72); }
+    .dest .val .d1 { opacity: 0; color: #ffbf00; }
+    .dest .ok {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #141006;
+      font-size: 11px;
+      font-weight: 800;
+      background: #ffbf00;
+      box-shadow: 0 0 12px rgba(255,191,0,.3);
+    }
+    .input-row {
+      margin-top: 10px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 0 8px 0 18px;
+      border-radius: 29px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.035);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .input-row .ph {
+      flex: 1;
+      font-size: 21px;
+      color: rgba(247,244,237,.58);
+      letter-spacing: -.01em;
+    }
+    .input-row .mini {
+      width: 34px; height: 34px;
+      display: grid;
+      place-items: center;
+      color: rgba(247,244,237,.47);
+    }
+    .input-row .sendb {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #171105;
+      background: linear-gradient(145deg, #ffd66b, #ffbf00 60%, #e89c00);
+      box-shadow: 0 8px 20px rgba(255,191,0,.15), inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .input-row .sendb svg { width: 21px; height: 21px; }
+    .chat-foot {
+      position: absolute;
+      left: 0; right: 0; bottom: 9px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .19em;
+      color: rgba(247,244,237,.22);
+    }
+    .cta-glow {
+      position: absolute;
+      left: 1578px;
+      top: 786px;
+      width: 170px;
+      height: 58px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,191,0,.72);
+      opacity: 0;
+    }
+    .demo-chip {
+      position: absolute;
+      right: 34px;
+      bottom: 34px;
+      font-size: 11px;
+      letter-spacing: .14em;
+      color: rgba(247,244,237,.24);
+    }
+  </style>
+  <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="glow" data-layout-ignore></div>
+    <div class="glow-low" data-layout-ignore></div>
+
+    <div class="brand-mini" id="s02-brand">
+      <img src="assets/img/logo-mark.png" alt="ViaNova" />
+      <div class="wm">VIANova <span>IA</span></div>
+    </div>
+    <div class="copy">
+      <div class="kicker" id="s02-kicker">SIN PESTAÑAS. SIN ADIVINAR.</div>
+      <h1 class="headline" id="s02-headline">Solo <span class="gold">dilo.</span></h1>
+      <div class="subline" id="s02-subline">La IA arma el plan.</div>
+    </div>
+    <div class="rule" id="s02-rule" data-layout-ignore></div>
+    <div class="steps">
+      <div class="step" id="s02-step1"><div class="n">01</div><div class="t">Pregunta</div></div>
+      <div class="step" id="s02-step2"><div class="n">02</div><div class="t">Plan</div></div>
+      <div class="step" id="s02-step3"><div class="n">03</div><div class="t">Viaje</div></div>
+    </div>
+
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore>
+      <path id="s02-thread" d="M 120 660 C 330 690 420 690 620 660 S 860 600 920 610" />
+    </svg>
+
+    <div class="chat" id="s02-chat">
+      <div class="chat-head">
+        <div class="orb"><span class="star">✦</span><span class="live"></span></div>
+        <div class="head-copy">
+          <div class="name">VIANova <span>AI</span></div>
+          <div class="sub">Asistente contextual</div>
+        </div>
+        <div class="head-actions">
+          <div class="icon-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+              <rect x="9" y="2.5" width="6" height="11" rx="3"></rect>
+              <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path>
+            </svg>
+          </div>
+          <div class="icon-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-body">
+        <div class="messages" id="s02-messages">
+          <div class="row" id="s02-greeting">
+            <div class="mini-orb">✦</div>
+            <div class="bubble">¡Hola! Soy tu asistente IA de ViaNova.<br />¿A dónde quieres ir hoy?</div>
+          </div>
+
+          <div class="row user" id="s02-userrow">
+            <div class="bubble user" id="s02-userbubble">
+              <span class="w">Quiero</span> <span class="w">conocer</span> <span class="w">el</span> <span class="w">Huila</span> <span class="w">en</span> <span class="w">3</span> <span class="w">días.</span>
+            </div>
+          </div>
+
+          <div class="row typing-abs" id="s02-typing" data-layout-allow-overlap>
+            <div class="mini-orb">✦</div>
+            <div class="bubble" style="padding: 14px 20px"><div class="dot-typing"><i></i><i></i><i></i></div></div>
+          </div>
+
+          <div class="row" id="s02-airow">
+            <div class="mini-orb">✦</div>
+            <div class="bubble ai-words" id="s02-aitext">
+              <span class="w">Perfecto.</span> <span class="w">Te</span> <span class="w">armo</span> <span class="w">un</span> <span class="w">plan</span> <span class="w">de</span> <span class="w">3</span> <span class="w">días</span> <span class="w">con</span> <span class="w">lugares</span> <span class="w">reales</span> <span class="w">del</span> <span class="w">Huila.</span>
+            </div>
+          </div>
+
+          <div class="day-list" id="s02-days">
+            <div class="day" id="s02-day1">
+              <div class="thumb" style="background-image:url('assets/img/hotel-plaza.jpg')"></div>
+              <div class="txt"><div class="k">DÍA 1</div><div class="t">Neiva <small>centro histórico y sabor local</small></div></div>
+              <div class="arrow">›</div>
+            </div>
+            <div class="day" id="s02-day2">
+              <div class="thumb" style="background-image:url('assets/img/tatacoa.jpg')"></div>
+              <div class="txt"><div class="k">DÍA 2</div><div class="t">Tatacoa <small>desierto, miradores y estrellas</small></div></div>
+              <div class="arrow">›</div>
+            </div>
+            <div class="day" id="s02-day3">
+              <div class="thumb" style="background-image:url('assets/img/asadero.jpg')"></div>
+              <div class="txt"><div class="k">DÍA 3</div><div class="t">Ruta del sabor <small>asadero y café huilense</small></div></div>
+              <div class="arrow">›</div>
+            </div>
+          </div>
+
+          <div class="summary" id="s02-summary">
+            <div class="meta">3 días · 2 noches · 6 lugares</div>
+            <div class="cta">Ver itinerario <span>›</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="dest" id="s02-dest">
+          <span class="pin">⌖</span><span class="lab">DESTINO</span><span class="val" id="s02-destval" data-layout-allow-overlap><span class="d0">Elige un destino</span><span class="d1">Huila</span></span><span class="ok" id="s02-destok" style="opacity:0">✓</span>
+        </div>
+        <div class="input-row">
+          <div class="ph">Pregúntale a ViaNovaIA…</div>
+          <div class="mini">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+              <circle cx="8.5" cy="9.5" r="1.5"></circle>
+              <path d="M21 15l-5-5L5 20"></path>
+            </svg>
+          </div>
+          <div class="sendb">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 3L10.5 13.5M21 3l-6.8 18-4.2-7.5L2.5 9.3 21 3z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="chat-foot" data-layout-ignore>VIANOVA CONTEXT-AWARE AI</div>
+    </div>
+    <div class="cta-glow" id="s02-ctaglow" data-layout-ignore></div>
+    <div class="demo-chip" data-layout-ignore>VISTA DE DEMOSTRACIÓN</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl2 = gsap.timeline({ paused: true });
+
+    tl2.fromTo("#s02-brand", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.0);
+    tl2.fromTo("#s02-thread", { strokeDasharray: 1200, strokeDashoffset: 1200 }, { strokeDashoffset: 0, duration: 1.2, ease: "power2.inOut" }, 0.2);
+    tl2.fromTo("#s02-kicker", { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.02);
+    tl2.fromTo("#s02-headline", { opacity: .55, y: 18, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.72, ease: "power4.out" }, 0.0);
+    tl2.fromTo("#s02-subline", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.5);
+    tl2.fromTo("#s02-rule", { scaleY: 0, transformOrigin: "top center" }, { scaleY: 1, duration: 0.7, ease: "power2.out" }, 0.5);
+    tl2.fromTo("#s02-chat", { opacity: 1, y: 0, scale: 1.015 }, { scale: 1, duration: 0.7, ease: "power2.out" }, 0);
+
+    tl2.fromTo("#s02-greeting", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.0);
+    tl2.fromTo("#s02-userrow", { opacity: 0, y: 16, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.25)" }, 1.38);
+    tl2.fromTo("#s02-userbubble .w", { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.035, ease: "none" }, 1.5);
+    tl2.fromTo("#s02-typing", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 2.18);
+    tl2.fromTo("#s02-typing i", { y: 0, opacity: 0.35 }, { y: -3, opacity: 1, duration: 0.24, ease: "sine.inOut", repeat: 3, yoyo: true, stagger: 0.09, immediateRender: false }, 2.3);
+    tl2.fromTo("#s02-typing", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power2.in", immediateRender: false }, 2.92);
+    tl2.fromTo("#s02-airow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 3.0);
+    tl2.fromTo("#s02-aitext .w", { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: 0.036, ease: "none" }, 3.06);
+
+    tl2.fromTo("#s02-days", { opacity: 0 }, { opacity: 1, duration: 0.01 }, 4.05);
+    tl2.fromTo("#s02-day1", { opacity: 0, x: 26, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" }, 4.05);
+    tl2.fromTo("#s02-day2", { opacity: 0, x: 26, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" }, 4.28);
+    tl2.fromTo("#s02-day3", { opacity: 0, x: 26, scale: 0.98 }, { opacity: 1, x: 0, scale: 1, duration: 0.5, ease: "power3.out" }, 4.51);
+    tl2.fromTo("#s02-summary", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.35);
+    tl2.fromTo("#s02-destval .d0", { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "power2.in" }, 1.55);
+    tl2.fromTo("#s02-destval .d1", { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, 1.6);
+    tl2.fromTo("#s02-destok", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.4)" }, 1.65);
+    tl2.fromTo("#s02-step1", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.85);
+    tl2.fromTo("#s02-step2", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 1.0);
+    tl2.fromTo("#s02-step3", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 1.15);
+    tl2.fromTo("#s02-step1", { borderColor: "rgba(255,255,255,.12)", backgroundColor: "rgba(18,18,20,.64)" }, { borderColor: "rgba(255,191,0,.52)", backgroundColor: "rgba(255,191,0,.075)", duration: 0.35, ease: "power2.out" }, 1.0);
+    tl2.fromTo("#s02-step2", { borderColor: "rgba(255,255,255,.12)", backgroundColor: "rgba(18,18,20,.64)" }, { borderColor: "rgba(255,191,0,.52)", backgroundColor: "rgba(255,191,0,.075)", duration: 0.35, ease: "power2.out" }, 4.0);
+    tl2.fromTo("#s02-step3", { borderColor: "rgba(255,255,255,.12)", backgroundColor: "rgba(18,18,20,.64)" }, { borderColor: "rgba(255,191,0,.52)", backgroundColor: "rgba(255,191,0,.075)", duration: 0.35, ease: "power2.out" }, 5.4);
+
+    tl2.fromTo("#s02-chat", { scale: 1 }, { scale: 1.018, duration: 1.2, ease: "power2.inOut", immediateRender: false }, 8.7);
+    tl2.fromTo("#s02-ctaglow", { opacity: 0, scale: 0.72 }, { opacity: 0.85, scale: 1, duration: 0.55, ease: "power2.out" }, 8.95);
+    tl2.fromTo("#s02-ctaglow", { opacity: 0.85, scale: 1 }, { opacity: 0, scale: 1.35, duration: 0.6, ease: "power2.out", immediateRender: false }, 9.5);
+
+    window.__timelines["s02"] = tl2;
+  </script>
+</template>

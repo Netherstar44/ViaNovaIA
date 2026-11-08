@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #08080a;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #08080a;
+        color: #f7f4ed;
+        font-family: Inter, sans-serif;
+      }
+      .film-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 90;
+        pointer-events: none;
+        background-image: url("assets/img/grain.png");
+        background-size: 256px 256px;
+        opacity: .045;
+      }
+      .film-vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 91;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 50% 47%, transparent 44%, rgba(0,0,0,.24) 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="300"
+      data-width="1920"
+      data-height="1080"
+      data-fps="30"
+    >
+      <audio
+        id="audio-master"
+        src="assets/audio/master5v.m4a"
+        data-start="0"
+        data-duration="300"
+        data-volume="1"
+      ></audio>
+      <div
+        id="s01"
+        data-composition-id="s01"
+        data-composition-src="compositions/01-hook.html"
+        data-start="0"
+        data-duration="5.5"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s02"
+        data-composition-id="s02"
+        data-composition-src="compositions/02-chat.html"
+        data-start="5.5"
+        data-duration="10.5"
+        data-track-index="2"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s03"
+        data-composition-id="s03"
+        data-composition-src="compositions/03-discovery.html"
+        data-start="16"
+        data-duration="11"
+        data-track-index="3"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s04"
+        data-composition-id="s04"
+        data-composition-src="compositions/04-booking.html"
+        data-start="27"
+        data-duration="11"
+        data-track-index="4"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s05"
+        data-composition-id="s05"
+        data-composition-src="compositions/05-movement.html"
+        data-start="38"
+        data-duration="12"
+        data-track-index="5"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s06"
+        data-composition-id="s06"
+        data-composition-src="compositions/06-business.html"
+        data-start="50"
+        data-duration="8"
+        data-track-index="6"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s08"
+        data-composition-id="s08"
+        data-composition-src="compositions/08-roles.html"
+        data-start="58"
+        data-duration="60"
+        data-track-index="8"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s09"
+        data-composition-id="s09"
+        data-composition-src="compositions/09-traveler-social.html"
+        data-start="118"
+        data-duration="60"
+        data-track-index="9"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s10"
+        data-composition-id="s10"
+        data-composition-src="compositions/10-provider-360capture.html"
+        data-start="178"
+        data-duration="60"
+        data-track-index="10"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s11"
+        data-composition-id="s11"
+        data-composition-src="compositions/11-immersive.html"
+        data-start="238"
+        data-duration="54"
+        data-track-index="11"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s07"
+        data-composition-id="s07"
+        data-composition-src="compositions/07-closing.html"
+        data-start="292"
+        data-duration="8"
+        data-track-index="12"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div class="film-grain" data-layout-ignore></div>
+      <div class="film-vignette" data-layout-ignore></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

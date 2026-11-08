@@ -1,0 +1,194 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Inter";
+      src: url("assets/fonts/inter-400.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-700.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Poppins";
+      src: url("assets/fonts/poppins-800.woff2") format("woff2");
+      font-weight: 800;
+      font-style: normal;
+      font-display: swap;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      position: absolute; inset: 0; overflow: hidden;
+      background: #08080a; color: #f7f4ed;
+      font-family: "Inter", sans-serif;
+    }
+    .bg {
+      position: absolute; inset: -3%;
+      background:
+        radial-gradient(ellipse at 76% 32%, rgba(255,191,0,.17), transparent 48%),
+        radial-gradient(ellipse at 16% 92%, rgba(255,138,42,.055), transparent 56%),
+        linear-gradient(155deg, #0c0c0f 0%, #08080a 58%, #090807 100%);
+    }
+    .bg::after {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 70px 70px;
+      mask-image: radial-gradient(ellipse at 70% 50%, #000 0%, transparent 68%);
+    }
+    .glow { position: absolute; right: -220px; top: -230px; width: 1280px; height: 1060px; background: radial-gradient(ellipse at 50% 50%, rgba(255,191,0,.18), rgba(255,138,42,.045) 43%, transparent 70%); }
+    .stage-glow { position: absolute; left: 720px; bottom: -200px; width: 1160px; height: 480px; background: radial-gradient(ellipse at 50% 50%, rgba(255,191,0,.10), transparent 68%); }
+    .thread { position: absolute; inset: 0; width: 1920px; height: 1080px; z-index: 1; }
+    .thread path { fill: none; stroke: rgba(255,191,0,.20); stroke-width: 1.2; stroke-dasharray: 3 9; }
+
+    .brand { position: absolute; left: 120px; top: 94px; display: flex; align-items: center; gap: 15px; z-index: 10; }
+    .brand .markwrap { position: relative; width: 70px; height: 64px; }
+    .brand .markwrap::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: radial-gradient(circle, rgba(255,191,0,.32), transparent 68%); }
+    .brand .logoimg { position: absolute; inset: 0; background: url("assets/img/logo-mark.png") center / contain no-repeat; }
+    .brand .wm { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 43px; letter-spacing: -.06em; line-height: 1; }
+    .brand .wm span { color: #ffbf00; }
+
+    .tagline { position: absolute; left: 120px; top: 207px; z-index: 10; }
+    .tagline .ln { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 67px; line-height: .94; letter-spacing: -.058em; color: #fffdf7; }
+    .tagline .ln.gold { color: #ffbf00; font-size: 76px; margin-top: 3px; }
+    .subline { position: absolute; left: 122px; top: 419px; width: 552px; font-size: 28px; line-height: 1.27; letter-spacing: -.025em; color: rgba(247,244,237,.82); z-index: 10; }
+
+    .urls { position: absolute; left: 120px; top: 540px; z-index: 10; width: 610px; }
+    .urlhead { font-size: 11px; font-weight: 800; letter-spacing: .2em; color: rgba(247,244,237,.48); }
+    .urlrow { display: flex; align-items: center; gap: 12px; height: 56px; margin-top: 7px; }
+    .uicon { width: 31px; height: 31px; border-radius: 9px; display: grid; place-items: center; color: #ffbf00; border: 1px solid rgba(255,191,0,.28); background: rgba(255,191,0,.06); flex: 0 0 auto; }
+    .uicon svg { width: 15px; height: 15px; }
+    .utext { min-width: 0; }
+    .ul { font-size: 9px; font-weight: 800; letter-spacing: .16em; color: rgba(247,244,237,.56); }
+    .uv { margin-top: 1px; font-size: 22px; font-weight: 600; letter-spacing: -.022em; color: rgba(251,248,241,.96); white-space: nowrap; }
+    .uv.small { font-size: 20px; }
+    .uline { margin-top: 3px; height: 1px; background: linear-gradient(90deg, rgba(255,191,0,.9), rgba(255,191,0,.05)); transform-origin: left center; }
+
+    .platforms { position: absolute; left: 120px; top: 687px; display: flex; align-items: center; gap: 9px; z-index: 10; }
+    .plat { height: 34px; padding: 0 13px; display: flex; align-items: center; gap: 7px; border-radius: 10px; border: 1px solid rgba(255,255,255,.17); background: rgba(255,255,255,.035); font-size: 12px; font-weight: 700; letter-spacing: .02em; color: rgba(247,244,237,.82); }
+    .plat .d { width: 5px; height: 5px; border-radius: 50%; background: #ffbf00; }
+
+    .qrcard { position: absolute; left: 120px; top: 744px; width: 310px; height: 310px; border-radius: 20px; padding: 12px; background: #fff6e3; border: 1px solid #e6cd99; box-shadow: 0 34px 74px rgba(0,0,0,.52), inset 0 1px 0 #fffdf7; z-index: 12; overflow: hidden; }
+    .qrcard .qr { width: 236px; height: 236px; margin: 0 auto; background: url("assets/img/qr-apk-cream.png") center / contain no-repeat; }
+    .qrcard .qlab { margin-top: 5px; text-align: center; font-size: 10px; font-weight: 900; letter-spacing: .14em; color: #5e4113; }
+    .qrcard .qsub { margin-top: 2px; text-align: center; font-size: 10.5px; font-weight: 600; color: #59421e; }
+    .qrcard .apk { position: absolute; right: 12px; top: 12px; height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 6px; background: #1c1914; color: #ffcf5c; font-size: 8px; font-weight: 900; letter-spacing: .12em; }
+    .scan { position: absolute; left: 12px; right: 12px; top: 12px; height: 2px; background: #c98500; opacity: 0; box-shadow: 0 0 13px rgba(201,133,0,.65); }
+    .qrring { position: absolute; inset: -1px; border: 2px solid rgba(255,191,0,.8); border-radius: 20px; opacity: 0; }
+
+    .dglow { position: absolute; left: 720px; top: 480px; width: 1080px; height: 550px; background: radial-gradient(ellipse at 55% 50%, rgba(255,191,0,.12), transparent 65%); z-index: 2; }
+    .laptop { position: absolute; left: 752px; top: 230px; width: 960px; height: 552px; z-index: 4; }
+    .laptop .screen { position: absolute; left: 10px; top: 0; width: 940px; height: 530px; border-radius: 15px 15px 5px 5px; background: #060607; border: 1px solid #34343a; padding: 10px; box-shadow: 0 40px 100px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.09); }
+    .laptop .display { position: relative; width: 920px; height: 510px; border-radius: 9px 9px 3px 3px; overflow: hidden; background: url("assets/img/laptop-home.jpg") center top / cover no-repeat; }
+    .laptop .camera { position: absolute; left: 50%; top: 4px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #26262a; box-shadow: 0 0 0 2px #0a0a0b; }
+    .laptop .base { position: absolute; left: 0; top: 530px; width: 960px; height: 22px; border-radius: 0 0 17px 17px; background: linear-gradient(180deg, #d3d3d6, #8b8b90 58%, #535358 100%); box-shadow: 0 18px 28px rgba(0,0,0,.44); }
+    .laptop .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 150px; height: 7px; margin-left: -75px; border-radius: 0 0 9px 9px; background: #6e6e74; }
+    .phone { position: absolute; left: 1490px; top: 470px; width: 272px; height: 558px; border-radius: 40px; border: 7px solid #111113; background: #000; box-shadow: 0 46px 90px rgba(0,0,0,.66), 0 0 0 1px rgba(255,255,255,.13), inset 0 1px 0 rgba(255,255,255,.2); z-index: 6; overflow: hidden; }
+    .phone .screen { position: absolute; inset: 3px; border-radius: 32px; overflow: hidden; background: url("assets/img/phone-home.jpg") top center / cover no-repeat; }
+    .phone .island { position: absolute; left: 50%; top: 8px; width: 77px; height: 18px; margin-left: -38.5px; border-radius: 11px; background: #000; z-index: 3; }
+    .phone .bar { position: absolute; left: 50%; bottom: 7px; width: 80px; height: 3px; margin-left: -40px; border-radius: 2px; background: rgba(255,255,255,.6); z-index: 3; }
+
+    .devicenote { position: absolute; left: 762px; top: 974px; font-size: 10px; letter-spacing: .14em; color: rgba(247,244,237,.30); z-index: 10; }
+    .endline { position: absolute; left: 120px; right: 120px; bottom: 24px; height: 1px; background: linear-gradient(90deg, rgba(255,191,0,.36), rgba(255,191,0,.05) 50%, transparent); }
+  </style>
+  <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
+    <div class="bg" data-layout-allow-overflow></div>
+    <div class="glow" data-layout-ignore></div>
+    <div class="stage-glow" data-layout-ignore></div>
+    <svg class="thread" viewBox="0 0 1920 1080" data-layout-ignore><path id="s07-thread" d="M 420 120 C 620 150 660 260 752 330" /></svg>
+
+    <div class="brand" id="s07-brand">
+      <div class="markwrap"><div class="logoimg"></div></div>
+      <div class="wm">VIANova <span>IA</span></div>
+    </div>
+
+    <div class="tagline" id="s07-tagline">
+      <div class="ln" id="s07-l1">Planifica.</div>
+      <div class="ln" id="s07-l2">Descubre.</div>
+      <div class="ln gold" id="s07-l3">Vive.</div>
+    </div>
+    <div class="subline" id="s07-subline">Tu próximo viaje empieza con una conversación.</div>
+
+    <div class="urls" id="s07-urls">
+      <div class="urlhead">VISÍTANOS</div>
+      <div class="urlrow">
+        <div class="uicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg></div>
+        <div class="utext"><div class="ul">VERCEL</div><div class="uv">https://via-nova-ia.vercel.app</div><div class="uline" id="s07-line1"></div></div>
+      </div>
+      <div class="urlrow">
+        <div class="uicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H6.8A4.8 4.8 0 0 1 6 9.4 6.4 6.4 0 0 1 18.2 11a4 4 0 0 1-.7 8Z"></path></svg></div>
+        <div class="utext"><div class="ul">CLOUDFLARE</div><div class="uv small">https://vianova.netherstar44.workers.dev</div><div class="uline" id="s07-line2"></div></div>
+      </div>
+    </div>
+
+    <div class="platforms" id="s07-platforms">
+      <div class="plat"><span class="d"></span> Web</div>
+      <div class="plat"><span class="d"></span> PWA</div>
+      <div class="plat"><span class="d"></span> Android</div>
+    </div>
+
+    <div class="qrcard" id="s07-qr">
+      <div class="qr"></div>
+      <div class="apk">APK</div>
+      <div class="qlab">ESCANEA PARA ANDROID</div>
+      <div class="qsub">Descarga la app y empieza tu viaje.</div>
+      <div class="scan" id="s07-scan" data-layout-ignore></div>
+      <div class="qrring" id="s07-qrring" data-layout-ignore></div>
+    </div>
+
+    <div class="dglow" data-layout-ignore></div>
+    <div class="laptop" id="s07-laptop">
+      <div class="screen"><div class="display"></div><div class="camera"></div></div>
+      <div class="base"></div>
+    </div>
+    <div class="phone" id="s07-phone">
+      <div class="screen"></div><div class="island"></div><div class="bar"></div>
+    </div>
+    <div class="devicenote" id="s07-devicenote" data-layout-ignore>UI REAL · WEB Y ANDROID</div>
+    <div class="endline" id="s07-endline" data-layout-ignore></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl7 = gsap.timeline({ paused: true });
+
+    tl7.fromTo("#s07-thread", { strokeDasharray: 360, strokeDashoffset: 360 }, { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut" }, 0.2);
+    tl7.fromTo("#s07-brand", { opacity: 0, y: -14, scale: .98 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power3.out" }, 0.1);
+    tl7.fromTo("#s07-l1", { opacity: 0, y: 24, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.62, ease: "power4.out" }, 0.22);
+    tl7.fromTo("#s07-l2", { opacity: 0, y: 24, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.62, ease: "power4.out" }, 0.34);
+    tl7.fromTo("#s07-l3", { opacity: 0, y: 24, filter: "blur(5px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.62, ease: "power4.out" }, 0.46);
+    tl7.fromTo("#s07-subline", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.6);
+
+    tl7.fromTo("#s07-urls", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.72);
+    tl7.fromTo("#s07-line1", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power2.inOut" }, 0.95);
+    tl7.fromTo("#s07-line2", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power2.inOut" }, 1.08);
+    tl7.fromTo("#s07-platforms .plat", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.36, ease: "power2.out", stagger: 0.06 }, 1.0);
+
+    tl7.fromTo("#s07-laptop", { opacity: 0, x: 42, y: 18 }, { opacity: 1, x: 0, y: 0, duration: 0.8, ease: "power3.out" }, 1.05);
+    tl7.fromTo("#s07-phone", { opacity: 0, y: 42, scale: .94 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 1.22);
+    tl7.fromTo("#s07-laptop .display", { scale: 1.035 }, { scale: 1, duration: 1.5, ease: "power2.out" }, 1.15);
+    tl7.fromTo("#s07-devicenote", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.45);
+    tl7.fromTo("#s07-endline", { scaleX: 0, transformOrigin: "left center" }, { scaleX: 1, duration: 1.2, ease: "power2.inOut" }, 1.55);
+
+    tl7.fromTo("#s07-qr", { opacity: 0, y: 22, scale: .97 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "power3.out" }, 0.98);
+    tl7.fromTo("#s07-scan", { opacity: 0, y: 0 }, { opacity: .9, y: -8, duration: .1 }, 1.75);
+    tl7.to("#s07-scan", { y: 236, duration: 0.9, ease: "sine.inOut" }, 1.88);
+    tl7.to("#s07-scan", { opacity: 0, duration: .2, ease: "power2.in" }, 2.75);
+
+    tl7.to("#s07-laptop", { y: -5, duration: 3.0, ease: "sine.inOut" }, 3.6);
+    tl7.to("#s07-phone", { y: -10, duration: 2.6, ease: "sine.inOut" }, 3.7);
+    tl7.fromTo("#s07-qrring", { opacity: 0, scale: .95 }, { opacity: .95, scale: 1.02, duration: .4, ease: "power2.out" }, 5.05);
+    tl7.fromTo("#s07-qrring", { opacity: .95, scale: 1.02 }, { opacity: 0, scale: 1.1, duration: .65, ease: "power2.out", immediateRender: false }, 5.45);
+    tl7.to("#s07-qr", { scale: 1.018, duration: .5, ease: "power2.out" }, 5.1);
+    tl7.to("#s07-qr", { scale: 1, duration: .7, ease: "power2.inOut" }, 5.6);
+    tl7.to("#s07-laptop .display", { scale: 1.015, duration: 1.8, ease: "sine.inOut" }, 6.0);
+    tl7.to("#s07-phone", { scale: 1.012, duration: 1.8, ease: "sine.inOut" }, 6.0);
+
+    window.__timelines["s07"] = tl7;
+  </script>
+</template>
