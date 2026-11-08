@@ -23,7 +23,7 @@ Plataforma full-stack de turismo y comercio local para Colombia. ViaNovaIA conec
 
 El repositorio contiene una SPA React, una API Express ejecutable en Node.js o Cloudflare Workers, una base de datos PostgreSQL (Neon), una app Android empaquetada con Capacitor y un prototipo móvil independiente en Expo.
 
-> Estado del documento: describe la implementación real del repositorio al **30 de octubre de 2026**. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
+> Estado del documento: describe la implementación real del repositorio al **7 de noviembre de 2026**. Las limitaciones y brechas conocidas se indican explícitamente para que no se confundan con funcionalidad terminada.
 
 > **Resumen de estado:** MVP funcional y desplegado. La web/PWA, la API, el login local y con Google, el marketplace, las reservas, el taxi, el social y la capa SEO están operativos. Pagos PSE, offline de escrituras y publicación en tiendas siguen siendo prototipo o trabajo pendiente.
 
@@ -33,7 +33,7 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 
 | Control | Dónde vive | Qué garantiza |
 | --- | --- | --- |
-| Regresión de seguridad | `tests/security.test.ts` | 51 pruebas: auth, roles, IDOR, validación, cabeceras, rate limit. |
+| Regresión de seguridad | `tests/security.test.ts` | 54 pruebas: auth, roles, IDOR, validación, cabeceras, rate limit, tiempo y despliegue. |
 | Auditoría de dependencias | `.github/workflows/security.yml` | `npm audit --omit=dev --audit-level=high` bloquea altas y críticas. |
 | Cabeceras HTTP | `client/public/_headers` | `nosniff`, `DENY` en frames, HSTS, `Referrer-Policy`, `Permissions-Policy`. |
 | Secretos | `.env` (ignorado) + `.env.example` | Ningún secreto se versiona; CI usa valores dummy. |
@@ -48,7 +48,14 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 - **2026-10-30** — `robots.txt` con allowlist explícita de rastreadores de IA y bloqueo de rutas privadas; `llms-full.txt` generado desde la misma fuente que el HTML.
 - **2026-10-30** — dependencias de build forzadas en Vercel (`npm ci --include=dev`) para que el despliegue no dependa de `NODE_ENV`.
 - **2026-10-29** — auditoría de producción sin vulnerabilidades altas ni críticas (8 moderadas aceptadas de `exceljs → archiver → glob → minimatch`).
-- **2026-10-27** — pruebas de regresión de seguridad ampliadas a 51 casos y cabeceras `_headers` endurecidas.
+- **2026-10-27** — pruebas de regresión de seguridad ampliadas a 54 casos y cabeceras `_headers` endurecidas.
+
+### Cambios recientes (7 de noviembre de 2026)
+
+- **Arranque en frío:** `ProductModal` se carga bajo demanda; `/explore` bajó de ~197 KB a 7,1 KB y las pestañas del dock se precargan durante el splash.
+- **Android:** las barras de estado y navegación usan el `--bg` del tema activo y el navbar perdió el borde interior que dividía la parte superior.
+- **Recursos:** fuentes Inter/Poppins locales, hero AVIF/WebP y montaje diferido del mapa.
+- **Release:** APK debug `ViaNovaIA.apk` (25.707.514 bytes, MD5 `e6d21c0f1d3b213f92de0dc5499a5cd2`) publicado como asset; ver [`docs/RELEASES.md`](./docs/RELEASES.md).
 
 ---
 
@@ -91,7 +98,7 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 | SEO técnico | Operativo | 4 guías prerenderizadas, metadatos por ruta, JSON-LD, `robots.txt`, `sitemap.xml`, `llms.txt`, canonical único y `noindex` en rutas privadas. |
 | PWA | Parcial | Instalable, push y shell offline de assets. No hay cola de mutaciones ni datos privados disponibles sin red. |
 | Voz (TTS) | Operativo | Función serverless `api/tts.py` con Edge TTS, JWT y lista blanca de voces. |
-| Móvil | Prototipo | APK Android vía Capacitor y app Expo separada para pruebas nativas. Sin publicación en tiendas. |
+| Móvil | Prototipo | APK debug Android vía Capacitor distribuido como release; app Expo separada para pruebas nativas. Sin publicación en tiendas. |
 
 ### Flujos principales
 
@@ -104,7 +111,7 @@ El repositorio contiene una SPA React, una API Express ejecutable en Node.js o C
 
 ## Estado del prototipo
 
-Corte: **27 de octubre de 2026**. Escala usada: **Operativo** = flujo principal usable y verificado; **Parcial** = funciona con límites explícitos; **Prototipo** = validación técnica, todavía no listo para producción.
+Corte: **7 de noviembre de 2026**. Escala usada: **Operativo** = flujo principal usable y verificado; **Parcial** = funciona con límites explícitos; **Prototipo** = validación técnica, todavía no listo para producción.
 
 | Dimensión | Estado | Detalle |
 |---|---|---|
@@ -119,9 +126,9 @@ Corte: **27 de octubre de 2026**. Escala usada: **Operativo** = flujo principal 
 | Admin y analíticas | Operativo | Métricas por rol, supervisión de cuentas y moderación básica. |
 | SEO técnico | Operativo; verificación manual pendiente | HTML prerenderizado, JSON-LD, canonical único, `sitemap.xml`, `robots.txt`, `llms.txt` y envío IndexNow. Falta pulsar “Verificar” en Google Search Console y Bing Webmaster Tools. |
 | Offline | Parcial | El service worker cachea el shell y assets; las APIs y las escrituras siguen requiriendo red. |
-| Android | Prototipo | Proyecto Capacitor configurado. Sin APK firmado ni publicación en Play Store. |
+| Android | Prototipo | APK debug compilado y publicado como asset de GitHub Releases. Sin firma de producción ni publicación en Play Store. |
 | Expo | Prototipo separado | App de validación en `mobile/`; no se empaqueta con Capacitor. |
-| Calidad | Cobertura inicial | `tsc` sin errores y 22 pruebas automatizadas. No hay suite E2E continua ni pruebas de carga. |
+| Calidad | Cobertura inicial | `tsc` sin errores y 54 pruebas automatizadas. No hay suite E2E continua ni pruebas de carga. |
 | Operación | MVP | Logs de plataforma, healthcheck y rate limiting. Sin APM, alertas ni SLA dedicado. |
 
 **Lectura correcta:** esto es un MVP avanzado, no un producto transaccional cerrado. Antes de operar con dinero real o tráfico alto hay que resolver pagos, offline de escrituras, observabilidad y autoridad de dominio.
@@ -146,7 +153,7 @@ Corte: **27 de octubre de 2026**. Escala usada: **Operativo** = flujo principal 
 
 ### Backend
 
-- **Node.js 20+** con **Express 4** y **tsx** en desarrollo
+- **Node.js 22+** con **Express 4** y **tsx** en desarrollo
 - **Drizzle ORM 0.45** + **PostgreSQL** (driver `@neondatabase/serverless`)
 - **Zod** + `drizzle-zod` para validación
 - **JWT** (`jsonwebtoken`) + **bcryptjs**
@@ -323,8 +330,8 @@ sequenceDiagram
 
 `client/src/styles/glass.css` define el lenguaje de superficies:
 
-- Tokens `--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-blur` y `--glass-highlight`.
-- Capas de **blur + saturación**, borde translúcido, brillo interior y una textura de ruido sutil para dar profundidad.
+- Tokens `--glass-bg`, `--glass-border`, `--glass-shadow` y `--glass-highlight`.
+- Superficies con gradientes, borde translúcido, brillo interior y una textura de ruido sutil. **No se usa `backdrop-filter`**: se retiró por rendimiento en móviles.
 - Variantes `liquid-glass`, `liquid-glass--strong` y `liquid-glass--hover` para tarjetas, paneles y contenedores.
 - `prefers-reduced-motion` desactiva las transiciones no esenciales y `hover: none` evita transformaciones en pantallas táctiles.
 
@@ -351,7 +358,7 @@ sequenceDiagram
 
 - No hay Storybook ni pruebas de regresión visual.
 - La cobertura de temas es funcional, pero no todos los componentes han sido revisados en las cinco variantes.
-- Los chunks de mapas y 3D siguen siendo grandes (`map-style` ~1,1 MB, Three ~720 KB); las rutas ya son lazy, pero esas dependencias pesan cuando se cargan.
+- El modal de producto (~201 KB) y los chunks de mapas/3D (`map-style` ~1,1 MB, Three ~720 KB) siguen siendo grandes; el modal y las rutas ya son lazy, pero esos recursos pesan cuando se cargan.
 
 ---
 
@@ -570,7 +577,7 @@ Las respuestas 429 incluyen `Retry-After` y cabeceras `RateLimit`.
 
 ### Requisitos
 
-- Node.js 20 o superior
+- Node.js 22 o superior
 - npm 10 o superior
 - PostgreSQL accesible (Neon o instancia local)
 - Opcional: Cloudflare Wrangler, Android Studio, Expo CLI
@@ -888,14 +895,18 @@ Configura las variables de entorno en el panel de Vercel. El proyecto usa el mis
 ### Android / Capacitor
 
 ```bash
+export JAVA_HOME="C:/Users/juan8/Desktop/ViaNovaIA/.tools/jdk21/jdk-21.0.13+9"
 npm run build
 npx cap sync android
-npx cap open android
+cd android && ./gradlew assembleDebug --console=plain
 ```
 
-- `capacitor.config.ts`: appId `com.vianova.app`, `webDir: dist/public`, `CapacitorHttp` habilitado.
+- `capacitor.config.ts`: appId `com.vianova.app`, `webDir: dist/public`, `CapacitorHttp` habilitado y `SystemBars` con insets nativos.
+- `ThemeBarsPlugin` pinta las barras con el token `--bg` del tema; `SystemBarsSync` actualiza el color al cambiar entre `light`, `dark`, `sunset`, `ocean` y `forest`.
 - El APK usa la API nativa con `VITE_NATIVE_API_BASE` y `Authorization: Bearer`.
+- Salida: `android/app/build/outputs/apk/debug/app-debug.apk`. El APK debug se distribuye en GitHub Releases; no se versiona en Git.
 - `android/` contiene el proyecto Gradle; `mobile/` es un prototipo Expo separado y no se empaqueta con Capacitor.
+- Procedimiento y checksum vigente: [`docs/RELEASES.md`](./docs/RELEASES.md).
 
 ### Orden recomendado de despliegue
 
@@ -914,10 +925,10 @@ npx cap open android
 
 ### Controles automatizados
 
-| Control | Comando | Resultado (27 oct 2026) | Alcance |
+| Control | Comando | Resultado (7 nov 2026) | Alcance |
 |---|---|---|---|
 | Tipos | `npm run check` | 0 errores | Todo el proyecto TypeScript. |
-| Pruebas | `npm test` | 22/22 | 21 pruebas de seguridad + 1 de configuración de despliegue. |
+| Pruebas | `npm test` | 54/54 | Seguridad, utilidades de panorama, tiempo y configuración de despliegue. |
 | Build | `npm run build` | Correcto | SPA, bundle de servidor, guías prerenderizadas y sitemap. |
 | Regresión Vercel | `tests/deploy-config.test.ts` | Correcto | Impide rewrites `/api` con extensión bajo `cleanUrls`. |
 
@@ -1036,6 +1047,7 @@ No hay porcentaje de cobertura de código ni suite E2E continua en CI. Las prueb
 | Documento | Ubicación | Estado |
 |---|---|---|
 | README técnico | `README.md` | Actualizado; arquitectura, diseño, estado, cobertura, API y operación. |
+| Releases Android | `docs/RELEASES.md` y `docs/releases/` | Versionado, build del APK, checksum y notas por versión. |
 | SEO avanzado | `docs/SEO_AVANZADO_VIANOVA.md` | Estrategia, URLs, prerender, JSON-LD, sitemap y checklist de indexación. |
 | Informe de QA y seguridad | `INFORME_QA_SEGURIDAD_VIANOVA.md` | Documento de hallazgos y contexto de auditoría. |
 | Checklist de remediación | `CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md` | Seguimiento de acciones de seguridad. |
@@ -1077,7 +1089,7 @@ Estas brechas están presentes en el código y deben considerarse al planificar 
 - **Datos mock:** `RideHistory` inserta reservas de ejemplo para viajeros; no son datos reales.
 - **Analytics admin:** el endpoint ya no devuelve usernames, pero la UI todavía intenta mostrar `log.username`.
 - **Operación:** sin APM, alertas, SLA ni suite E2E continua. Los logs son los de la plataforma.
-- **Móvil:** Capacitor está configurado, pero no hay APK firmado ni publicación en tiendas; Expo es un prototipo separado.
+- **Móvil:** hay APK debug distribuido como release, pero no tiene firma de producción ni publicación en tiendas, y el arranque en frío no se ha validado en hardware físico desde este entorno.
 
 Para el detalle de pruebas, usa `docs/CHECKLIST_QA_VIANOVA.md` y `docs/SEO_AVANZADO_VIANOVA.md`.
 

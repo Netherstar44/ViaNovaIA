@@ -11,7 +11,7 @@ La app se despliega como un Worker con assets estáticos:
 
 ## 1. Requisitos
 
-- Node.js 20 o superior.
+- Node.js 22 o superior.
 - Una cuenta de Cloudflare.
 - Wrangler (ya está en `devDependencies`).
 

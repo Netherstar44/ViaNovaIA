@@ -1,6 +1,7 @@
 # Checklist QA Front/Back — ViaNovaIA
 
-**Fecha:** 2026-10-22  
+**Fecha base:** 2026-10-22 · **Actualización:** 2026-11-07
+
 **Alcance:** verificación funcional, de integración y de seguridad de la SPA React + API Express.  
 **Entorno de referencia:** Windows 11, Node.js 22, PostgreSQL (Neon), servidor local `http://localhost:5000`, navegador Chromium headless.  
 **Documentos relacionados:** [`README.md`](../README.md), [`INFORME_QA_SEGURIDAD_VIANOVA.md`](../INFORME_QA_SEGURIDAD_VIANOVA.md), [`CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md`](../CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md).
@@ -62,7 +63,7 @@
 
 - [x] `ErrorBoundary` global captura errores de render y muestra fallback.
 - [x] `localStorage.user` corrupto o ausente no rompe el arranque.
-- [~] Todas las páginas usan `React.lazy` (hoy las rutas se importan de forma eager).
+- [x] Las rutas principales usan `React.lazy` y `Suspense`; el modal de producto se carga aparte de `/explore`.
 - [~] i18n completo en los cinco idiomas (cobertura parcial conocida).
 
 ---
@@ -168,7 +169,7 @@ Matriz negativa ejecutada con `scripts/security-smoke` (34/34 PASS en la última
 - [x] Se eliminó la consulta N+1 de comentarios en las tarjetas; se usa `GET /api/comments/ratings` en lote.
 - [x] El Home muestra splash en lugar de `null` durante la carga.
 - [x] Timeout de sesión evita bloqueo indefinido si la API no responde.
-- [~] El bundle inicial puede reducirse con lazy routes.
+- [x] El bundle inicial se redujo con lazy routes, fuentes locales y precarga de las pestañas del dock.
 - [~] Las imágenes públicas usan `loading="lazy"` en las tarjetas principales.
 - [ ] Medir Core Web Vitals en un despliegue real.
 - [ ] Probar con red lenta y dispositivo móvil de gama baja.
@@ -232,3 +233,17 @@ Se considera apto para QA cerrada cuando:
 3. La matriz de seguridad negativa queda en 34/34.
 4. El mapa renderiza tiles en claro y oscuro sin errores de consola.
 5. No hay secretos en el repositorio ni en el historial de Git.
+
+---
+
+## 14. Actualización 2026-11-07 — arranque móvil y release
+
+- [x] `npm run check` sin errores.
+- [x] `npm test` → **54/54** pruebas en verde.
+- [x] `npm run build` genera `dist/` y `llms-full.txt`.
+- [x] `/explore` bajó de ~197 KB a **7,1 KB**; `ProductModal` (~201 KB) se carga solo al abrir un producto.
+- [x] Las pestañas del dock se precargan durante el splash y el mapa del Home se monta por `IntersectionObserver`.
+- [x] El navbar ya no dibuja el borde superior que separaba la barra de estado de la app.
+- [x] APK debug compilado y verificado: `25.707.514` bytes, MD5 `e6d21c0f1d3b213f92de0dc5499a5cd2`, firma debug SHA-1 `D1:73:52:F1:1F:52:86:7B:55:A1:1C:FA:39:F4:28:FC:B5:0F:49:EE`.
+- [ ] Validación visual del arranque en frío en un dispositivo Android físico (no hay dispositivo conectado en este entorno).
+- [x] El APK quedó fuera de Git y se publica como asset de release; ver [`docs/RELEASES.md`](RELEASES.md).

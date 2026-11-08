@@ -101,7 +101,7 @@ Producción: <https://via-nova-ia.vercel.app>. El proyecto de Vercel lo administ
 ```bash
 npm ci --include=dev     # instala también devDependencies
 npm run check            # TypeScript
-npm test                 # 51 pruebas
+npm test                 # 54 pruebas
 npm run build            # build de producción + SEO
 npm run dev:client       # Vite en :5000 (UI solamente)
 npm run dev              # API + Vite (necesita .env y base de datos)

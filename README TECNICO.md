@@ -94,7 +94,7 @@ flowchart TB
         TTSFunction["Edge TTS Function (api/tts.py)<br/>Python Serverless · Voces es-CO"]
     end
 
-    subgraph APIBackend["CAPA DE APLICACIÓN (Node.js 20+ / Cloudflare Worker)"]
+    subgraph APIBackend["CAPA DE APLICACIÓN (Node.js 22+ / Cloudflare Worker)"]
         HttpGuard["Filtros de Seguridad HttpSecurity<br/>(CORS Allowlist · CSP · HSTS · Anti-CSRF)"]
         RateLimiter["Limitadores de Tasa Adaptativos<br/>(In-Memory / Upstash Redis Store)"]
         AuthMiddleware["Motor de Autenticación & RBAC<br/>(JWT + JTI Revocation · Cooldown · Ownership)"]
@@ -193,7 +193,7 @@ El proyecto fue construido utilizando únicamente dependencias probadas para ent
 - **i18next (`^26.2.0`) & react-i18next:** Sistema de internacionalización con soporte para 5 idiomas (`es`, `en`, `fr`, `pt`, `zh`).
 
 ### Backend
-- **Node.js 20+ LTS / Cloudflare Workers:** Runtimes de ejecución compatibles tanto con servidores tradicionales como con aislamiento en el Edge.
+- **Node.js 22+ LTS / Cloudflare Workers:** Runtimes de ejecución compatibles tanto con servidores tradicionales como con aislamiento en el Edge.
 - **Express 4 (`^4.22.3`):** Núcleo HTTP de enrutamiento modular y middlewares.
 - **Drizzle ORM (`^0.45.2`) & Drizzle Kit:** ORM tipado de cero sobrecarga computacional con soporte para transacciones complejas.
 - **@neondatabase/serverless (`^0.10.4`):** Driver PostgreSQL optimizado para conexiones HTTP y WebSockets sobre infraestructuras serverless.
@@ -737,15 +737,15 @@ ViaNovaIA implementa una estrategia móvil dual orientada a maximizar el alcance
 - **Configuración (`capacitor.config.ts`):** Identificador `com.vianova.app`, nombre de app `ViaNovaIA`, directorio web sincronizado `dist/public`.
 - **Plugin `CapacitorHttp`:** Habilitado para interceptar peticiones de red del WebView y ejecutarlas en la capa nativa de Android, evitando discrepancias de CORS y facilitando el uso del token en cabeceras `Authorization: Bearer`.
 - **Inicio de Sesión con Google Nativo:** Integrado mediante `@capgo/capacitor-social-login` y validado en el servidor vía `/api/auth/google/mobile`.
-- **Compilación del APK:**
+- **Barras del sistema:** `SystemBars` gestiona los insets y los iconos; `ThemeBarsPlugin` pinta las barras con el token `--bg` del tema activo para que la app y el sistema se vean continuos.
+- **Compilación del APK debug:**
   ```powershell
-  # 1. Compilar el cliente web
+  export JAVA_HOME="C:/Users/juan8/Desktop/ViaNovaIA/.tools/jdk21/jdk-21.0.13+9"
   npm run build
-  # 2. Sincronizar assets con el proyecto nativo Android
   npx cap sync android
-  # 3. Abrir en Android Studio para depurar o generar APK release
-  npx cap open android
+  cd android && ./gradlew assembleDebug --console=plain
   ```
+  Salida: `android/app/build/outputs/apk/debug/app-debug.apk`. El APK se publica como asset de GitHub Releases y no se versiona en Git. Procedimiento completo en [`docs/RELEASES.md`](docs/RELEASES.md).
 
 ### 11.2 Prototipo Móvil Independiente (Expo 54)
 - **Directorio:** `mobile/`
@@ -821,7 +821,7 @@ Configurado mediante `vercel.json`:
 ## 14. Guía de Ejecución Local y Comandos del Proyecto
 
 ### 14.1 Requisitos Previos del Sistema
-- **Node.js:** Versión `20.19.0` o superior (se recomienda Node 22 LTS).
+- **Node.js:** Versión `22` o superior (LTS).
 - **Gestor de Paquetes:** `npm` versión `10+`.
 - **Base de Datos:** Instancia de PostgreSQL accesible (cuenta gratuita en [Neon.tech](https://neon.tech) recomendada).
 - **Opcional:** Android Studio (para desarrollo del APK) o Wrangler CLI (`npm i -g wrangler`).
@@ -879,7 +879,7 @@ Se dispone de un script de pruebas automatizadas en Chromium headless: `scripts/
 7. **Motor Multitema:** Conmutación entre temas claros y oscuros sin errores de contraste.
 
 ### 15.2 Matriz de Pruebas Negativas de Seguridad
-En cumplimiento del plan de remediación (`CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md`), se verificaron **34/34 vectores de ataque**, asegurando que:
+En cumplimiento del plan de remediación (`CHECKLIST_REMEDIACION_SEGURIDAD_VIANOVA.md`), se verificaron **34/34 vectores de ataque** y la suite `npm test` quedó en **54/54** el 7 de noviembre de 2026, asegurando que:
 - Intentos de acceso a `/api/admin/stats` sin rol admin responden **403 Forbidden**.
 - Mutaciones sin encabezado de origen válido responden **403 Forbidden**.
 - Solicitudes con tokens modificados o revocados responden **401 Unauthorized**.
@@ -933,7 +933,7 @@ Con el propósito de mantener transparencia técnica, se documentan las caracter
 - **Pagos PSE / Pasarelas Locales:** Actualmente los pagos con Nequi, Daviplata y Efectivo operan bajo simulación de confirmación. La pasarela con cobro bancario real activa es Stripe.
 - **Servicios Cartográficos Públicos:** El cálculo de rutas (OSRM) y la geocodificación inversa (Nominatim) consumen APIs comunitarias libres sin SLA comercial. Para un entorno de producción masivo, se recomienda desplegar instancias propias de OSRM en contenedores Docker o suscribirse a un proveedor comercial con SLA garantizado.
 - **Sincronización de Componentes de Gestión:** En `client/src/App.tsx`, el panel `/products` enlaza a `ProductManager.tsx` (catálogo comercial físico), mientras que `/my-products` enlaza a `MyProducts.tsx` (gestión de servicios turísticos). `ProviderDashboard.tsx` es un componente completo disponible para ser unificado como panel maestro.
-- **Carga Diferida de Rutas (Code Splitting):** Para optimizar aún más el tiempo de carga inicial en redes móviles 3G/4G, se proyecta migrar las importaciones de páginas en `App.tsx` hacia `React.lazy()` y `Suspense`.
+- **Carga Diferida de Rutas (Code Splitting):** Las rutas principales ya usan `React.lazy()` y `Suspense`; el modal de producto se separó de `/explore` y el mapa del Home se monta cuando se acerca al viewport. Queda optimizar los chunks pesados de mapas y 3D.
 - **Estrategia PWA Offline:** Existe un Service Worker activo para notificaciones push (`client/public/sw.js`), pero la navegación completa sin conexión (caching de vistas e IndexedDB) se completará en la siguiente fase del roadmap.
 
 ---
