@@ -7,6 +7,7 @@ import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import TranslatedText from "./TranslatedText";
+import { CatalogImage } from "./CatalogImage";
 
 const VRViewer = lazy(() => import("./VRViewer"));
 
@@ -30,11 +31,9 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
     >
       <div className="overflow-hidden transition-all h-full flex flex-col group border-none shadow-none bg-transparent cursor-pointer">
         <div className="relative aspect-[1/1] w-full overflow-hidden rounded-[12px] mb-3">
-        <img 
+        <CatalogImage
           src={item.image} 
           alt={item.name} 
-          loading="lazy"
-          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute top-3 right-3">

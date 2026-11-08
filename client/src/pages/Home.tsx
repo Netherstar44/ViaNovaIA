@@ -7,7 +7,8 @@ import Navbar from "@/components/Navbar";
 import CardItem from "@/components/CardItem";
 import HomeSeoSection from "@/components/HomeSeoSection";
 import Comments from "@/components/Comments";
-import { LocationItem, locations } from "@/data/mockData";
+import type { LocationItem } from "@/data/mockData";
+import { CatalogImage } from "@/components/CatalogImage";
 import { isUsableCoordinatePair, parseCoordinate } from "@/lib/geo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,6 +204,8 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState<LocationItem | null>(null);
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
   const [serviceLocations, setServiceLocations] = useState<LocationItem[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState(false);
   const [commentRatings, setCommentRatings] = useState<Record<string, number>>({});
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
 
@@ -314,11 +317,12 @@ export default function Home() {
   useEffect(() => {
     // cargar servicios por categoría y mapear a LocationItem
     const cats = ['hotel', 'restaurant', 'recreation', 'transport'] as const;
+    const controller = new AbortController();
     const fetchAll = async () => {
       const acc: LocationItem[] = [];
-      for (const c of cats) {
-        try {
-          const res = await fetch(`${apiBase}/api/services?category=${c}`);
+      const results = await Promise.allSettled(cats.map(async c => {
+          const res = await fetch(`${apiBase}/api/services?category=${c}`, { signal: controller.signal });
+          if (!res.ok) throw new Error("No se pudieron cargar los servicios.");
           const data = await res.json();
           if (res.ok && Array.isArray(data.services)) {
             for (const s of data.services) {
@@ -330,7 +334,7 @@ export default function Home() {
                 name: s.name,
                 category: c,
                 description: s.description || '',
-                image: s.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?fit=crop&w=800&q=80',
+                image: s.imageUrl || '',
                 coordinates: [lat, lng],
                 rating: s.rating || 0,
                 priceRange: priceRangeFor(s.price),
@@ -342,15 +346,18 @@ export default function Home() {
               });
             }
           }
-        } catch { }
-      }
+      }));
+      if (controller.signal.aborted) return;
       setServiceLocations(acc);
+      setServicesError(results.some(result => result.status === 'rejected'));
+      setServicesLoading(false);
     };
     fetchAll();
+    return () => controller.abort();
   }, []);
 
   const allLocations = useMemo(() => {
-    return [...locations, ...serviceLocations];
+    return serviceLocations;
   }, [serviceLocations]);
 
   function haversineKm(a: [number, number], b: [number, number]) {
@@ -581,11 +588,11 @@ export default function Home() {
                   <h2 className="sr-only">Resultados de búsqueda</h2>
 
                   {/* Layout Grid For Cards */}
-                  {filteredAll.length === 0 ? (
+                  {servicesLoading ? <p role="status" className="py-12 text-center text-muted-foreground">Cargando servicios publicados…</p> : filteredAll.length === 0 ? (
                     <div className="flex w-full flex-col items-center justify-center py-20 text-center opacity-70">
                       <Search className="mb-4 h-14 w-14 text-muted-foreground/60" />
-                      <h3 className="text-xl font-semibold">{t('home.no_results')}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">Intenta ajustar tus filtros de búsqueda</p>
+                      <h3 className="text-xl font-semibold">{servicesError ? "No se pudo cargar el catálogo" : t('home.no_results')}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{servicesError ? "Revisa la conexión e inténtalo de nuevo." : "Solo se muestran servicios publicados. Prueba otros filtros."}</p>
                     </div>
                   ) : (
                     <motion.div
@@ -664,7 +671,7 @@ export default function Home() {
             {/* Hero specific to the item */}
             <div className="relative h-[38vh] min-h-[280px] w-full sm:h-[42vh] sm:min-h-[320px]">
               <div className="hero-scrim pointer-events-none absolute inset-0 z-10" />
-              <img src={selectedItem?.image} alt={selectedItem?.name} className="h-full w-full object-cover" />
+              <CatalogImage src={selectedItem?.image} alt={selectedItem?.name} className="h-full w-full object-cover" />
 
               <div className="absolute left-4 top-5 z-20 sm:left-6 sm:top-6">
                 <Button variant="secondary" onClick={handleBackToLanding} className="glass-pill gap-2 rounded-full pl-3 pr-5 transition-all hover:scale-105 sm:pr-6">
@@ -734,7 +741,7 @@ export default function Home() {
                               className="w-full text-left flex items-center gap-3 p-3 rounded-xl bg-card/60 hover:bg-card border border-transparent hover:border-primary/40 transition-all"
                             >
                               <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden">
-                                <img src={r.image} alt={r.name} className="h-full w-full object-cover" />
+                                <CatalogImage src={r.image} alt={r.name} className="h-full w-full object-cover" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-bold text-foreground truncate">{r.name}</div>
@@ -904,7 +911,7 @@ export default function Home() {
                         className="flex items-center gap-4 p-3 rounded-2xl cursor-pointer transition-all duration-300 bg-card/50 hover:bg-card border border-transparent hover:border-border shadow-sm hover:shadow-md group"
                       >
                         <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden shadow-inner">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <CatalogImage src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-foreground truncate group-hover:text-primary-ink transition-colors">

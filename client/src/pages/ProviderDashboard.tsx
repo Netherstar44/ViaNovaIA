@@ -19,14 +19,13 @@ export default function ProviderDashboard() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const [name, setName] = useState<string>(user?.role === 'taxi' ? 'Juan Pérez - Taxi Rápido' : 'Mi Negocio');
-  const [description, setDescription] = useState<string>(user?.role === 'taxi' ? 'Servicio de transporte seguro y confiable. Disponible 24/7.' : 'Ofrecemos la mejor experiencia para nuestros clientes...');
-  const [contact, setContact] = useState<string>("+34 600 000 000");
-  const [locationText, setLocationText] = useState<string>('Madrid, Centro');
-  const [locationLat, setLocationLat] = useState<string>('40.416775');
-  const [locationLng, setLocationLng] = useState<string>('-3.703790');
+  const [name, setName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
+  const [locationText, setLocationText] = useState<string>('');
+  const [locationLat, setLocationLat] = useState<string>('');
+  const [locationLng, setLocationLng] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
-  const [rating, setRating] = useState<number>(5);
   const [services, setServices] = useState<any[]>([]);
 
   const categoryFromRole = (role?: string) => {
@@ -101,7 +100,6 @@ export default function ProviderDashboard() {
         imageUrl,
         locationLat,
         locationLng,
-        rating,
       };
       const res = await fetch(apiBase + '/api/services', {
         method: 'POST',
@@ -279,7 +277,7 @@ export default function ProviderDashboard() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]"></span>
                       </div>
-                      <span className="text-base font-semibold tracking-wide">Perfil Verificado y Activo</span>
+                      <span className="text-base font-semibold tracking-wide">Cuenta de proveedor</span>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed font-light">
                       Apareces en búsquedas de IA y mapas de viajeros en la categoría 
@@ -295,11 +293,11 @@ export default function ProviderDashboard() {
                    <CardContent className="space-y-5 pt-6">
                      <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl">
                        <span className="text-sm font-medium text-muted-foreground">Vistas de Perfil (Mes)</span>
-                        <span className="font-extrabold text-2xl text-foreground">1,234</span>
+                        <span className="text-sm text-muted-foreground">Sin medición</span>
                      </div>
                      <div className="flex justify-between items-center bg-background/30 p-4 rounded-xl">
                        <span className="text-sm font-medium text-muted-foreground">Contactos generados</span>
-                       <span className="font-extrabold text-2xl text-primary">45</span>
+                       <span className="text-sm text-muted-foreground">Sin medición</span>
                      </div>
                    </CardContent>
                 </Card>
