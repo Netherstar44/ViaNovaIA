@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import AppLoader from "@/components/AppLoader";
 import GlassCanvas from "@/components/ui/GlassCanvas";
 import { Capacitor } from '@capacitor/core';
 import { apiBase } from "@/lib/queryClient";
-import logoPrincipal from "@/assets/Logo_principal-removebg-preview.png";
+import logoPrincipal from "@/assets/Logo_principal-removebg-preview.webp";
 
 // forgot flow steps: email → token → newPassword
 type ForgotStep = "email" | "token" | "newPassword";
@@ -105,11 +106,29 @@ export default function Login() {
     }
   }, [isAuthenticated, loading, setLocation]);
 
-  // No redirigir mientras se verifica la sesión con el backend (evita race condition)
-  if (loading) return null;
+  // Mientras se verifica una sesión ya guardada mostramos el loader; un
+  // visitante sin sesión ve el formulario de inmediato, sin pantalla en blanco.
+  if (loading && isAuthenticated) return <AppLoader variant="route" />;
 
 
   const clearMessage = () => setMessage(null);
+
+  // Volver desde el login: dentro del flujo de recuperación regresa al
+  // formulario de acceso; fuera de él, a la pantalla anterior o al inicio.
+  const goBack = () => {
+    if (viewMode === "forgot") {
+      clearMessage();
+      setViewMode("auth");
+      setForgotStep("email");
+      setResetToken("");
+      return;
+    }
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    setLocation("/");
+  };
 
   // ─── Google Login handler ───
   const handleGoogleLogin = async (e: React.FormEvent) => {
@@ -135,17 +154,17 @@ export default function Login() {
 
         let login: any = null;
         try {
-          login = await (SocialLogin as any).login({
-            provider: "google",
-            options: { scopes: ["email", "profile"] },
-          });
+          // Sin `scopes`: Credential Manager ya devuelve email y perfil en el
+          // ID token. Pasar scopes exige modificar MainActivity y el plugin
+          // rechaza el login con "You CANNOT use scopes..." si no lo está.
+          login = await (SocialLogin as any).login({ provider: "google" });
         } catch (initialErr) {
           console.warn("Google login falló, reintentando una vez…", initialErr);
           await new Promise((resolve) => setTimeout(resolve, 500));
-          login = await (SocialLogin as any).login({
-            provider: "google",
-            options: { scopes: ["email", "profile"] },
-          });
+          // Sin `scopes`: Credential Manager ya devuelve email y perfil en el
+          // ID token. Pasar scopes exige modificar MainActivity y el plugin
+          // rechaza el login con "You CANNOT use scopes..." si no lo está.
+          login = await (SocialLogin as any).login({ provider: "google" });
         }
 
         const idToken = login?.result?.idToken;
@@ -319,6 +338,16 @@ export default function Login() {
 
   return (
     <main className="flex min-h-screen bg-background relative overflow-hidden text-foreground">
+      <button
+        type="button"
+        onClick={goBack}
+        aria-label="Volver"
+        className="glass-pill fixed left-3 z-30 flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground shadow-lg transition-transform hover:scale-105 sm:left-6"
+        style={{ top: "max(0.75rem, env(safe-area-inset-top))" }}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Volver
+      </button>
       {/* LEFT SIDE — BRANDING */}
       <div className="hidden lg:flex w-1/2 relative bg-secondary/20 items-center justify-center overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
