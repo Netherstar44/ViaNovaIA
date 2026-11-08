@@ -34,6 +34,7 @@ import {
 
 import TranslatedText from "@/components/TranslatedText";
 import GlassCanvas from "@/components/ui/GlassCanvas";
+import DeferredMount from "@/components/DeferredMount";
 import { Spinner } from "@/components/ui/spinner";
 import type { SimulatedTaxi } from "@/components/TaxiOrderPanel";
 
@@ -85,22 +86,37 @@ function priceRangeFor(value: unknown): "$" | "$$" | "$$$" | undefined {
 const HERO_IMAGES = [
   {
     src: "/images/colombia/cocora-hero.webp",
+    avif: "/images/colombia/cocora-hero.avif",
+    srcSet: "/images/colombia/cocora-hero-900.webp 900w, /images/colombia/cocora-hero.webp 1920w",
+    avifSet: "/images/colombia/cocora-hero-900.avif 900w, /images/colombia/cocora-hero.avif 1920w",
     alt: "Palmas de cera gigantes en el verde del Valle del Cocora.",
   },
   {
     src: "/images/colombia/cartagena.webp",
+    avif: "/images/colombia/cartagena.avif",
+    srcSet: "/images/colombia/cartagena-900.webp 900w, /images/colombia/cartagena.webp 1400w",
+    avifSet: "/images/colombia/cartagena-900.avif 900w, /images/colombia/cartagena.avif 1400w",
     alt: "Calle colonial de Cartagena con balcones de colores y flores.",
   },
   {
     src: "/images/colombia/tayrona.webp",
+    avif: "/images/colombia/tayrona.avif",
+    srcSet: "/images/colombia/tayrona-900.webp 900w, /images/colombia/tayrona.webp 1400w",
+    avifSet: "/images/colombia/tayrona-900.avif 900w, /images/colombia/tayrona.avif 1400w",
     alt: "Playa del Parque Nacional Tayrona entre piedras y selva.",
   },
   {
     src: "/images/colombia/tatacoa.webp",
+    avif: "/images/colombia/tatacoa.avif",
+    srcSet: "/images/colombia/tatacoa-900.webp 900w, /images/colombia/tatacoa.webp 1400w",
+    avifSet: "/images/colombia/tatacoa-900.avif 900w, /images/colombia/tatacoa.avif 1400w",
     alt: "Formaciones de arena rojiza bajo un cielo abierto en la Tatacoa.",
   },
   {
     src: "/images/colombia/guatape.webp",
+    avif: "/images/colombia/guatape.avif",
+    srcSet: "/images/colombia/guatape-900.webp 900w, /images/colombia/guatape.webp 1400w",
+    avifSet: "/images/colombia/guatape-900.avif 900w, /images/colombia/guatape.avif 1400w",
     alt: "Piedra del Peñol y embalse de Guatapé vistos desde el aire.",
   },
 ];
@@ -131,14 +147,20 @@ const HeroSection = ({ children }: { children?: React.ReactNode }) => {
           className="absolute inset-0 h-full w-full"
           aria-hidden={heroIndex !== index}
         >
-          <img
-            src={image.src}
-            alt=""
-            className="h-full w-full object-cover"
-            loading={index === 0 ? "eager" : "lazy"}
-            decoding="async"
-            fetchPriority={index === 0 ? "high" : "auto"}
-          />
+          <picture className="block h-full w-full">
+            <source type="image/avif" srcSet={image.avifSet} sizes="100vw" />
+            <source type="image/webp" srcSet={image.srcSet} sizes="100vw" />
+            <img
+              src={image.src}
+              srcSet={image.srcSet}
+              sizes="100vw"
+              alt=""
+              className="h-full w-full object-cover"
+              loading={index === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={index === 0 ? "high" : "low"}
+            />
+          </picture>
         </motion.div>
       ))}
 
@@ -609,13 +631,15 @@ export default function Home() {
 
                 {/* Map Sidebar Column */}
                 <div className="group relative z-10 h-[420px] w-full overflow-hidden rounded-3xl border border-border/50 shadow-xl sm:h-[520px] md:sticky md:top-24 md:h-[calc(100dvh-150px)] md:w-[35%]">
-                  <Suspense fallback={<MapSkeleton />}>
-                    <MapView
-                      locations={mapLocations}
-                      selectedCategory={selectedCategory}
-                      onMarkerClick={handleItemClick}
-                    />
-                  </Suspense>
+                  <DeferredMount fallback={<MapSkeleton />}>
+                    <Suspense fallback={<MapSkeleton />}>
+                      <MapView
+                        locations={mapLocations}
+                        selectedCategory={selectedCategory}
+                        onMarkerClick={handleItemClick}
+                      />
+                    </Suspense>
+                  </DeferredMount>
 
                   {/* Overlay shadow to integrate it beautifully */}
                   <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
@@ -831,17 +855,19 @@ export default function Home() {
               {/* Map View & Mini Explorer Panel */}
               <div className="flex w-full flex-col gap-6 md:w-[40%]">
                 <div className="relative h-[320px] shrink-0 overflow-hidden rounded-3xl border border-border/50 bg-card shadow-xl sm:h-[400px]">
-                  <Suspense fallback={<MapSkeleton />}>
-                    <MapView
-                      locations={mapLocations}
-                      selectedCategory="all"
-                      onMarkerClick={handleItemClick}
-                      selectedId={selectedItem?.id}
-                      routeCoords={routeCoords.length > 0 ? routeCoords : undefined}
-                      nearbyTaxis={showTaxiPanel ? nearbyTaxis : undefined}
-                      routeInfo={routeInfo ? routeInfo : undefined}
-                    />
-                  </Suspense>
+                  <DeferredMount fallback={<MapSkeleton />}>
+                    <Suspense fallback={<MapSkeleton />}>
+                      <MapView
+                        locations={mapLocations}
+                        selectedCategory="all"
+                        onMarkerClick={handleItemClick}
+                        selectedId={selectedItem?.id}
+                        routeCoords={routeCoords.length > 0 ? routeCoords : undefined}
+                        nearbyTaxis={showTaxiPanel ? nearbyTaxis : undefined}
+                        routeInfo={routeInfo ? routeInfo : undefined}
+                      />
+                    </Suspense>
+                  </DeferredMount>
                   <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-3xl pointer-events-none" />
                 </div>
 
