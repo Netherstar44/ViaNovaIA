@@ -26,8 +26,8 @@ export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption, 
   const hasPanorama = Boolean(panoramaUrl);
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl bg-black/90">
-      <div className="absolute left-3 right-12 top-3 z-10 flex flex-wrap items-center gap-2 sm:left-4 sm:right-14 sm:top-4">
+    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-xl bg-black/90">
+      <div className="relative z-30 flex shrink-0 flex-wrap items-center gap-2 bg-card px-3 py-3 pr-12 sm:px-4 sm:pr-14">
         <div className="liquid-glass-chip flex items-center rounded-full px-3 py-1 text-xs text-[#1f1f1f]">
           {mode === 'product' ? 'Vista previa 3D' : 'Panorama 360°'}
         </div>
@@ -41,6 +41,7 @@ export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption, 
         </Button>
       </div>
 
+      <div className="relative min-h-0 flex-1">
       {mode === 'interior' ? (
         hasPanorama ? (
           <Suspense
@@ -71,6 +72,7 @@ export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption, 
         )
       ) : modelUrl ? <Suspense fallback={<div role="status" className="flex h-full items-center justify-center text-white">Cargando modelo 3D…</div>}><Viewer3D src={modelUrl} alt={modelCaption ?? "Modelo 3D publicado"} /></Suspense>
         : <div className="flex h-full items-center justify-center px-6 text-center text-white">Este servicio todavía no tiene un modelo 3D publicado.</div>}
+      </div>
     </div>
   );
 }
