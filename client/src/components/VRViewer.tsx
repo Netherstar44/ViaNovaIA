@@ -1,33 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Float } from '@react-three/drei';
 import { Button } from '@/components/ui/button';
 import { Loader2, PanelsTopLeft } from 'lucide-react';
 
 const Viewer360 = lazy(() =>
   import('@/components/media/Viewer360').then((module) => ({ default: module.Viewer360 })),
 );
-
-/**
- * Showroom model. It is an illustrative stand-in, never presented as the
- * real product: vendors upload real 3D assets through ProductManager.
- */
-function ProductModel(props: any) {
-  return (
-    <group {...props}>
-      <Float speed={1.2} rotationIntensity={0.25} floatIntensity={0.35}>
-        <mesh castShadow receiveShadow position={[0, 0, 0]}>
-          <boxGeometry args={[1.2, 1.2, 1.2]} />
-          <meshStandardMaterial color="#ffbf00" roughness={0.35} metalness={0.15} />
-        </mesh>
-      </Float>
-      <mesh position={[0, -0.85, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[1.6, 48]} />
-        <meshStandardMaterial color="#111827" roughness={1} />
-      </mesh>
-    </group>
-  );
-}
+const Viewer3D = lazy(() => import('@/components/media/Viewer3D').then(module => ({ default: module.Viewer3D })));
 
 interface VRViewerProps {
   mode: 'product' | 'interior';
@@ -35,6 +13,8 @@ interface VRViewerProps {
   /** Equirectangular 2:1 panorama uploaded by the provider. */
   panoramaUrl?: string | null;
   panoramaCaption?: string;
+  modelUrl?: string | null;
+  modelCaption?: string;
 }
 
 /**
@@ -42,7 +22,7 @@ interface VRViewerProps {
  * used by the product gallery. When the provider has not uploaded one yet we
  * say so instead of showing a fake room.
  */
-export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption }: VRViewerProps) {
+export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption, modelUrl, modelCaption }: VRViewerProps) {
   const hasPanorama = Boolean(panoramaUrl);
 
   return (
@@ -89,34 +69,8 @@ export default function VRViewer({ mode, onClose, panoramaUrl, panoramaCaption }
             </Button>
           </div>
         )
-      ) : (
-        <Canvas
-          shadows
-          dpr={[1, 2]}
-          camera={{ position: [0, 0, 5], fov: 50 }}
-          gl={{ antialias: true, powerPreference: 'high-performance' }}
-        >
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[5, 8, 5]} intensity={1.4} castShadow />
-          <pointLight position={[-5, -2, -5]} intensity={0.5} />
-          <ProductModel />
-          <OrbitControls
-            makeDefault
-            enablePan={false}
-            enableZoom
-            minDistance={3}
-            maxDistance={9}
-          />
-        </Canvas>
-      )}
-
-      {mode === 'product' && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-6">
-          <p className="rounded-full bg-black/55 px-3 py-1.5 text-center text-[11px] text-white/80">
-            Modelo ilustrativo. Arrastra para girarlo.
-          </p>
-        </div>
-      )}
+      ) : modelUrl ? <Suspense fallback={<div role="status" className="flex h-full items-center justify-center text-white">Cargando modelo 3D…</div>}><Viewer3D src={modelUrl} alt={modelCaption ?? "Modelo 3D publicado"} /></Suspense>
+        : <div className="flex h-full items-center justify-center px-6 text-center text-white">Este servicio todavía no tiene un modelo 3D publicado.</div>}
     </div>
   );
 }

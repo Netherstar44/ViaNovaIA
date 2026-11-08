@@ -499,3 +499,8 @@ test("taxi: una petición anónima no alcanza la migración de datos", async () 
   assert.equal((await fetch(baseUrl + "/api/taxi/nearby")).status, 401);
   assert.equal((await fetch(baseUrl + "/api/rides/nearby")).status, 401);
 });
+
+test("los medios públicos validan el identificador antes de consultar", async () => {
+  const response = await fetch(baseUrl + "/api/products/not-a-valid-id/media");
+  assert.equal(response.status, 400);
+});

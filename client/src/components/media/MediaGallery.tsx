@@ -6,6 +6,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 import { Maximize2, Play, Loader2 } from 'lucide-react';
+import { normalizeCatalogMedia } from '@shared/catalog-media';
 
 // Heavy viewers are loaded only when a 3D/360 slide is actually present.
 const Viewer3D = lazy(() => import('./Viewer3D').then((module) => ({ default: module.Viewer3D })));
@@ -35,7 +36,8 @@ interface MediaAsset {
   caption?: string | null;
 }
 
-export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; className?: string }) {
+export function MediaGallery({ media: rawMedia, className = "" }: { media: MediaAsset[]; className?: string }) {
+  const media = normalizeCatalogMedia(rawMedia);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -62,7 +64,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
         {media.map((asset, index) => (
           <SwiperSlide key={asset.id} className="w-full h-full">
             <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black/5">
-              {asset.type === '3d_model' || asset.type === 'model_3d' ? (
+              {asset.type === '3d_model' ? (
                 activeIndex === index ? (
                   <Suspense fallback={<ViewerFallback />}>
                     <Viewer3D src={asset.url} alt={asset.caption || "3D Model"} />
@@ -70,7 +72,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
                 ) : (
                   <ViewerPlaceholder label="Modelo 3D" />
                 )
-              ) : asset.type === '360_image' || asset.type === 'image_360' ? (
+              ) : asset.type === '360_image' ? (
                 activeIndex === index ? (
                   <Suspense fallback={<ViewerFallback />}>
                     <Viewer360 url={asset.url} />
@@ -78,7 +80,7 @@ export function MediaGallery({ media, className = "" }: { media: MediaAsset[]; c
                 ) : (
                   <ViewerPlaceholder label="Imagen 360°" />
                 )
-              ) : asset.type === 'video' ? (
+              ) : asset.type === 'vr_tour' ? <a href={asset.url} target="_blank" rel="noopener noreferrer" className="rounded bg-background p-4 text-foreground underline">Abrir recorrido publicado</a> : asset.type === 'video' ? (
                 <div className="w-full h-full relative" onClick={() => setActiveVideo(asset.id)}>
                   {activeVideo === asset.id ? (
                     <video 

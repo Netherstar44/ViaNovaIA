@@ -22,6 +22,7 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
   const [vrMode, setVrMode] = useState<'product' | 'interior' | null>(null);
   const displayRating = ratingOverride ?? item.rating ?? 0;
   const hasPanorama = Boolean(item.panoramaUrl);
+  const hasModel = Boolean(item.modelUrl);
 
   return (
     <motion.div 
@@ -64,12 +65,13 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
       </div>
       
       <div className="flex flex-col gap-2 pt-3 px-1">
-        {item.hasVR && (
-          <div className="grid grid-cols-2 gap-2 w-full">
+        {(hasModel || hasPanorama) && (
+          <div className={`grid ${hasModel && hasPanorama ? 'grid-cols-2' : 'grid-cols-1'} gap-2 w-full`}>
+             {hasModel && <>
              <Button 
                 variant="outline" 
                 size="sm" 
-                className={`w-full gap-1 text-xs ${hasPanorama ? '' : 'col-span-2'}`}
+                className="w-full gap-1 text-xs"
                 onClick={(e) => { e.stopPropagation(); setVrMode('product'); }}
              >
                <Box className="h-3 w-3" />
@@ -85,10 +87,11 @@ export default function CardItem({ item, onViewMap, ratingOverride }: CardItemPr
               >
                 <DialogTitle className="sr-only">Visor de producto 3D</DialogTitle>
                  <Suspense fallback={<div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">Cargando visor…</div>}>
-                   <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                   <VRViewer mode="product" onClose={() => setVrMode(null)} modelUrl={item.modelUrl} modelCaption={item.name} />
                  </Suspense>
               </DialogContent>
             </Dialog>
+             </>}
 
              {hasPanorama && (
                <>

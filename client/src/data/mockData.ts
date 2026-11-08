@@ -13,6 +13,8 @@ export interface LocationItem {
   /** Real equirectangular 2:1 panorama uploaded by the provider. */
   panoramaUrl?: string | null;
   panoramaCaption?: string;
+  modelUrl?: string | null;
+  media?: import("@shared/catalog-media").CatalogMedia[];
   contact?: string;
   parentHotelId?: string | null;
   responsibleVerified?: boolean;

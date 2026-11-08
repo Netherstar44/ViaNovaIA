@@ -9,6 +9,7 @@ import HomeSeoSection from "@/components/HomeSeoSection";
 import Comments from "@/components/Comments";
 import type { LocationItem } from "@/data/mockData";
 import { CatalogImage } from "@/components/CatalogImage";
+import { catalogViewerSources } from "@shared/catalog-media";
 import { isUsableCoordinatePair, parseCoordinate } from "@/lib/geo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -338,8 +339,7 @@ export default function Home() {
                 coordinates: [lat, lng],
                 rating: s.rating || 0,
                 priceRange: priceRangeFor(s.price),
-                hasVR: false,
-                hasAR: false,
+                ...catalogViewerSources(s.media),
                 contact: undefined,
                 parentHotelId: s.parentHotelId || undefined,
                 responsibleVerified: s.responsibleVerified === true,
@@ -798,6 +798,7 @@ export default function Home() {
 
                     {selectedItem?.hasVR ? (
                       <>
+                        {selectedItem.modelUrl && <>
                         <Button onClick={(e) => { e.stopPropagation(); setVrMode('product') }} variant="outline" className="h-12 px-6 rounded-xl border-primary/50 text-foreground hover:bg-primary/10 hover:text-primary transition-all">
                           <Box className="mr-2 h-5 w-5 text-primary-ink" />
                           {t('home.3d_model')}
@@ -813,10 +814,11 @@ export default function Home() {
                           >
                             <DialogTitle className="sr-only">Visor de producto 3D</DialogTitle>
                             <Suspense fallback={<InlineLoader />}>
-                              <VRViewer mode="product" onClose={() => setVrMode(null)} />
+                              <VRViewer mode="product" onClose={() => setVrMode(null)} modelUrl={selectedItem.modelUrl} modelCaption={selectedItem.name} />
                             </Suspense>
                           </DialogContent>
                         </Dialog>
+                        </>}
 
                         <Button onClick={(e) => { e.stopPropagation(); setVrMode('interior') }} className={`h-12 px-8 rounded-xl bg-primary text-black font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all ${selectedItem.panoramaUrl ? '' : 'hidden'}`}>
                           <Eye className="mr-2 h-5 w-5" />
