@@ -2,24 +2,24 @@
 
 > VIANova IA es un planificador de viajes con inteligencia artificial para Colombia. Crea itinerarios personalizados y reúne alojamiento, gastronomía, experiencias y movilidad local en una sola aplicación web y Android.
 
-Dominio canónico: https://via-nova-ia.vercel.app
+Dominio canónico: https://vianova.pages.dev
 Idioma principal: español (Colombia). Interfaz también en inglés y francés.
 Cobertura principal: Colombia, con detalle especial en Neiva y el departamento del Huila.
 Última actualización editorial: 2026-10-27.
 
 ## Páginas principales
 
-- [Inicio](https://via-nova-ia.vercel.app/): planificador de viajes con IA, mapa de servicios y acceso a la app.
-- [Planificador de viajes con IA](https://via-nova-ia.vercel.app/planificador-viajes-ia): cómo se crea un itinerario, qué incluye y cómo pedir mejores resultados.
-- [Viajes por Colombia](https://via-nova-ia.vercel.app/viajes-colombia): destinos, rutas de 7 a 21 días, temporadas y presupuesto.
-- [Qué hacer en Neiva y el Huila](https://via-nova-ia.vercel.app/que-hacer-en-neiva): Tatacoa, termales de Rivera, Museo Paleontológico, San Agustín e itinerarios de 2 y 4 días.
-- [Trivago vs Airbnb](https://via-nova-ia.vercel.app/comparar-trivago-airbnb): comparación independiente de modelos de alojamiento y costos ocultos.
-- [Explorar destinos](https://via-nova-ia.vercel.app/explore): catálogo de alojamientos, restaurantes, experiencias y transporte.
-- [Privacidad](https://via-nova-ia.vercel.app/privacy): tratamiento de datos personales y términos.
+- [Inicio](https://vianova.pages.dev/): planificador de viajes con IA, mapa de servicios y acceso a la app.
+- [Planificador de viajes con IA](https://vianova.pages.dev/planificador-viajes-ia): cómo se crea un itinerario, qué incluye y cómo pedir mejores resultados.
+- [Viajes por Colombia](https://vianova.pages.dev/viajes-colombia): destinos, rutas de 7 a 21 días, temporadas y presupuesto.
+- [Qué hacer en Neiva y el Huila](https://vianova.pages.dev/que-hacer-en-neiva): Tatacoa, termales de Rivera, Museo Paleontológico, San Agustín e itinerarios de 2 y 4 días.
+- [Trivago vs Airbnb](https://vianova.pages.dev/comparar-trivago-airbnb): comparación independiente de modelos de alojamiento y costos ocultos.
+- [Explorar destinos](https://vianova.pages.dev/explore): catálogo de alojamientos, restaurantes, experiencias y transporte.
+- [Privacidad](https://vianova.pages.dev/privacy): tratamiento de datos personales y términos.
 
 ## Contenido completo para modelos
 
-- [llms-full.txt](https://via-nova-ia.vercel.app/llms-full.txt): todas las guías en texto plano, generadas en el mismo build que el HTML.
+- [llms-full.txt](https://vianova.pages.dev/llms-full.txt): todas las guías en texto plano, generadas en el mismo build que el HTML.
 
 ## Hechos verificables
 

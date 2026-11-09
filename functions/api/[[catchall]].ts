@@ -5,7 +5,6 @@ interface Env {
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url);
-  // Reenviar al backend de producción en Vercel si no se especifica otro
   const backendBase = context.env.BACKEND_URL || "https://via-nova-ia.vercel.app";
   const targetUrl = new URL(url.pathname + url.search, backendBase);
 
@@ -23,9 +22,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
 
     const responseHeaders = new Headers(response.headers);
-    // Eliminar o ajustar CSP si entra en conflicto
     responseHeaders.set("Access-Control-Allow-Origin", url.origin);
     responseHeaders.set("Access-Control-Allow-Credentials", "true");
+
+    // Interceptar cualquier redirección (3xx) que mande a Vercel y reescribirla a Cloudflare Pages
+    const location = responseHeaders.get("Location");
+    if (location) {
+      const rewritten = location.replace(/https?:\/\/via-nova-ia\.vercel\.app/g, url.origin);
+      responseHeaders.set("Location", rewritten);
+    }
+
+    // Limpiar Domain en Set-Cookie para que la cookie pertenezca al dominio actual de Pages
+    const setCookie = responseHeaders.get("Set-Cookie");
+    if (setCookie) {
+      const rewrittenCookie = setCookie.replace(/Domain=[^;]+;?/gi, "");
+      responseHeaders.set("Set-Cookie", rewrittenCookie);
+    }
 
     return new Response(response.body, {
       status: response.status,

@@ -80,7 +80,7 @@ export function getAllowedOrigins(): string[] {
         "http://127.0.0.1:5055",
       ];
 
-  const defaults = isProduction() ? ["https://via-nova-ia.vercel.app"] : [];
+  const defaults = isProduction() ? ["https://vianova.pages.dev"] : [];
   return Array.from(new Set([...configured, ...defaults, ...native, ...local]));
 }
 
@@ -99,7 +99,7 @@ export function getAppBaseUrl(): string {
     const normalized = normalizeOrigin(configured);
     if (normalized) return normalized;
   }
-  return isProduction() ? "https://via-nova-ia.vercel.app" : "http://localhost:5055";
+  return isProduction() ? "https://vianova.pages.dev" : "http://localhost:5055";
 }
 
 /** URI de callback de Google OAuth fijada por entorno. */

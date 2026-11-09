@@ -7,7 +7,7 @@
  */
 
 /** Dominio canónico. El otro dominio debe declarar este como canonical. */
-export const SITE_URL = "https://via-nova-ia.vercel.app";
+export const SITE_URL = "https://vianova.pages.dev";
 export const SECONDARY_URL = "https://vianova.netherstar44.workers.dev";
 export const BRAND_NAME = "VIANova";
 export const BRAND_SHORT = "VIANova";

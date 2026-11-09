@@ -12,7 +12,7 @@ async function throwIfResNotOk(res: Response) {
 // Web deployments (including Cloudflare Workers) are always same-origin. Only
 // native/Capacitor builds need an absolute backend URL, and that URL can be
 // supplied at build time with VITE_NATIVE_API_BASE.
-const FALLBACK_NATIVE_API_BASE = "https://via-nova-ia.vercel.app";
+const FALLBACK_NATIVE_API_BASE = "https://vianova.pages.dev";
 const configuredNativeApiBase = String(import.meta.env.VITE_NATIVE_API_BASE || "")
   .trim()
   .replace(/\/+$/, "");

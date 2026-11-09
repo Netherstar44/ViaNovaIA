@@ -1,5 +1,5 @@
-Contact: https://via-nova-ia.vercel.app/privacy
+Contact: https://vianova.pages.dev/privacy
 Expires: 2027-10-30T00:00:00.000Z
 Preferred-Languages: es, en
-Canonical: https://via-nova-ia.vercel.app/.well-known/security.txt
-Policy: https://via-nova-ia.vercel.app/privacy
+Canonical: https://vianova.pages.dev/.well-known/security.txt
+Policy: https://vianova.pages.dev/privacy

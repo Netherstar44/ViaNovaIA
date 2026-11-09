@@ -1,5 +1,5 @@
 # robots.txt — VIANova IA
-# Canonical host: https://via-nova-ia.vercel.app
+# Canonical host: https://vianova.pages.dev
 # AI answer engines are welcome. Private app surfaces are not.
 
 # Content signals (IETF aipref draft): search, AI answers and training allowed
@@ -17,12 +17,12 @@ Disallow: /profile
 Disallow: /u/
 
 # Structured discovery
-Sitemap: https://via-nova-ia.vercel.app/sitemap.xml
-Host: https://via-nova-ia.vercel.app
+Sitemap: https://vianova.pages.dev/sitemap.xml
+Host: https://vianova.pages.dev
 
 # Long-form context for LLMs (generated at build time)
-# https://via-nova-ia.vercel.app/llms.txt
-# https://via-nova-ia.vercel.app/llms-full.txt
+# https://vianova.pages.dev/llms.txt
+# https://vianova.pages.dev/llms-full.txt
 
 # --- Search + AI crawlers (explicit allow) ---
 User-agent: Googlebot
