@@ -143,6 +143,23 @@ npm run dev              # API + Vite (necesita .env y base de datos)
 | Generación SEO | `vite-plugin-seo-pages.ts` |
 | Pruebas | `tests/*.test.ts` |
 
+### Skills del proyecto
+
+`skills/<id>/SKILL.md` contiene procedimientos verificados por área. **Ábrela antes de editar esa área**, no después. Cualquier agente (OpenCode, Claude Code, Codex, Cursor, Copilot, Gemini, Windsurf…) puede leerlas: son Markdown plano con frontmatter.
+
+| Skill | Cuándo usarla |
+| --- | --- |
+| `vianova-codebase` | Orientarte en el repo, comandos, convenciones y trampas. |
+| `vianova-theming` | Temas, tokens, superficies, contraste. |
+| `vianova-seo` | Landings, JSON-LD, sitemap, `llms.txt`, prerenderizado. |
+| `vianova-security` | Endpoints, auth, roles, pagos, uploads, rate limits, IA. |
+| `vianova-testing` | Pruebas, TDD, depuración de fallos. |
+| `vianova-media-360` | Panoramas 360°, Three.js, modelos 3D. |
+| `vianova-deploy` | Vercel, Workers, Node, Android, variables de entorno. |
+| `vianova-ai-chat` | `/api/chat`, Groq, catálogo, planificador, fallback. |
+
+Índice completo, cómo añadir una skill y matriz de compatibilidad por agente: `skills/README.md`.
+
 ---
 
 ## 6. Trampas conocidas (ya nos pasaron)
