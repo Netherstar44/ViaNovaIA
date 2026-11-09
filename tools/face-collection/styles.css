@@ -1,0 +1,40 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --ink: #17212b;
+  --muted: #5c6875;
+  --line: #d7dee6;
+  --accent: #0b6bcb;
+  --danger: #8b1d1d;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #111820; --card: #18222d; --ink: #edf3f8; --muted: #b5c1cc; --line: #2e3d4b; --accent: #6cb6ff; --danger: #ffb4b4; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 32px 18px 64px; }
+header { margin-bottom: 20px; }
+.eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: .74rem; margin: 0 0 8px; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.15; margin: 0 0 10px; }
+h2 { font-size: 1.1rem; margin: 0 0 14px; }
+.lead, .hint, .status { color: var(--muted); }
+.card, .warning { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin: 16px 0; }
+.warning { border-color: var(--danger); }
+.warning strong { display: block; color: var(--danger); margin-bottom: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+label { display: grid; gap: 6px; font-weight: 600; margin-bottom: 12px; }
+label.check { display: flex; align-items: flex-start; gap: 8px; font-weight: 500; }
+input, select, button { font: inherit; }
+input, select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--bg); color: var(--ink); }
+button { border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; background: var(--accent); color: #fff; cursor: pointer; font-weight: 650; }
+button.secondary { background: transparent; color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0; }
+.poses { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.consent { max-height: 260px; overflow: auto; white-space: pre-wrap; border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 12px 0; font-size: .92rem; background: var(--bg); }
+.instruction { font-weight: 700; }
+video { display: block; width: 100%; max-height: 420px; border-radius: 12px; background: #000; margin: 12px 0; transform: scaleX(-1); }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+code { font-size: .9em; }
+.status { min-height: 1.5em; }

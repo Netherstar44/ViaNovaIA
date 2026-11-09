@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Colección facial local — VIANova</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Solo este equipo · sin servicios externos</p>
+      <h1>Recolección facial para calibración</h1>
+      <p class="lead">Herramienta local para participantes voluntarios. No guarda nombres, documentos ni correos. No empieces hasta explicar el consentimiento y obtener autorización.</p>
+    </header>
+
+    <section class="warning">
+      <strong>Antes de guardar una sola foto:</strong>
+      <span>lee el consentimiento con la persona, comprueba que es voluntaria y que entiende la retención. La captura está deshabilitada hasta iniciar el servidor con <code>--authorize-capture</code>.</span>
+    </section>
+
+    <section class="card">
+      <h2>1. Acceso local</h2>
+      <label>Token que muestra la terminal
+        <input id="token" type="password" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="row">
+        <button id="load" class="secondary">Cargar estado</button>
+        <span id="connection" class="status"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Participante y consentimiento específico</h2>
+      <div class="grid">
+        <label>Seudónimo
+          <input id="participant" placeholder="voluntario-01" autocapitalize="none" spellcheck="false">
+        </label>
+        <label>Conjunto
+          <select id="split">
+            <option value="calibration">Calibración</option>
+            <option value="evaluation">Evaluación</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint">El seudónimo no debe contener nombres reales. La asignación de conjunto no se puede cambiar después.</p>
+      <div id="consent-text" class="consent"></div>
+      <label class="check"><input id="accepted" type="checkbox"> He leído y la persona aceptó este consentimiento específico.</label>
+      <button id="register">Registrar consentimiento</button>
+      <p id="participant-status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>3. Sesión de captura</h2>
+      <div class="grid">
+        <label>Condición
+          <select id="condition"></select>
+        </label>
+        <button id="new-session" class="secondary">Crear sesión</button>
+      </div>
+      <p class="hint">Haz varias sesiones en momentos distintos. Incluye luz normal, poca luz y gafas cuando corresponda. No cambies la etiqueta para “mejorar” el resultado.</p>
+      <p id="session-status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>4. Capturas guiadas</h2>
+      <p id="instruction" class="instruction">Crea una sesión y enciende la cámara.</p>
+      <video id="video" playsinline muted></video>
+      <canvas id="canvas" width="640" height="480" hidden></canvas>
+      <div class="row">
+        <button id="camera" class="secondary">Encender cámara</button>
+        <button id="stop" class="secondary">Apagar</button>
+      </div>
+      <div class="poses">
+        <button data-pose="center" disabled>Centro</button>
+        <button data-pose="left" disabled>Izquierda</button>
+        <button data-pose="right" disabled>Derecha</button>
+      </div>
+      <p id="capture-status" class="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>Estado local</h2>
+      <button id="refresh" class="secondary">Actualizar resumen</button>
+      <pre id="state">Sin cargar.</pre>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -9,6 +9,8 @@
   "scripts": {
     "face:assets": "node scripts/prepare-face-assets.mjs",
     "face:calibrate": "tsx scripts/calibrate-face.ts",
+    "face:collect": "tsx scripts/face-collect.ts",
+    "face:preflight": "tsx scripts/face-preflight.ts",
     "identity:purge": "tsx scripts/purge-identity.ts",
     "predev": "npm run face:assets",
     "predev:client": "npm run face:assets",
