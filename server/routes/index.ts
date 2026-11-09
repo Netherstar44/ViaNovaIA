@@ -34,7 +34,7 @@ import { and, eq, sql as drizzleSql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail, sendCustomEmail } from "../mailer.js";
-import { getAppBaseUrl, getGoogleRedirectUri, getGoogleAllowedClientIds } from "../config.js";
+import { getAppBaseUrl, getGoogleRedirectUri, getGoogleAllowedClientIds, isOriginAllowed } from "../config.js";
 import {
   requireAuth,
   optionalAuth,
@@ -1040,6 +1040,15 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       if (!code) {
         const state = crypto.randomBytes(32).toString("hex");
+        const rawOrigin = req.headers["x-forwarded-host"] ? `https://${req.headers["x-forwarded-host"]}` : req.headers.origin;
+        const originUrl = rawOrigin && isOriginAllowed(rawOrigin) ? rawOrigin : getAppBaseUrl();
+        res.cookie("oauth_origin", originUrl, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 10 * 60 * 1000,
+          path: "/api/auth/google",
+        });
         res.cookie("oauth_state", state, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -1121,7 +1130,11 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       // No colocamos datos personales en la URL: el cliente consulta
       // /api/auth/me usando la cookie HttpOnly recién emitida.
-      return res.redirect(`${getAppBaseUrl()}/login#google=1`);
+      const targetBase = (req as any).cookies?.oauth_origin && isOriginAllowed((req as any).cookies.oauth_origin)
+        ? (req as any).cookies.oauth_origin
+        : getAppBaseUrl();
+      res.clearCookie("oauth_origin", { path: "/api/auth/google" });
+      return res.redirect(`${targetBase}/login#google=1`);
     } catch (err) {
       console.error("Auth google error:", err);
       next(err);
