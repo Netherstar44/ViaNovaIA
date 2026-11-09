@@ -9,6 +9,7 @@ import { ArrowRight, Mail, KeyRound, ArrowLeft, Check, AlertCircle, Eye, EyeOff,
 import { motion, AnimatePresence } from "framer-motion";
 import AppLoader from "@/components/AppLoader";
 import GlassCanvas from "@/components/ui/GlassCanvas";
+import { FaceLogin } from "@/components/identity/FaceLogin";
 import { Capacitor } from '@capacitor/core';
 import { apiBase } from "@/lib/queryClient";
 import logoPrincipal from "@/assets/Logo_principal-removebg-preview.webp";
@@ -47,6 +48,7 @@ export default function Login() {
 
   // UI state
   const [viewMode, setViewMode] = useState<ViewMode>("auth");
+  const [authTab, setAuthTab] = useState("login");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -435,9 +437,10 @@ export default function Login() {
                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-4 text-muted-foreground/60">O usa tu cuenta local</span></div>
                 </div>
 
-                <Tabs defaultValue="login" className="w-full" onValueChange={clearMessage}>
-                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-secondary/50 p-1 rounded-xl">
+                <Tabs value={authTab} onValueChange={(value) => { setAuthTab(value); clearMessage(); }} className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary/50 p-1 rounded-xl">
                     <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">Ingreso</TabsTrigger>
+                    <TabsTrigger value="face" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">Rostro</TabsTrigger>
                     <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">Registro</TabsTrigger>
                   </TabsList>
 
@@ -490,6 +493,20 @@ export default function Login() {
                       </Button>
                     </form>
                     )}
+                  </TabsContent>
+
+                  {/* ─── FACE LOGIN TAB ─── */}
+                  <TabsContent value="face" className="mt-0">
+                    <FaceLogin
+                      initialIdentifier={loginUsername}
+                      onMessage={clearMessage}
+                      onRequires2FA={(username, text) => {
+                        setTwoFAUser(username);
+                        setTwoFACode("");
+                        setAuthTab("login");
+                        setMessage({ type: "success", text });
+                      }}
+                    />
                   </TabsContent>
 
                   {/* ─── REGISTER TAB (no role selection) ─── */}

@@ -5,6 +5,10 @@
  * synthetic descriptors, so those values must never enable the feature by
  * themselves. An operator must additionally approve the calibration after
  * reviewing an independent evaluation report.
+ *
+ * `FACE_DEV_MODE` is a local-only escape hatch: it is ignored outside
+ * development/test and never sets `ready`. It exists so enrollment and face
+ * login can be exercised before a real calibration report is approved.
  */
 export const FACE_CALIBRATION_TARGET_FAR = 0.001; // 0.1 %
 export const FACE_CALIBRATION_TARGET_FRR = 0.05; // 5 %
@@ -19,7 +23,10 @@ export const FACE_CALIBRATION_MIN_GROUP_IMPOSTORS = 100;
 export const FACE_CALIBRATION_MIN_GROUP_GENUINE = 30;
 
 export type CalibrationGate = {
+  /** Production-approved calibration. Only this flag may enable the feature in production. */
   ready: boolean;
+  /** Explicit local override active. Always false in production. */
+  development: boolean;
   threshold: number | null;
   reason: string | null;
 };
@@ -32,17 +39,22 @@ export function calibrationGate(env: NodeJS.ProcessEnv = process.env): Calibrati
   const rawThreshold = env.FACE_DISTANCE_THRESHOLD;
   const threshold = Number(rawThreshold);
   if (!rawThreshold || !Number.isFinite(threshold) || threshold <= 0 || threshold >= 1) {
-    return { ready: false, threshold: null, reason: "Falta un umbral de distancia calibrado." };
+    return { ready: false, development: false, threshold: null, reason: "Falta un umbral de distancia calibrado." };
   }
+
+  // Local-only override. It deliberately requires an explicit flag and a
+  // non-production environment; setting it in production changes nothing.
+  const development = env.FACE_DEV_MODE === "true" && (env.NODE_ENV === "development" || env.NODE_ENV === "test");
+  const developmentThreshold = development ? threshold : null;
 
   const calibrationId = String(env.FACE_CALIBRATION_ID ?? "").trim();
   if (!/^[A-Za-z0-9._:-]{8,128}$/.test(calibrationId)) {
-    return { ready: false, threshold: null, reason: "Falta un identificador de calibración válido." };
+    return { ready: false, development, threshold: developmentThreshold, reason: "Falta un identificador de calibración válido." };
   }
 
   if (env.FACE_CALIBRATION_APPROVED !== "true") {
-    return { ready: false, threshold: null, reason: "La calibración no tiene aprobación explícita." };
+    return { ready: false, development, threshold: developmentThreshold, reason: "La calibración no tiene aprobación explícita." };
   }
 
-  return { ready: true, threshold, reason: null };
+  return { ready: true, development, threshold, reason: null };
 }

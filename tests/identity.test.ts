@@ -86,6 +86,61 @@ test("retención de 30 días suprime plantillas al leer y el historial no contie
   await h.service.read("driver"); assert.equal(h.records.get("driver")?.template, undefined);
   assert.equal(JSON.stringify(h.audit).includes("descriptor"), false);
 });
+test("modo desarrollo local: permite enrolar y acceder sin aprobación de calibración", async () => {
+  const h = harness();
+  const saved = { NODE_ENV: process.env.NODE_ENV, FACE_DEV_MODE: process.env.FACE_DEV_MODE, FACE_CALIBRATION_APPROVED: process.env.FACE_CALIBRATION_APPROVED };
+  process.env.NODE_ENV = "test"; process.env.FACE_DEV_MODE = "true"; process.env.FACE_CALIBRATION_APPROVED = "false";
+  try {
+    await h.service.consent("driver"); await h.complete("enroll");
+    assert.deepEqual(h.service.faceLoginStatus(await h.store.get("driver")), { ready: true, enrolled: true, locked: false });
+  } finally {
+    for (const [key, value] of Object.entries(saved)) value === undefined ? delete process.env[key] : process.env[key] = value;
+  }
+});
+test("el modo desarrollo se ignora en producción", async () => {
+  const h = harness();
+  const saved = { NODE_ENV: process.env.NODE_ENV, FACE_DEV_MODE: process.env.FACE_DEV_MODE, FACE_CALIBRATION_APPROVED: process.env.FACE_CALIBRATION_APPROVED };
+  process.env.NODE_ENV = "production"; process.env.FACE_DEV_MODE = "true"; process.env.FACE_CALIBRATION_APPROVED = "false";
+  try {
+    await h.service.consent("driver");
+    await assert.rejects(h.service.challenge("driver", "enroll"), /calibración aprobada/);
+  } finally {
+    for (const [key, value] of Object.entries(saved)) value === undefined ? delete process.env[key] : process.env[key] = value;
+  }
+});
+test("acceso facial 1:1: completa el reto sin conceder identidad verificada", async () => {
+  const h = harness(); await h.service.consent("driver"); await h.complete("enroll");
+  let step: any = await h.service.faceLoginChallenge("driver");
+  while (!step.done) {
+    h.tick();
+    step = await h.service.faceLoginFrame("driver", step.id, Buffer.from([step.action === "left" ? 1 : step.action === "right" ? 2 : 0]));
+  }
+  assert.equal(step.done, true);
+  assert.ok(step.distance <= 0.4);
+  const after = await h.store.get("driver");
+  assert.equal(after.verifiedAt, undefined);
+  assert.equal(after.validUntil, 0);
+  assert.equal(after.loginChallenge, undefined);
+  assert.equal((await h.service.public("driver")).verified, false);
+});
+test("acceso facial rechaza un rostro distinto con error genérico", async () => {
+  const h = harness(); await h.service.consent("driver"); await h.complete("enroll");
+  const c = await h.service.faceLoginChallenge("driver"); h.tick();
+  await assert.rejects(h.service.faceLoginFrame("driver", c.id, Buffer.from([3])), (error: any) =>
+    error.status === 401 && !/plantilla|cuenta|enrol/i.test(error.message));
+  assert.equal(h.records.get("driver")?.loginChallenge, undefined);
+});
+test("el acceso facial bloquea tras cinco retos abandonados", async () => {
+  const h = harness(); await h.service.consent("driver"); await h.complete("enroll");
+  for (let i = 0; i < 5; i++) await h.service.faceLoginChallenge("driver");
+  await assert.rejects(h.service.faceLoginChallenge("driver"), /Demasiados/);
+  assert.equal(h.service.faceLoginStatus(await h.store.get("driver")).locked, true);
+});
+test("el acceso facial no revela cuentas sin plantilla", async () => {
+  const h = harness(); await h.service.consent("driver");
+  await assert.rejects(h.service.faceLoginChallenge("driver"), (error: any) => error.status === 401);
+  assert.equal(h.service.faceLoginStatus(await h.store.get("driver")).enrolled, false);
+});
 test("motor real: carga modelos locales y rechaza JPEG sintético sin rostro", async () => {
   const { VladFaceEngine } = await import("../server/identity/face-engine.js");
   const { createCanvas } = await import("@napi-rs/canvas");

@@ -7,7 +7,8 @@ import { identityStore, type IdentityRecord, type IdentityStore } from "./store.
 export function identityError(message: string, status = 400) { return Object.assign(new Error(message), { status }); }
 function threshold(): number {
   const gate = calibrationGate();
-  if (!gate.ready || gate.threshold === null) throw identityError("La verificación facial requiere calibración aprobada. Solicita revisión manual.", 503);
+  // `development` is a local-only override and never becomes `ready`.
+  if ((!gate.ready && !gate.development) || gate.threshold === null) throw identityError("La verificación facial requiere calibración aprobada. Solicita revisión manual.", 503);
   return gate.threshold;
 }
 function ttl(): number {
@@ -42,8 +43,13 @@ export class IdentityService {
       await this.save(subject, r, subject, "challenge-retention", "deleted");
       r.revision++;
     }
-    if (r.templateExpires && r.templateExpires <= this.now() && (r.template || r.challenge)) {
-      delete r.template; delete r.challenge; delete r.templateExpires; r.validUntil = 0;
+    if (r.loginChallenge && r.loginChallenge.expires <= this.now()) {
+      delete r.loginChallenge;
+      await this.save(subject, r, subject, "login-challenge-retention", "deleted");
+      r.revision++;
+    }
+    if (r.templateExpires && r.templateExpires <= this.now() && (r.template || r.challenge || r.loginChallenge)) {
+      delete r.template; delete r.challenge; delete r.loginChallenge; delete r.templateExpires; r.validUntil = 0;
       await this.save(subject, r, subject, "retention", "deleted");
       r.revision++;
     }
@@ -76,6 +82,7 @@ export class IdentityService {
   async revoke(subject: string) {
     const r = await this.read(subject);
     delete r.template; delete r.challenge; delete r.model; delete r.templateExpires;
+    delete r.loginChallenge; delete r.loginAttempts; delete r.loginLockedUntil;
     delete r.consentAt; r.revoked = true; r.validUntil = 0; delete r.method;
     await this.save(subject, r, subject, "consent", "revoked-template-deleted");
   }
@@ -94,6 +101,84 @@ export class IdentityService {
       r.method = "manual"; r.revoked = false; r.verifiedAt = this.now(); r.validUntil = this.now() + ttl();
     } else { r.validUntil = 0; }
     await this.save(subject, r, actor, "admin-document-approval", method);
+  }
+  /* ── Acceso facial 1:1: la cuenta se elige antes del reto ───────────────── */
+  /**
+   * Estado de la credencial facial para la propia cuenta. No revela umbral,
+   * modelo ni plantilla. Se calcula sobre el registro ya leído por la ruta.
+   */
+  faceLoginStatus(record: IdentityRecord) {
+    const gate = calibrationGate();
+    return {
+      ready: (gate.ready || gate.development) && gate.threshold !== null && this.engine.available !== false,
+      enrolled: !!record.template && !record.revoked && !!record.consentAt
+        && record.consentVersion === CONSENT_VERSION && record.model === this.engine.model
+        && (record.templateExpires ?? 0) > this.now(),
+      locked: (record.loginLockedUntil ?? 0) > this.now(),
+    };
+  }
+  async faceLoginChallenge(subject: string) {
+    threshold();
+    const r = await this.read(subject);
+    if ((r.loginLockedUntil ?? 0) > this.now()) throw identityError("Demasiados intentos. Espera 15 minutos.", 429);
+    if (r.revoked || !r.template || !r.consentAt || r.consentVersion !== CONSENT_VERSION
+      || r.model !== this.engine.model || (r.templateExpires ?? 0) <= this.now()) {
+      throw identityError("No pudimos iniciar sesión con tu rostro.", 401);
+    }
+    // Starting a challenge also counts; abandoning it cannot reset attempts.
+    r.loginAttempts = (r.loginAttempts ?? 0) + 1;
+    if (r.loginAttempts > 5) {
+      r.loginLockedUntil = this.now() + 900_000; r.loginAttempts = 0;
+      await this.save(subject, r, subject, "login-challenge", "locked");
+      throw identityError("Demasiados intentos. Espera 15 minutos.", 429);
+    }
+    const direction = randomInt(2) ? "left" : "right";
+    r.loginChallenge = {
+      id: randomUUID(),
+      actions: ["center", direction, "center", direction === "left" ? "right" : "left", "center"],
+      step: 0, issued: this.now(), expires: this.now() + 90_000,
+    };
+    await this.save(subject, r, subject, "login-challenge", "issued");
+    return { id: r.loginChallenge.id, action: r.loginChallenge.actions[0], step: 0 };
+  }
+  async faceLoginFrame(subject: string, id: string, image: Buffer) {
+    try {
+      const limit = threshold();
+      const r = await this.read(subject); const c = r.loginChallenge;
+      if (!c || c.id !== id || c.expires <= this.now()) throw identityError("Reto vencido o utilizado. Solicita uno nuevo.", 409);
+      // Re-check the credential: a revocation or expiry between challenge and
+      // frame must never fall back to the frame's own baseline.
+      if (r.revoked || !r.template || !r.consentAt || r.consentVersion !== CONSENT_VERSION
+        || r.model !== this.engine.model || (r.templateExpires ?? 0) <= this.now()) {
+        throw identityError("No pudimos iniciar sesión con tu rostro.", 401);
+      }
+      if (this.now() - c.issued < 300) throw identityError("Espera a completar el movimiento indicado.");
+      let score: number | undefined;
+      try {
+        const sample = await this.engine.analyze(image, false);
+        const guide = quality(sample, c.actions[c.step]);
+        if (guide) throw identityError(guide);
+        if (!actionMatches(c.actions[c.step], sample)) throw identityError("No se detectó el movimiento solicitado. Reinicia el reto.");
+        if (!c.baseline) c.baseline = sample.descriptor;
+        score = distance(r.template, sample.descriptor);
+        if (score > limit || distance(c.baseline, sample.descriptor) > limit) throw identityError("No pudimos iniciar sesión con tu rostro.", 401);
+        c.step++;
+        if (c.step === c.actions.length) {
+          // El acceso facial no concede identidad verificada: solo autentica.
+          delete r.loginChallenge; r.loginAttempts = 0;
+          await this.save(subject, r, subject, "login", "passed", score);
+          return { done: true, distance: Number(score.toFixed(3)) };
+        }
+        c.id = randomUUID(); c.issued = this.now();
+        await this.save(subject, r, subject, "login-step", "passed", score);
+        return { done: false, id: c.id, action: c.actions[c.step], step: c.step };
+      } catch (error) {
+        delete r.loginChallenge;
+        await this.save(subject, r, subject, "login", "rejected", score);
+        if ((error as any).status) throw error;
+        throw identityError("No pudimos procesar el rostro. Revisa luz, distancia y posición.");
+      }
+    } finally { image.fill(0); }
   }
   /* ── Piloto experimental: no concede identidad verificada ni sesiones ─── */
   async pilotStatus(subject: string): Promise<Omit<PilotIdentityStatus, "invited">> {

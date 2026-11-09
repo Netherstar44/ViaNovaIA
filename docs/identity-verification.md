@@ -12,18 +12,47 @@ Acceso visible: menú de cuenta → **Verificación facial** → `/settings`. La
 
 La vista previa puede abrirse mediante **Abrir cámara de vista previa**, aunque el registro no esté habilitado. Solo muestra el video local: no extrae ni envía fotogramas, no ejecuta reconocimiento y no guarda plantilla. **Añadir mi rostro** requiere consentimiento guardado y `faceReady: true` del servidor. Un error de estado no deja continuar un reto activo; la vista previa independiente puede permanecer abierta y cerrarse explícitamente.
 
+El acceso con rostro ya guardado está en `/login`, pestaña **Rostro**. Se escribe el usuario o correo, se completa el mismo reto de cinco posiciones y, si la cuenta tiene 2FA, la interfaz cambia a la pestaña **Ingreso** para pedir el código. Sin 2FA, la sesión se emite directamente. El rostro autentica la cuenta; no la marca como identidad verificada.
+
+## Acceso facial (1:1)
+
+El acceso es **1:1**: la cuenta se elige antes del reto y cada fotograma se compara con la plantilla de esa cuenta. No se hace 1:N ni se busca “a quién pertenece este rostro”. Es deliberado: sin una calibración aprobada, un 1:N podría autenticar a la persona equivocada y además enumerar cuentas.
+
+Endpoints públicos, registrados antes de `requireAuth`:
+
+| Método y ruta | Cuerpo | Respuesta |
+| --- | --- | --- |
+| `POST /api/identity/login/challenge` | `{ "identifier": "usuario o correo" }` | `{ id, action, step }` |
+| `POST /api/identity/login/frame` | `{ identifier, id, jpeg }` | `{ done: false, id, action, step }`, sesión `{ done: true, user, token? }` o 2FA `{ done: true, requires2FA, username, message }` |
+
+`done: true` es el contrato terminal: el cliente deja de enviar fotogramas. El campo `token` solo aparece para el cliente nativo; el navegador recibe la cookie `HttpOnly`. El reto dura 90 segundos, exige al menos 300 ms entre fotogramas y encadena cinco acciones (`center`, giro, `center`, giro contrario, `center`). Cada fotograma debe cumplir calidad de luz, nitidez, tamaño y pose, coincidir con la acción pedida y quedar por debajo del umbral tanto frente a la plantilla como frente al primer fotograma del reto.
+
+Requisitos para iniciar: plantilla existente, consentimiento vigente, modelo actual y plantilla no vencida. No se exige aprobación documental: la plantilla es una credencial de la cuenta, no una certificación de identidad. Un fotograma de login revalida la credencial después del reto, de modo que una revocación o un vencimiento ocurridos entre el reto y el fotograma no caen al baseline del propio fotograma.
+
+Controles de abuso:
+
+- Tras cinco retos iniciados o fallidos, la cuenta queda bloqueada 15 minutos (`loginLockedUntil`). Iniciar un reto también cuenta: abandonarlo no reinicia el contador.
+- Rate limit de 10 peticiones por 15 minutos por IP + identificador y 40 por 15 minutos por IP; las respuestas correctas no consumen cuota (`skipSuccessfulRequests`).
+- Usuario inexistente, cuenta sin plantilla, plantilla revocada o rostro que no coincide devuelven el mismo 401 genérico. No se revela si la cuenta existe ni si tiene enrolamiento.
+- Un reto vencido o reutilizado responde 409 y obliga a empezar de nuevo; un motor ocupado responde 429.
+- El login facial no escribe `verifiedAt` ni `validUntil`: la insignia de identidad sigue dependiendo del enrolamiento aprobado o de la revisión manual.
+
+`GET /api/identity/me` expone `faceLogin: { ready, enrolled, locked }` para la propia cuenta. `ready` combina el gate de calibración (o el modo desarrollo), el umbral y la disponibilidad del motor; `enrolled` exige plantilla, consentimiento vigente, modelo actual y vigencia; `locked` refleja el bloqueo temporal.
+
 ## Variables del despliegue
 
 El administrador con acceso a las variables de **ese proyecto de Vercel** debe copiar `BIOMETRIC_ENCRYPTION_KEY` desde el archivo local autorizado al entorno desplegado; editar `.env` local no configura automáticamente el servidor remoto. No compartirla por chat ni añadirla al repo. No hace falta cambiar el dominio. Si hay plantillas existentes, no rotar la clave sin un procedimiento de migración: dejarían de poder descifrarse.
 
 `FACE_DISTANCE_THRESHOLD` y `FACE_CALIBRATION_ID` deben proceder del informe de calibración, no de los valores sintéticos de tests. Además, `FACE_CALIBRATION_APPROVED=true` solo se configura después de revisar una evaluación independiente que cumpla el objetivo de riesgo; sin esa aprobación explícita, el servidor rechaza iniciar retos faciales aunque existan umbral e ID. `FACE_CONSENT_LEGAL_APPROVED=true` solo tras completar/revisar el consentimiento. No se habilitaron estos valores arbitrariamente. Reiniciar/publicar el entorno después de configurar variables. `/api/identity/me` comunica por separado `manualReady` y `faceReady` sin exponer secretos; una migración por sí sola no activa el reconocimiento.
 
+`FACE_DEV_MODE=true` es una excepción **solo local**: se ignora salvo en `development`/`test`, exige igualmente `FACE_DISTANCE_THRESHOLD` y nunca activa `ready` ni `FACE_CALIBRATION_APPROVED`. Sirve para probar enrolamiento y acceso facial antes de tener un informe aprobado. `/api/identity/me` expone `calibration.development` para que la UI avise que es una prueba local y no una calibración aprobada. En producción no cambia nada: el gate sigue siendo `ready`.
+
 Referencias de plataforma: [Node fijado mediante engines](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions), [incluir los pesos en una función](https://vercel.com/docs/project-configuration/vercel-json).
 
 1. `npm ci --include=dev` y `npm run face:assets`. El build prepara también los modelos públicos versionados y el bundle de cámara desde el paquete fijado, sin CDN.
 2. Para desarrollo aislado, crear una **base PostgreSQL local vacía**, ejecutar primero las migraciones existentes y aplicar `migrations/identity-verification.sql` con una URL local comprobada. En la base configurada ya se aplicó esta migración con autorización escrita del usuario; no repetir migraciones heredadas sobre producción. La migración nueva es aditiva y no modifica registros existentes.
 3. Configurar JWT/SESSION y la URL **local** habituales; una `BIOMETRIC_ENCRYPTION_KEY` independiente de 32 bytes en hex; `FACE_DISTANCE_THRESHOLD` y `FACE_CALIBRATION_ID` obtenidos de la calibración; y `FACE_CALIBRATION_APPROVED=true` solo tras revisar el informe independiente. No hay umbral predeterminado ni aprobación de calibración por defecto. `FACE_VALIDITY_MINUTES=30` limita vigencia; reverificación facial aleatoria entre el 50% y el 100% de esa vigencia. Sin esos valores, usar la alternativa manual.
-4. `npm run dev`. En `/settings` o `/taxi-dashboard`: autorización separada → enrolar cinco posiciones → administrador coteja presencialmente documento y persona, y aprueba nombre/referencia en `/admin` → verificar con cámara → activar disponibilidad → pedir taxi con otra sesión en `/request-ride` o el panel del mapa. La insignia y hora proceden del servidor; foto/placa existente solo cuando corresponde al viaje asignado.
+4. `npm run dev`. En `/settings` o `/taxi-dashboard`: autorización separada → enrolar cinco posiciones → administrador coteja presencialmente documento y persona, y aprueba nombre/referencia en `/admin` → verificar con cámara → activar disponibilidad → pedir taxi con otra sesión en `/request-ride` o el panel del mapa. La insignia y hora proceden del servidor; foto/placa existente solo cuando corresponde al viaje asignado. Para probar el acceso, cerrar sesión y entrar en `/login` → pestaña **Rostro** con el mismo usuario o correo; si la cuenta tiene 2FA, se pedirá el código después del reto.
 5. Alternativa: solicitar revisión manual; administrador coteja documento y aprueba vía manual. Permite el mismo trabajo sin biometría y vence con la misma vigencia máxima. Renovarla requiere otra revisión. La cuenta de turista se verifica igual; el conductor solo recibe el nombre de pila aprobado y el estado.
 6. `npm run check`, `npm test`, `npm run build`, `npm audit --omit=dev --audit-level=high`.
 
@@ -65,7 +94,7 @@ Ejecutar `npm run face:calibrate -- ruta/manifest.json ruta/reporte.json`. Selec
 
 ## Privacidad, operación y límites
 
-AES-256-GCM con AAD por usuario cifra estado, plantilla versionada, referencia documental y baseline transitorio; no guarda fotos. Nonces de un solo uso, 90 s, 5 intentos, bloqueo 15 min y límites por cuenta/IP; una inferencia simultánea por proceso. CAS impide que una inferencia concurrente restaure un consentimiento revocado. Las plantillas duran 30 días; revocación elimina plantilla y reto e invalida el turno en la misma escritura. Las respuestas autenticadas son `no-store`. Auditoría restringida: actor, sujeto, fecha, acción, resultado y distancia escalar; no vectores ni imágenes en logs.
+AES-256-GCM con AAD por usuario cifra estado, plantilla versionada, referencia documental y baseline transitorio; no guarda fotos. Nonces de un solo uso, 90 s, 5 intentos, bloqueo 15 min y límites por cuenta/IP; una inferencia simultánea por proceso. El acceso facial usa un reto propio (`loginChallenge`) y no reutiliza el reto de verificación ni escribe la vigencia de identidad. CAS impide que una inferencia concurrente restaure un consentimiento revocado. Las plantillas duran 30 días; revocación elimina plantilla y reto e invalida el turno en la misma escritura. Las respuestas autenticadas son `no-store`. Auditoría restringida: actor, sujeto, fecha, acción, resultado y distancia escalar; no vectores ni imágenes en logs.
 
 Ejecutar `npm run identity:purge` cada cinco minutos sobre el servidor compatible para supresión física de plantillas caducadas; el acceso también las elimina y siempre rechaza su uso vencido. El servidor Node persistente inicia la purga cada cinco minutos cuando hay clave biométrica; en serverless hace falta programarla externamente. Supervisar si hay más de 500 vencidas por lote. Los baselines de retos abandonados también caducan a los 90 segundos y se eliminan en lectura o purga. Las copias de seguridad/WAL no pueden prometer borrado inmediato: definir caducidad limitada de backups, acceso restringido y reejecutar purga/revocaciones antes de cualquier restauración. Purgar auditoría según el plazo legal aprobado; no exponerla en UI pública. El rate limit HTTP es por proceso, con bloqueo de retos persistente por cuenta; para varias instancias se requiere el almacén distribuido existente antes de habilitar.
 

@@ -57,6 +57,29 @@ export const loginIpLimiter = rateLimit({
   handler: jsonHandler("Demasiados intentos desde esta conexión. Espera 15 minutos."),
 });
 
+/**
+ * Acceso facial: límite por IP + identificador de cuenta. Solo cuentan los
+ * intentos fallidos; un inicio correcto no consume cupo.
+ */
+export const faceLoginLimiter = rateLimit({
+  ...common(),
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => `face-login:${ip(req)}:${accountHash(req.body?.identifier)}`,
+  handler: jsonHandler("Demasiados intentos faciales. Espera 15 minutos e inténtalo de nuevo."),
+});
+
+/** Límite por IP sola: evita enumerar cuentas rotando identificadores. */
+export const faceLoginIpLimiter = rateLimit({
+  ...common(),
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => `face-login-ip:${ip(req)}`,
+  handler: jsonHandler("Demasiados intentos desde esta conexión. Espera 15 minutos."),
+});
+
 export const registerLimiter = rateLimit({
   ...common(),
   windowMs: 60 * 60 * 1000,

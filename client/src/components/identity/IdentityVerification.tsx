@@ -39,6 +39,8 @@ type Status = {
   manualRequested: boolean;
   faceReady?: boolean;
   manualReady?: boolean;
+  calibration?: { ready: boolean; development: boolean; reason: string | null };
+  faceLogin?: { ready: boolean; enrolled: boolean; locked: boolean };
   pilot?: PilotStatus;
 };
 
@@ -206,7 +208,10 @@ export function IdentityVerification() {
       <Button variant="outline" disabled={isFetching} onClick={() => refetch()}>Reintentar conexión</Button>
     </div>}
     {available && <IdentityBadge identity={data?.identity} />}
-    {available && !faceReady && <p role="status" className="text-sm text-muted-foreground">El registro facial está pendiente de habilitación. Puedes abrir la vista previa de cámara; para registrar el rostro, contacta al administrador.</p>}
+    {available && data?.calibration?.development && <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-300">
+      Modo desarrollo local: la calibración facial <strong>no está aprobada</strong>. Puedes registrar y probar tu rostro en este equipo, pero no se considera evidencia de producción ni concede una identidad verificada.
+    </p>}
+    {available && !faceReady && <p role="status" className="text-sm text-muted-foreground">El registro facial está pendiente de habilitación{data?.calibration?.reason ? `: ${data.calibration.reason}` : "."} Puedes abrir la vista previa de cámara; para registrar el rostro, contacta al administrador.</p>}
     <p className="text-sm text-muted-foreground">Un administrador aprueba el nombre al revisar tu documento. Puedes elegir revisión manual sin usar el rostro.</p>
     {faceReady && !data?.consent && <><p className="text-sm text-muted-foreground">Para activar «Añadir mi rostro», revisa y guarda primero esta autorización específica.</p><details className="text-sm"><summary className="cursor-pointer py-2">Consentimiento biométrico (borrador: revisar con abogado)</summary><p className="py-2">{BIOMETRIC_CONSENT}</p></details>
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="mt-1 h-5 w-5" />Autorizo específicamente el tratamiento facial descrito en el borrador.</label>

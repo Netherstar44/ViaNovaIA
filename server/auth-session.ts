@@ -6,11 +6,11 @@ import { cookieOptions, isNativeAuthClient, sanitizeUser, signToken } from "./se
  * navegador y JWT solo para el cliente nativo. Nunca devuelve el hash ni datos
  * internos del usuario.
  */
-export function issueSession(req: Request, res: Response, user: any) {
+export function issueSession(req: Request, res: Response, user: any, extra: Record<string, unknown> = {}) {
   const token = signToken(user);
   res.cookie("token", token, cookieOptions());
   res.set("Cache-Control", "no-store");
-  const payload: Record<string, unknown> = { user: sanitizeUser(user) };
+  const payload: Record<string, unknown> = { ...extra, user: sanitizeUser(user) };
   if (isNativeAuthClient(req)) payload.token = token;
   return res.json(payload);
 }
