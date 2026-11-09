@@ -80,7 +80,7 @@ export function getAllowedOrigins(): string[] {
         "http://127.0.0.1:5055",
       ];
 
-  const defaults = isProduction() ? ["https://vianova.pages.dev"] : [];
+  const defaults = isProduction() ? ["https://vianova.pages.dev", "https://via-nova-ia.vercel.app"] : [];
   return Array.from(new Set([...configured, ...defaults, ...native, ...local]));
 }
 

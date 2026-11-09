@@ -3,12 +3,12 @@ name: Cloudflare Pages Deployment
 on:
   push:
     branches:
-      - Despliegue-vercel
       - main
+      - Despliegue-vercel
   pull_request:
     branches:
-      - Despliegue-vercel
       - main
+      - Despliegue-vercel
 
 permissions:
   contents: read
@@ -39,7 +39,18 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
+      - name: Verify Cloudflare Secret
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "::warning::El secreto CLOUDFLARE_API_TOKEN no está configurado en GitHub Secrets. Agrégalo en Settings > Secrets and variables > Actions para habilitar el despliegue automático desde GitHub."
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish to Cloudflare Pages
+        if: steps.check-secrets.outputs.has_token == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
