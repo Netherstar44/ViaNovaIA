@@ -1,10 +1,21 @@
 {
-  "status": "awaiting-authorized-dataset",
+  "status": "blocked",
   "model": "face-api-1.7.15-recognition-v1-landmark68",
   "selectedThreshold": null,
   "genuineComparisons": 0,
   "impostorComparisons": 0,
   "FAR": null,
   "FRR": null,
-  "reason": "No hay un conjunto facial autorizado y etiquetado en el repositorio. Las pruebas con motor simulado no miden exactitud biométrica."
+  "target": {
+    "FAR": 0.001,
+    "FRR": 0.05,
+    "confidence": 0.95,
+    "minimumEvaluationImpostors": 3000,
+    "minimumEvaluationGenuine": 300,
+    "minimumGroupImpostors": 100,
+    "minimumGroupGenuine": 30
+  },
+  "productionEnabled": false,
+  "datasetReview": "docs/face-dataset-review.md",
+  "reason": "No hay un conjunto facial autorizado y etiquetado en el repositorio. Las pruebas con motor simulado no miden exactitud biométrica y ningún dataset revisado autoriza este uso comercial sin un acuerdo y revisión adicionales."
 }

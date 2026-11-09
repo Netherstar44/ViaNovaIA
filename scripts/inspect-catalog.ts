@@ -23,7 +23,7 @@ const serviceMedia = await attachCatalogMedia(services, 'service', execute);
 const productMedia = await attachCatalogMedia(products, 'product', execute);
 const summary = { mode: 'READ ONLY', services: services.length, activeProducts: products.length, assets, identity,
   attachedServiceAssets: serviceMedia.reduce((n, row) => n + row.media.length, 0), attachedProductAssets: productMedia.reduce((n, row) => n + row.media.length, 0),
-  faceConfigured: { encryption: !!process.env.BIOMETRIC_ENCRYPTION_KEY, threshold: !!process.env.FACE_DISTANCE_THRESHOLD, calibration: !!process.env.FACE_CALIBRATION_ID } };
+  faceConfigured: { encryption: !!process.env.BIOMETRIC_ENCRYPTION_KEY, threshold: !!process.env.FACE_DISTANCE_THRESHOLD, calibration: !!process.env.FACE_CALIBRATION_ID, approved: process.env.FACE_CALIBRATION_APPROVED === "true" } };
 await mkdir('_capture-catalog', { recursive: true });
 await writeFile('_capture-catalog/summary.json', JSON.stringify(summary, null, 2));
 if (process.argv.includes('--ui-fixture')) {
