@@ -1179,6 +1179,8 @@ ViaNovaIA aspira a ser el **sistema operativo de viajes locales de Colombia**: u
 
 La integración facial de desarrollo, sus límites y requisitos están en [docs/identity-verification.md](docs/identity-verification.md). No hay umbral de reconocimiento habilitado sin calibración ni cambios automáticos de producción.
 
+La sección está al principio de `/settings`, accesible desde el menú de cuenta → **Verificación facial**. La vista previa local de cámara funciona incluso si el servicio de identidad no está disponible. El registro requiere consentimiento específico, configuración del servidor y calibración; la revisión manual permite verificar sin biometría. La migración aditiva de identidad se aplicó a la base configurada con autorización escrita; la clave generada en `.env` local debe configurarse también en el entorno de Vercel, sin compartirla ni subirla al repositorio.
+
 El diagnóstico, la captura y la evidencia del visor esférico están en [docs/spherical-capture.md](docs/spherical-capture.md). Las zonas no capturadas se declaran; una imagen 2:1 no demuestra por sí sola cobertura completa.
 
 La auditoría del catálogo, la conexión de sus archivos y el estado real de la base están en [docs/catalog-media-audit.md](docs/catalog-media-audit.md). El catálogo ya no incorpora sitios ni reservas de demostración del frontend.

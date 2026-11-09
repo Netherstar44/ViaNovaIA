@@ -205,6 +205,10 @@ export default function AccountSettings() {
           <h1 className="text-3xl font-bold mb-2">Configuración de Cuenta</h1>
           <p className="text-muted-foreground mb-10">Administra tu perfil, cuentas y ajustes específicos.</p>
 
+          <div className="mb-8">
+            <IdentityVerification />
+          </div>
+
           {/* Message */}
           <AnimatePresence>
             {message && (
@@ -271,7 +275,6 @@ export default function AccountSettings() {
                     </Button>
                   </Link>
                   
-                  <IdentityVerification />
                   <div className="pt-2 border-t border-border/30">
                     <span className="text-xs text-muted-foreground block mb-2">Rol Activo</span>
                     <div className="relative">

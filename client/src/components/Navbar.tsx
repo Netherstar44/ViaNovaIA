@@ -281,6 +281,11 @@ export default function Navbar() {
                     {t('navbar.settings', 'Configuración de Cuenta')}
                   </DropdownMenuItem>
 
+                  <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer gap-2">
+                    <Shield className="h-4 w-4" />
+                    Verificación facial
+                  </DropdownMenuItem>
+
                   {user.role === 'admin' && (
                     <DropdownMenuItem onClick={() => setLocation("/admin")} className="cursor-pointer gap-2">
                       <Shield className="h-4 w-4 text-red-400" />

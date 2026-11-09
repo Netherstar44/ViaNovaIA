@@ -1,13 +1,27 @@
-# Identidad — frente A (desarrollo, no habilitado para producción)
+# Identidad — frente A
 
-React 19/Vite 7/Capacitor puede abrir cámara en HTTPS o localhost. El backend es Express 4/PostgreSQL Neon; existe Workers y Vercel. La máquina tenía Node 26.8.1: se instaló Node **22.23.4** solo como dependencia de desarrollo con autorización del usuario. `npm run` usa su ejecutable local. Workers no ejecuta el motor; falla cerrado. No se cambió hosting ni se llamó a producción.
+React 19/Vite 7/Capacitor puede abrir cámara en HTTPS o localhost. El backend es Express 4/PostgreSQL Neon; existe Workers y Vercel. La máquina tenía Node 26.8.1: se instaló Node **22.23.4** solo como dependencia de desarrollo con autorización del usuario. `npm run` usa su ejecutable local. Workers no ejecuta el motor; falla cerrado. No se cambió hosting. La migración aditiva en la base configurada se ejecutó con autorización escrita, como se detalla abajo.
 
-La entrada persistente `server/index.ts` inyecta el motor Node; los adaptadores que usan solo `createExpressServer` (Workers/Vercel) conservan revisión manual y no importan el decodificador nativo. Se verificó la compilación de Workers con `wrangler deploy --dry-run`, sin desplegar. Su futura habilitación facial necesita una decisión explícita de arquitectura/hosting.
+La entrada persistente `server/index.ts` y la función `api/index.ts` de Vercel inyectan el motor con Node 22. Workers mantiene la alternativa manual y no importa el decodificador nativo. `package.json` fija `22.x` y `vercel.json` incluye expresamente el bundle y los pesos de face-api: faltaba esa inicialización en la entrega inicial, causando fallos al intentar verificar en Vercel. Estos cambios son de código/configuración del repositorio; no se modifica la cuenta ni el dominio.
 
 ## Probar
 
+Acceso visible: menú de cuenta → **Verificación facial** → `/settings`. La sección aparece al principio de Configuración, con el botón **Añadir mi rostro**. El registro se habilita después de consultar el estado y guardar el consentimiento; si la API no está disponible se informa explícitamente, y la vista previa local sigue siendo independiente.
+
+**Actualización autorizada del 8 de noviembre de 2026:** se crearon `identity_verifications`, `identity_audit` y `identity_audit_subject_time` en la base configurada, tras confirmación escrita del usuario. No se borraron ni modificaron registros existentes. También se generó, con autorización separada, una clave biométrica en `.env`, ignorado por git; su valor no aparece en informes ni en el chat.
+
+La vista previa puede abrirse mediante **Abrir cámara de vista previa**, aunque el registro no esté habilitado. Solo muestra el video local: no extrae ni envía fotogramas, no ejecuta reconocimiento y no guarda plantilla. **Añadir mi rostro** requiere consentimiento guardado y `faceReady: true` del servidor. Un error de estado no deja continuar un reto activo; la vista previa independiente puede permanecer abierta y cerrarse explícitamente.
+
+## Variables del despliegue
+
+El administrador con acceso a las variables de **ese proyecto de Vercel** debe copiar `BIOMETRIC_ENCRYPTION_KEY` desde el archivo local autorizado al entorno desplegado; editar `.env` local no configura automáticamente el servidor remoto. No compartirla por chat ni añadirla al repo. No hace falta cambiar el dominio. Si hay plantillas existentes, no rotar la clave sin un procedimiento de migración: dejarían de poder descifrarse.
+
+`FACE_DISTANCE_THRESHOLD` y `FACE_CALIBRATION_ID` deben proceder del informe de calibración, no de los valores sintéticos de tests. `FACE_CONSENT_LEGAL_APPROVED=true` solo tras completar/revisar el consentimiento. No se habilitaron estos valores arbitrariamente. Reiniciar/publicar el entorno después de configurar variables. `/api/identity/me` comunica por separado `manualReady` y `faceReady` sin exponer secretos; una migración por sí sola no activa el reconocimiento.
+
+Referencias de plataforma: [Node fijado mediante engines](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions), [incluir los pesos en una función](https://vercel.com/docs/project-configuration/vercel-json).
+
 1. `npm ci --include=dev` y `npm run face:assets`. El build prepara también los modelos públicos versionados y el bundle de cámara desde el paquete fijado, sin CDN.
-2. Crear una **base PostgreSQL local vacía** y ejecutar primero las migraciones existentes para su esquema. Aplicar `migrations/identity-verification.sql` únicamente a esa base, con una herramienta PostgreSQL y una URL local comprobada. Esta tarea no ejecutó migraciones contra la base configurada: puede ser producción. La migración nueva es aditiva y no modifica registros existentes.
+2. Para desarrollo aislado, crear una **base PostgreSQL local vacía**, ejecutar primero las migraciones existentes y aplicar `migrations/identity-verification.sql` con una URL local comprobada. En la base configurada ya se aplicó esta migración con autorización escrita del usuario; no repetir migraciones heredadas sobre producción. La migración nueva es aditiva y no modifica registros existentes.
 3. Configurar JWT/SESSION y la URL **local** habituales; una `BIOMETRIC_ENCRYPTION_KEY` independiente de 32 bytes en hex; `FACE_DISTANCE_THRESHOLD` y `FACE_CALIBRATION_ID` obtenidos de la calibración. No hay umbral predeterminado. `FACE_VALIDITY_MINUTES=30` limita vigencia; reverificación facial aleatoria entre el 50% y el 100% de esa vigencia. Sin esos valores, usar la alternativa manual.
 4. `npm run dev`. En `/settings` o `/taxi-dashboard`: autorización separada → enrolar cinco posiciones → administrador coteja presencialmente documento y persona, y aprueba nombre/referencia en `/admin` → verificar con cámara → activar disponibilidad → pedir taxi con otra sesión en `/request-ride` o el panel del mapa. La insignia y hora proceden del servidor; foto/placa existente solo cuando corresponde al viaje asignado.
 5. Alternativa: solicitar revisión manual; administrador coteja documento y aprueba vía manual. Permite el mismo trabajo sin biometría y vence con la misma vigencia máxima. Renovarla requiere otra revisión. La cuenta de turista se verifica igual; el conductor solo recibe el nombre de pila aprobado y el estado.
@@ -17,7 +31,7 @@ El repo representa negocios como servicios con `providerUsername`, sin flujo ind
 
 ## Exactitud y calibración
 
-`docs/face-calibration-report.json` declara 0 comparaciones y FAR/FRR/umbral **no disponibles**. Las pruebas unitarias usan descriptores sintéticos y no acreditan exactitud. El smoke real solo demuestra carga del motor/decodificador/modelos y rechazo de un JPEG sin rostro.
+`docs/face-calibration-report.json` declara 0 comparaciones y FAR/FRR/umbral **no disponibles**. El usuario confirmó que no dispone de un conjunto de prueba autorizado: la verificación automática permanece pendiente; la vista previa y la revisión manual no requieren inventar un umbral. Las pruebas unitarias usan descriptores sintéticos y no acreditan exactitud. El smoke real solo demuestra carga del motor/decodificador/modelos y rechazo de un JPEG sin rostro.
 
 Preparar fuera de git un `manifest.json` con `consentConfirmed: true`, `enrollments: {"sujeto-anonimo": "enrolamiento.jpg"}` y `probes: [{"claimedId":"sujeto-anonimo","image":"probe.jpg","genuine":true,"group":"poca-luz"}]`. Incluir comparaciones genuinas de sesiones diferentes e impostoras (`genuine:false`); grupos `normal`, `poca-luz`, `gafas`, `piel-clara`, `piel-media`, `piel-oscura`, etiquetados con autorización específica. JPEG de 160–960 px, hasta 240 KB. Separar calibración y evaluación independiente; no reutilizar fotos de enrolamiento como pruebas.
 
