@@ -1035,13 +1035,13 @@ export async function registerRoutes(app: Express): Promise<Express> {
       if (!clientId || !clientSecret) {
         return res.status(503).json({ message: "Google OAuth no está configurado" });
       }
-      const redirectUri = getGoogleRedirectUri();
+      const rawOrigin = req.headers["x-forwarded-host"] ? `https://${req.headers["x-forwarded-host"]}` : req.headers.origin;
+      const originUrl = rawOrigin && isOriginAllowed(rawOrigin) ? rawOrigin : getAppBaseUrl();
       const code = sanitizeSingleLine(req.query.code, 2048);
 
       if (!code) {
         const state = crypto.randomBytes(32).toString("hex");
-        const rawOrigin = req.headers["x-forwarded-host"] ? `https://${req.headers["x-forwarded-host"]}` : req.headers.origin;
-        const originUrl = rawOrigin && isOriginAllowed(rawOrigin) ? rawOrigin : getAppBaseUrl();
+        const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${originUrl}/api/auth/google`;
         res.cookie("oauth_origin", originUrl, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
@@ -1068,6 +1068,11 @@ export async function registerRoutes(app: Express): Promise<Express> {
         logSecurityEvent("google_oauth_state_invalid", { ip: req.ip });
         return res.status(400).json({ message: "Estado OAuth inválido. Intenta de nuevo." });
       }
+
+      const targetBase = (req as any).cookies?.oauth_origin && isOriginAllowed((req as any).cookies.oauth_origin)
+        ? (req as any).cookies.oauth_origin
+        : originUrl;
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${targetBase}/api/auth/google`;
 
       const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
@@ -1130,9 +1135,6 @@ export async function registerRoutes(app: Express): Promise<Express> {
 
       // No colocamos datos personales en la URL: el cliente consulta
       // /api/auth/me usando la cookie HttpOnly recién emitida.
-      const targetBase = (req as any).cookies?.oauth_origin && isOriginAllowed((req as any).cookies.oauth_origin)
-        ? (req as any).cookies.oauth_origin
-        : getAppBaseUrl();
       res.clearCookie("oauth_origin", { path: "/api/auth/google" });
       return res.redirect(`${targetBase}/login#google=1`);
     } catch (err) {

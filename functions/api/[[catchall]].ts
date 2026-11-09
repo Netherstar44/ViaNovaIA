@@ -3,6 +3,23 @@ interface Env {
   PUBLIC_URL?: string;
 }
 
+function splitCookiesString(str: string): string[] {
+  if (!str) return [];
+  const cookies: string[] = [];
+  let start = 0;
+  let inExpires = false;
+  for (let i = 0; i < str.length; i++) {
+    if (str.slice(i, i + 8).toLowerCase() === "expires=") inExpires = true;
+    if (inExpires && str[i] === ";") inExpires = false;
+    if (!inExpires && str[i] === "," && str[i + 1] === " ") {
+      cookies.push(str.slice(start, i).trim());
+      start = i + 2;
+    }
+  }
+  if (start < str.length) cookies.push(str.slice(start).trim());
+  return cookies;
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const url = new URL(context.request.url);
   const backendBase = context.env.BACKEND_URL || "https://via-nova-ia.vercel.app";
@@ -36,11 +53,20 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       responseHeaders.set("Location", rewritten);
     }
 
-    // Limpiar Domain en Set-Cookie para que la cookie pertenezca al dominio actual de Pages
-    const setCookie = responseHeaders.get("Set-Cookie");
-    if (setCookie) {
-      const rewrittenCookie = setCookie.replace(/Domain=[^;]+;?/gi, "");
-      responseHeaders.set("Set-Cookie", rewrittenCookie);
+    // Preservar múltiples cookies individuales y eliminar Domain para que pertenezcan a Pages
+    const rawCookies: string[] =
+      typeof (response.headers as any).getSetCookie === "function"
+        ? (response.headers as any).getSetCookie()
+        : splitCookiesString(response.headers.get("Set-Cookie") || "");
+
+    if (rawCookies.length > 0) {
+      responseHeaders.delete("Set-Cookie");
+      for (const cookie of rawCookies) {
+        const rewrittenCookie = cookie.replace(/Domain=[^;]+;?/gi, "").trim();
+        if (rewrittenCookie) {
+          responseHeaders.append("Set-Cookie", rewrittenCookie);
+        }
+      }
     }
 
     return new Response(response.body, {
