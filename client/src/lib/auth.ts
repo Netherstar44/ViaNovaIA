@@ -47,6 +47,7 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   login: (username: string, password: string) => Promise<{ ok: boolean; message?: string; requires2FA?: boolean; username?: string }>;
+  loginWithPasskey: () => Promise<{ ok: boolean; message?: string; requires2FA?: boolean; username?: string }>;
   verify2FA: (username: string, code: string) => Promise<{ ok: boolean; message?: string }>;
   loginDirect: (username: string, role: UserRole, name?: string, email?: string, roleChangedAt?: string | null, token?: string | null) => void;
   register: (data: {
@@ -163,6 +164,52 @@ export const useAuth = create<AuthState>((set, get) => {
       } catch (err: any) {
         set({ loading: false });
         return { ok: false, message: err.message || 'Error de conexión' };
+      }
+    },
+
+    loginWithPasskey: async () => {
+      set({ loading: true });
+      try {
+        const optionsRes = await fetch(apiBase + '/api/auth/passkey/options', {
+          method: 'POST',
+          credentials: 'include',
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
+          body: '{}',
+        });
+        const optionsData = await optionsRes.json();
+        if (!optionsRes.ok) {
+          set({ loading: false });
+          return { ok: false, message: optionsData.message || 'El acceso con passkey no está disponible.' };
+        }
+        const { startAuthentication } = await import('@simplewebauthn/browser');
+        const assertion = await startAuthentication({ optionsJSON: optionsData.options });
+        const res = await fetch(apiBase + '/api/auth/passkey/verify', {
+          method: 'POST',
+          credentials: 'include',
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ challengeId: optionsData.challengeId, response: assertion }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          set({ loading: false });
+          return { ok: false, message: data.message || 'No se pudo entrar con passkey.' };
+        }
+        if (data.requires2FA) {
+          set({ loading: false });
+          return { ok: false, requires2FA: true, username: data.username, message: data.message };
+        }
+        const user: User = toAuthUser(data.user);
+        localStorage.setItem('user', JSON.stringify(user));
+        await setAuthToken(data.token || null);
+        set({ user, isAuthenticated: true, loading: false });
+        const { queryClient } = await import('./queryClient');
+        queryClient.clear();
+        get().fetchRoles();
+        return { ok: true };
+      } catch (err: any) {
+        set({ loading: false });
+        const cancelled = err?.name === 'NotAllowedError' || err?.name === 'AbortError';
+        return { ok: false, message: cancelled ? 'Cancelaste o el dispositivo no confirmó la passkey.' : (err?.message || 'Error de conexión') };
       }
     },
 

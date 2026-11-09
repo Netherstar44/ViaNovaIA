@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "../server/routes/index.js";
 import { ensureUserSchema } from "../server/analytics.js";
+import { ensureSecuritySchema } from "../server/passkeys/schema.js";
 import { assertSecurityConfig, getSessionSecret } from "../server/config.js";
 import { applyHttpSecurity } from "../server/http-security.js";
 import { requestLogger, logServerError } from "../server/observability.js";
@@ -42,6 +43,8 @@ app.use(express.urlencoded({ extended: false, limit: "256kb" }));
 app.use("/api", async (_req, _res, next) => {
   try {
     await ensureUserSchema();
+    // Solo tablas nuevas (IF NOT EXISTS); nunca altera datos existentes.
+    await ensureSecuritySchema().catch((err) => console.error("[security-schema]", err?.message || err));
     next();
   } catch (err) {
     next(err);

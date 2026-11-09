@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer, bigint, real } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, varchar, timestamp, jsonb, integer, bigint, real, boolean, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -429,6 +429,46 @@ export const identityAudit = pgTable("identity_audit", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+
+// Passkeys WebAuthn. La clave pública nunca se expone al cliente.
+export const userPasskeys = pgTable("user_passkeys", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  credentialId: text("credential_id").notNull().unique(),
+  publicKey: text("public_key").notNull(),
+  counter: bigint("counter", { mode: "number" }).notNull().default(0),
+  transports: text("transports").notNull().default("[]"),
+  deviceType: text("device_type"),
+  backedUp: boolean("backed_up").notNull().default(false),
+  label: text("label"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+});
+export const webauthnChallenges = pgTable("webauthn_challenges", {
+  id: uuid("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  challenge: text("challenge").notNull(),
+  purpose: text("purpose"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+export const reauthTokens = pgTable("reauth_tokens", {
+  tokenHash: text("token_hash").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  purpose: text("purpose").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+// Allowlist del piloto facial experimental. Control exclusivo del servidor.
+export const identityPilotAccess = pgTable("identity_pilot_access", {
+  username: text("username").primaryKey().references(() => users.username, { onDelete: "cascade" }),
+  invitedBy: text("invited_by").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
 
 export type LocationItem = {
   id: string;

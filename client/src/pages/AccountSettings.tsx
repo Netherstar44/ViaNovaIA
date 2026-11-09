@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import PaymentMethods from "@/components/PaymentMethods";
 import { IdentityVerification } from "@/components/identity/IdentityVerification";
+import { AccessSecurity } from "@/components/security/AccessSecurity";
 import { ReviewList } from "@/components/ReviewSystem";
 
 const ROLES: { value: UserRole; label: string; icon: React.ReactElement; desc: string; color: string; fields: string[] }[] = [
@@ -204,6 +205,10 @@ export default function AccountSettings() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <h1 className="text-3xl font-bold mb-2">Configuración de Cuenta</h1>
           <p className="text-muted-foreground mb-10">Administra tu perfil, cuentas y ajustes específicos.</p>
+
+          <div className="mb-8">
+            <AccessSecurity />
+          </div>
 
           <div className="mb-8">
             <IdentityVerification />

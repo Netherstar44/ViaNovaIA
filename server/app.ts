@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import { createServer, type Server } from "http";
 import { registerRoutes } from "./routes/index.js";
 import { ensureUserSchema } from "./analytics.js";
+import { ensureSecuritySchema } from "./passkeys/schema.js";
 import { assertSecurityConfig, getSessionSecret } from "./config.js";
 import { applyHttpSecurity } from "./http-security.js";
 import { requestLogger, logServerError } from "./observability.js";
@@ -56,6 +57,8 @@ export async function createExpressServer(): Promise<{ app: Express; httpServer:
   app.use("/api", async (_req, _res, next) => {
     try {
       await ensureUserSchema();
+      // Solo tablas nuevas (IF NOT EXISTS); nunca altera datos existentes.
+      await ensureSecuritySchema().catch((err) => console.error("[security-schema]", err?.message || err));
       next();
     } catch (err) {
       next(err);

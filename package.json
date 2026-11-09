@@ -70,6 +70,8 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.1.0",
     "@stripe/stripe-js": "^9.5.0",
     "@tanstack/react-query": "^5.60.5",
     "@tensorflow/tfjs": "4.22.0",

@@ -5,6 +5,9 @@ import { attachCatalogMedia } from "../catalog-media.js";
 import { normalizeCatalogMedia } from "../../shared/catalog-media.js";
 import { registerTaxiRoutes } from "./taxi.routes.js";
 import { registerIdentityRoutes, identities } from "../identity/routes.js";
+import { registerPasskeyRoutes } from "../passkeys/routes.js";
+import { requireReauth } from "../passkeys/reauth.js";
+import { beginTwoFactorChallenge } from "../two-factor.js";
 import { getRideById } from "../taxi.storage.js";
 import { bookingsRouter } from "./bookings.routes.js";
 import { socialRouter } from "./social.routes.js";
@@ -607,21 +610,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
       `);
 
       if (String(user.twoFactorEnabled) === "true") {
-        const code = crypto.randomInt(100000, 999999).toString();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-        await db.execute(drizzleSql`
-          UPDATE users
-          SET verification_token = ${`2fa:${hashResetToken(code)}:${expiresAt}`}, two_factor_attempts = 0
-          WHERE id = ${user.id}
-        `);
-        if (user.email) {
-          sendCustomEmail({
-            to: user.email,
-            subject: "Tu código de verificación VIANova",
-            html: `<p>Hola ${escapeHtml(user.name || user.username)},</p><p>Tu código de verificación en dos pasos es: <strong>${code}</strong></p><p>Expira en 10 minutos.</p>`,
-          }).catch((err) => console.error("Error enviando código 2FA:", err.message));
-        }
-        return res.json({ requires2FA: true, username: user.username, message: "Ingresa el código enviado a tu correo." });
+        return res.json(await beginTwoFactorChallenge(user));
       }
 
       return sendAuthenticated(req, res, user);
@@ -706,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Express> {
     }
   });
 
-  app.patch("/api/auth/2fa", requireAuth, async (req: any, res) => {
+  app.patch("/api/auth/2fa", requireAuth, requireReauth("two-factor"), async (req: any, res) => {
     try {
       const enabled = req.body?.enabled === true || req.body?.enabled === "true";
       const user = await storage.getUserByUsername(req.user.username);
@@ -727,6 +716,75 @@ export async function registerRoutes(app: Express): Promise<Express> {
       res.json({ enabled });
     } catch {
       res.status(500).json({ message: "No se pudo actualizar la verificación en dos pasos" });
+    }
+  });
+
+  /* ── Cambios sensibles: confirmación reciente ligada a la operación ─────── */
+
+  app.patch("/api/auth/password", requireAuth, writeLimiter, requireReauth("password-change"), async (req: any, res, next) => {
+    try {
+      const currentPassword = typeof req.body?.currentPassword === "string" ? req.body.currentPassword : "";
+      const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user || user.deletedAt) return res.status(404).json({ message: "Usuario no encontrado" });
+
+      if (/^\$2[aby]\$/.test(String(user.password || ""))) {
+        const valid = currentPassword ? await bcrypt.compare(currentPassword, user.password) : false;
+        if (!valid) return res.status(401).json({ message: "La contraseña actual no es correcta" });
+      }
+      const check = validatePassword(newPassword, user.username);
+      if (!check.ok) return res.status(400).json({ message: check.message });
+      if (await bcrypt.compare(newPassword, user.password)) {
+        return res.status(400).json({ message: "La nueva contraseña debe ser diferente a la actual" });
+      }
+
+      await storage.updateUserPassword(user.id, await hashPassword(newPassword));
+      await revokeTokenFromRequest(req);
+      if (user.email) {
+        sendPasswordChangedEmail(user.email, user.name || user.username, `${getAppBaseUrl()}/login`)
+          .catch((err) => console.error("Error enviando aviso de cambio de contraseña:", err?.message || err));
+      }
+      logSecurityEvent("auth.password.change", { actor: req.user.username, target: user.username });
+      res.clearCookie("token", clearCookieOptions());
+      return res.json({ ok: true, message: "Contraseña actualizada. Inicia sesión de nuevo." });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch("/api/auth/recovery-email", requireAuth, profileLimiter, requireReauth("recovery-email"), async (req: any, res, next) => {
+    try {
+      const email = normalizeEmail(req.body?.email);
+      if (!isValidEmail(email)) return res.status(400).json({ message: "El correo de recuperación no es válido" });
+      const user = await storage.getUserByUsername(req.user.username);
+      if (!user || user.deletedAt) return res.status(404).json({ message: "Usuario no encontrado" });
+      const existing = await storage.getUserByEmail(email);
+      if (existing && existing.id !== user.id) {
+        return res.status(409).json({ message: "Ese correo ya está registrado en otra cuenta" });
+      }
+
+      const code = crypto.randomInt(100000, 999999).toString();
+      await storage.updateUserProfile(user.id, { email, updatedAt: new Date() });
+      const db = getDb();
+      await db.execute(drizzleSql`
+        UPDATE users SET is_verified = 'false', verification_token = ${code} WHERE id = ${user.id}
+      `);
+      sendCustomEmail({
+        to: email,
+        subject: "Verifica tu nuevo correo de recuperación",
+        html: `<p>Hola ${escapeHtml(user.name || user.username)},</p><p>Tu código de verificación es: <strong>${code}</strong></p>`,
+      }).catch((err) => console.error("Error enviando código al nuevo correo:", err?.message || err));
+      if (user.email && user.email !== email) {
+        sendCustomEmail({
+          to: user.email,
+          subject: "El correo de recuperación de tu cuenta cambió",
+          html: `<p>El correo de recuperación de tu cuenta VIANova cambió a ${escapeHtml(email)}. Si no fuiste tú, cambia tu contraseña de inmediato.</p>`,
+        }).catch(() => undefined);
+      }
+      logSecurityEvent("auth.recovery-email.change", { actor: req.user.username, target: user.username });
+      return res.json({ email, verified: false, message: "Correo actualizado. Revisa el código enviado a la nueva dirección." });
+    } catch (err) {
+      next(err);
     }
   });
 
@@ -3068,6 +3126,7 @@ ${analyticsContext}`;
 
   // ── Módulo Taxi ────────────────────────────────────────────────────────────
   registerIdentityRoutes(app);
+  registerPasskeyRoutes(app);
   registerTaxiRoutes(app);
 
   return app;
