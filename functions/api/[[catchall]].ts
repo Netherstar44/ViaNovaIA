@@ -25,10 +25,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     responseHeaders.set("Access-Control-Allow-Origin", url.origin);
     responseHeaders.set("Access-Control-Allow-Credentials", "true");
 
-    // Interceptar cualquier redirección (3xx) que mande a Vercel y reescribirla a Cloudflare Pages
+    // Interceptar cualquier redirección (3xx), tanto URLs directas como parámetros codificados en OAuth
     const location = responseHeaders.get("Location");
     if (location) {
-      const rewritten = location.replace(/https?:\/\/via-nova-ia\.vercel\.app/g, url.origin);
+      const originDecoded = url.origin;
+      const originEncoded = encodeURIComponent(url.origin);
+      let rewritten = location
+        .replaceAll("https://via-nova-ia.vercel.app", originDecoded)
+        .replaceAll(encodeURIComponent("https://via-nova-ia.vercel.app"), originEncoded);
       responseHeaders.set("Location", rewritten);
     }
 
