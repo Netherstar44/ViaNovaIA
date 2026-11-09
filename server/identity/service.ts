@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
-import { CONSENT_VERSION, type PublicIdentity } from "../../shared/identity.js";
-import { actionMatches, distance, isCurrent, quality, type FaceEngine } from "./policy.js";
+import { CONSENT_VERSION, PILOT_CONSENT_VERSION, type PilotIdentityStatus, type PublicIdentity } from "../../shared/identity.js";
+import { actionMatches, distance, isCurrent, quality, type FaceEngine, type FaceSample } from "./policy.js";
 import { calibrationGate } from "./calibration.js";
 import { identityStore, type IdentityRecord, type IdentityStore } from "./store.js";
 
@@ -14,6 +14,25 @@ function ttl(): number {
   const minutes = Number(process.env.FACE_VALIDITY_MINUTES ?? 30);
   return Math.max(1, Math.min(120, Number.isFinite(minutes) ? minutes : 30)) * 60_000;
 }
+/** Umbral experimental, independiente de la calibración aprobada. */
+function pilotThreshold(): number {
+  const raw = Number(process.env.FACE_PILOT_DISTANCE_THRESHOLD ?? 0.55);
+  return Math.min(0.8, Math.max(0.3, Number.isFinite(raw) ? raw : 0.55));
+}
+function pilotRetentionDays(): number {
+  const raw = Number(process.env.FACE_PILOT_RETENTION_DAYS ?? 7);
+  return Math.max(1, Math.min(30, Number.isFinite(raw) ? raw : 7));
+}
+/** Calidad legible para la persona; nunca vectores ni fotogramas. */
+export function pilotQualityReport(sample: FaceSample) {
+  return {
+    facePixels: Math.round(sample.facePixels),
+    light: Math.round((sample.light / 255) * 100),
+    sharpness: Math.max(0, Math.round(sample.sharpness)),
+    yaw: Number(sample.yaw.toFixed(2)),
+    roll: Math.round(sample.roll),
+  };
+}
 export class IdentityService {
   constructor(readonly engine: FaceEngine, readonly store: IdentityStore = identityStore, readonly now = Date.now) {}
   async read(subject: string) {
@@ -26,6 +45,11 @@ export class IdentityService {
     if (r.templateExpires && r.templateExpires <= this.now() && (r.template || r.challenge)) {
       delete r.template; delete r.challenge; delete r.templateExpires; r.validUntil = 0;
       await this.save(subject, r, subject, "retention", "deleted");
+      r.revision++;
+    }
+    if (r.pilotTemplateExpires && r.pilotTemplateExpires <= this.now() && (r.pilotTemplate || r.pilotChallenge)) {
+      delete r.pilotTemplate; delete r.pilotChallenge; delete r.pilotModel; delete r.pilotTemplateExpires;
+      await this.save(subject, r, subject, "pilot-retention", "deleted");
       r.revision++;
     }
     return r;
@@ -70,6 +94,118 @@ export class IdentityService {
       r.method = "manual"; r.revoked = false; r.verifiedAt = this.now(); r.validUntil = this.now() + ttl();
     } else { r.validUntil = 0; }
     await this.save(subject, r, actor, "admin-document-approval", method);
+  }
+  /* ── Piloto experimental: no concede identidad verificada ni sesiones ─── */
+  async pilotStatus(subject: string): Promise<Omit<PilotIdentityStatus, "invited">> {
+    const r = await this.read(subject);
+    return {
+      consent: !!r.pilotConsentAt && r.pilotConsentVersion === PILOT_CONSENT_VERSION,
+      enrolled: !!r.pilotTemplate && (r.pilotTemplateExpires ?? 0) > this.now(),
+      ready: this.engine.available !== false,
+      model: this.engine.model,
+      threshold: pilotThreshold(),
+      retentionDays: pilotRetentionDays(),
+      last: r.pilotLastAt
+        ? { at: new Date(r.pilotLastAt).toISOString(), distance: r.pilotLastDistance ?? null, quality: r.pilotLastQuality ?? null }
+        : null,
+    };
+  }
+  async pilotConsent(subject: string, version: string) {
+    const r = await this.read(subject);
+    r.pilotConsentAt = this.now(); r.pilotConsentVersion = version;
+    await this.save(subject, r, subject, "pilot-consent", "authorized");
+  }
+  async pilotRevoke(subject: string) {
+    const r = await this.read(subject);
+    delete r.pilotTemplate; delete r.pilotChallenge; delete r.pilotModel; delete r.pilotTemplateExpires;
+    delete r.pilotConsentAt; delete r.pilotConsentVersion; delete r.pilotLastAt;
+    delete r.pilotLastDistance; delete r.pilotLastQuality;
+    await this.save(subject, r, subject, "pilot-consent", "revoked-template-deleted");
+  }
+  async pilotChallenge(subject: string, purpose: "enroll" | "verify") {
+    const r = await this.read(subject);
+    if (!r.pilotConsentAt || r.pilotConsentVersion !== PILOT_CONSENT_VERSION) {
+      throw identityError("Autoriza primero la prueba experimental en esta pantalla.", 403);
+    }
+    if ((r.pilotLockedUntil ?? 0) > this.now()) throw identityError("Demasiados intentos. Espera 15 minutos.", 429);
+    if (purpose === "enroll" && r.pilotTemplate) throw identityError("Ya hay una muestra piloto. Revócala para reemplazarla.", 409);
+    if (purpose === "verify" && (!r.pilotTemplate || r.pilotModel !== this.engine.model || (r.pilotTemplateExpires ?? 0) <= this.now())) {
+      throw identityError("Primero enrola tu rostro en el piloto.", 403);
+    }
+    r.pilotAttempts = (r.pilotAttempts ?? 0) + 1;
+    if (r.pilotAttempts > 5) {
+      r.pilotLockedUntil = this.now() + 900_000; r.pilotAttempts = 0;
+      await this.save(subject, r, subject, "pilot-challenge", "locked");
+      throw identityError("Demasiados intentos. Espera 15 minutos.", 429);
+    }
+    const direction = randomInt(2) ? "left" : "right";
+    r.pilotChallenge = {
+      id: randomUUID(),
+      actions: ["center", direction, "center", direction === "left" ? "right" : "left", "center"],
+      step: 0, issued: this.now(), expires: this.now() + 90_000, purpose,
+    };
+    await this.save(subject, r, subject, "pilot-challenge", purpose);
+    return { id: r.pilotChallenge.id, action: r.pilotChallenge.actions[0], step: 0, purpose, threshold: pilotThreshold() };
+  }
+  async pilotFrame(subject: string, id: string, image: Buffer) {
+    const r = await this.read(subject); const c = r.pilotChallenge;
+    if (!r.pilotConsentAt || r.pilotConsentVersion !== PILOT_CONSENT_VERSION || !c || c.id !== id || c.expires <= this.now()) {
+      throw identityError("Reto vencido o utilizado. Solicita uno nuevo.", 409);
+    }
+    if (this.now() - c.issued < 300) throw identityError("Espera a completar el movimiento indicado.");
+    let score = 0;
+    let qualityReport: ReturnType<typeof pilotQualityReport> | undefined;
+    try {
+      const sample = await this.engine.analyze(image, c.purpose === "enroll");
+      qualityReport = pilotQualityReport(sample);
+      const guide = quality(sample, c.actions[c.step]);
+      if (guide) throw identityError(guide);
+      if (!actionMatches(c.actions[c.step], sample)) throw identityError("No se detectó el movimiento solicitado. Reinicia la prueba.");
+      if (!c.baseline) c.baseline = sample.descriptor;
+      const limit = pilotThreshold();
+      score = distance(c.purpose === "enroll" ? c.baseline : (r.pilotTemplate ?? c.baseline), sample.descriptor);
+      if (distance(c.baseline, sample.descriptor) > limit) throw identityError("Los fotogramas no parecen de la misma persona.");
+      const rejected = score > limit;
+      c.step++;
+      const report = {
+        quality: qualityReport,
+        distance: Number(score.toFixed(3)),
+        threshold: limit,
+        result: rejected ? "rejected" : "passed",
+        experimental: true,
+      };
+      if (rejected) {
+        delete r.pilotChallenge;
+        await this.save(subject, r, subject, "pilot-verify", "rejected", score);
+        return { done: false, rejected: true, ...report, message: "El resultado supera el umbral experimental. La identidad no está validada; puedes intentarlo de nuevo." };
+      }
+      if (c.step === c.actions.length) {
+        if (c.purpose === "enroll") {
+          r.pilotTemplate = c.baseline; r.pilotModel = this.engine.model;
+          r.pilotTemplateExpires = this.now() + pilotRetentionDays() * 86400_000;
+        }
+        r.pilotLastAt = this.now(); r.pilotLastDistance = score; r.pilotLastQuality = qualityReport.light;
+        delete r.pilotChallenge; r.pilotAttempts = 0;
+        await this.save(subject, r, subject, c.purpose === "enroll" ? "pilot-enroll" : "pilot-verify", "passed", score);
+        return {
+          done: true, ...report,
+          message: c.purpose === "enroll"
+            ? "Muestra piloto guardada. La identidad sigue sin validar."
+            : "Tu rostro coincide con la muestra piloto. La identidad sigue sin validar.",
+        };
+      }
+      c.id = randomUUID(); c.issued = this.now();
+      await this.save(subject, r, subject, "pilot-challenge-step", "passed", score);
+      return { done: false, id: c.id, action: c.actions[c.step], step: c.step, ...report };
+    } catch (error) {
+      delete r.pilotChallenge;
+      await this.save(subject, r, subject, "pilot-verify", "rejected", score);
+      if ((error as any).status) {
+        (error as any).quality = qualityReport;
+        (error as any).distance = Number(score.toFixed(3));
+      }
+      throw error;
+    } finally { image.fill(0); }
   }
   async challenge(subject: string, purpose: "enroll" | "verify") {
     threshold();

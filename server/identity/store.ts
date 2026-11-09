@@ -2,12 +2,18 @@ import { sql } from "drizzle-orm";
 import { getDb } from "../storage.js";
 import { seal, unseal } from "./crypto.js";
 export type Challenge = { id: string; actions: string[]; step: number; expires: number; issued: number; baseline?: number[]; purpose: "enroll" | "verify" };
+/** Reto separado del flujo oficial: nunca escribe validUntil, method ni approvedName. */
+export type PilotChallenge = { id: string; actions: string[]; step: number; expires: number; issued: number; baseline?: number[]; purpose: "enroll" | "verify" };
 export type IdentityRecord = {
   revision: number; consentAt?: number; consentVersion?: string; revoked?: boolean;
   approvedName?: string; approvedBy?: string; documentRef?: string; manualRequested?: boolean;
   template?: number[]; model?: string; templateExpires?: number;
   verifiedAt?: number; validUntil?: number; method?: "face" | "manual";
   attempts?: number; lockedUntil?: number; challenge?: Challenge;
+  pilotConsentAt?: number; pilotConsentVersion?: string;
+  pilotTemplate?: number[]; pilotModel?: string; pilotTemplateExpires?: number;
+  pilotChallenge?: PilotChallenge; pilotAttempts?: number; pilotLockedUntil?: number;
+  pilotLastAt?: number; pilotLastDistance?: number; pilotLastQuality?: number;
 };
 export type IdentityAudit = { actor: string; subject: string; event: string; result: string; score?: number };
 export interface IdentityStore {
