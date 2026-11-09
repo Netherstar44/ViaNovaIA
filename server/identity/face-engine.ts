@@ -18,16 +18,21 @@ async function api() {
   return initialization;
 }
 
+/** Expected rejection of an input image, not an engine/configuration failure. */
+export class FaceInputError extends Error {}
+
 export class VladFaceEngine implements FaceEngine {
   readonly model = FACE_MODEL;
   async analyze(image: Buffer, enrollment: boolean): Promise<FaceSample> {
     // Reject formats/dimensions before invoking the native decoder (decompression bomb).
-    if (image.length > 240_000 || image.length < 10 || image.readUInt16BE(0) !== 0xffd8) throw new Error("Usa un fotograma JPEG de hasta 240 KB.");
+    if (image.length > 240_000 || image.length < 10 || image.readUInt16BE(0) !== 0xffd8) throw new FaceInputError("Usa un fotograma JPEG de hasta 240 KB.");
     const { jpegDimensions } = await import("./jpeg.js");
     const dimensions = jpegDimensions(image);
-    if (!dimensions || dimensions.width > 960 || dimensions.height > 960 || dimensions.width < 160 || dimensions.height < 160) throw new Error("Usa una imagen entre 160 y 960 píxeles por lado.");
+    if (!dimensions || dimensions.width > 960 || dimensions.height > 960 || dimensions.width < 160 || dimensions.height < 160) throw new FaceInputError("Usa una imagen entre 160 y 960 píxeles por lado.");
     const face = await api();
-    const decoded = await loadImage(image);
+    let decoded: Awaited<ReturnType<typeof loadImage>>;
+    try { decoded = await loadImage(image); }
+    catch { throw new FaceInputError("No se pudo decodificar el fotograma JPEG."); }
     const canvas = createCanvas(decoded.width, decoded.height);
     const ctx = canvas.getContext("2d");
     ctx.drawImage(decoded, 0, 0);
@@ -41,7 +46,7 @@ export class VladFaceEngine implements FaceEngine {
       const options = enrollment ? new face.SsdMobilenetv1Options({ minConfidence: 0.7, maxResults: 2 })
         : new face.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.65 });
       const faces = await face.detectAllFaces(tensor, options).withFaceLandmarks().withFaceDescriptors();
-      if (faces.length !== 1) throw new Error("Debe aparecer un solo rostro, completo y bien iluminado.");
+      if (faces.length !== 1) throw new FaceInputError("Debe aparecer un solo rostro, completo y bien iluminado.");
       const result = faces[0];
       const points = result.landmarks.positions;
       const left = points[36], right = points[45], nose = points[30];
