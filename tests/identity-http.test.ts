@@ -35,6 +35,12 @@ test("HTTP: sesión, propiedad, rechazo de descriptores, vencimiento y supresió
   const request = (url: string, method = 'GET', body?: unknown, username = 'driver') => fetch(base + url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token(username)}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
     assert.equal((await fetch(base + '/api/identity/me')).status, 401);
+    delete process.env.BIOMETRIC_ENCRYPTION_KEY;
+    const unavailable = await (await request('/api/identity/me')).json();
+    assert.equal(unavailable.faceReady, false); assert.equal(unavailable.manualReady, false);
+    process.env.BIOMETRIC_ENCRYPTION_KEY = 'cd'.repeat(32);
+    const configured = await (await request('/api/identity/me')).json();
+    assert.equal(configured.faceReady, true); assert.equal(configured.manualReady, true);
     assert.equal((await request('/api/identity/consent', 'POST', { version: CONSENT_VERSION, accepted: true, username: 'victim' })).status, 400);
     assert.equal((await request('/api/identity/consent', 'POST', { version: CONSENT_VERSION, accepted: true })).status, 200);
     assert.equal((await request('/api/identity/frame', 'POST', { id: crypto.randomUUID(), match: true, descriptor: Array(128).fill(0) })).status, 400);

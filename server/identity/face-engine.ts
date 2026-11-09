@@ -1,15 +1,14 @@
 import path from "node:path";
-import { createRequire } from "node:module";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { FACE_MODEL, type FaceEngine, type FaceSample } from "./policy.js";
 
-// The browser UMD bundle includes TFJS + CPU; no tfjs-node download or remote inference.
-const require = createRequire(path.resolve("package.json"));
+// Static module specifier lets serverless file tracing include TFJS dependencies.
 let initialization: Promise<any> | undefined;
 async function api() {
   if (!initialization) initialization = (async () => {
     if (Number(process.versions.node.split(".")[0]) !== 22) throw new Error("El motor facial requiere Node 22.");
-    const face = require("@vladmandic/face-api/dist/face-api.node-wasm.js");
+    const imported = await import("@vladmandic/face-api/dist/face-api.node-wasm.js");
+    const face: any = (imported as any).default ?? imported;
     await face.tf.setBackend("cpu");
     await face.tf.ready();
     const models = path.resolve("node_modules/@vladmandic/face-api/model");

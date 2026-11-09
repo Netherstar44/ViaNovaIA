@@ -20,3 +20,11 @@ test("las reescrituras /api de Vercel omiten extensiones con cleanUrls", () => {
     );
   }
 });
+
+test("el despliegue facial fija Node 22 e incluye sus pesos locales", () => {
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(pkg.engines.node, "22.x");
+  const included = config.functions?.["api/index.ts"]?.includeFiles;
+  assert.ok(included.includes("@vladmandic/face-api"));
+  assert.ok(included.includes("model/**"));
+});

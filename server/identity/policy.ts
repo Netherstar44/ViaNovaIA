@@ -10,6 +10,7 @@ export type FaceSample = {
 };
 export interface FaceEngine {
   readonly model: string;
+  readonly available?: boolean;
   analyze(image: Buffer, enrollment: boolean): Promise<FaceSample>;
 }
 export function distance(a: number[], b: number[]): number {

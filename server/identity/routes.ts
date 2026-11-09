@@ -11,6 +11,7 @@ let nodeEngine: FaceEngine | undefined;
 export function configureFaceEngine(engine: FaceEngine): void { nodeEngine = engine; }
 export const identities = new IdentityService({
   model: FACE_MODEL,
+  get available() { return !!nodeEngine; },
   async analyze(image, enrollment) {
     if (!nodeEngine) throw identityError("El motor requiere un servidor Node 22. Solicita revisión manual.", 503);
     return nodeEngine.analyze(image, enrollment);
@@ -49,7 +50,12 @@ export function registerIdentityRoutes(app: Express, service = identities) {
   };
   app.get("/api/identity/me", route(async req => {
     const r = await service.read(req.user.username);
-    return { identity: await service.public(req.user.username), consent: !!r.consentAt && !r.revoked && r.consentVersion === CONSENT_VERSION, enrolled: !!r.template, pendingApproval: !!r.template && !r.approvedName, manualRequested: !!r.manualRequested };
+    const manualReady = /^[a-f\d]{64}$/i.test(process.env.BIOMETRIC_ENCRYPTION_KEY ?? '');
+    const distance = Number(process.env.FACE_DISTANCE_THRESHOLD);
+    const calibrated = distance > 0 && distance < 1 && !!process.env.FACE_CALIBRATION_ID;
+    const consentReady = process.env.NODE_ENV !== 'production' || process.env.FACE_CONSENT_LEGAL_APPROVED === 'true';
+    return { identity: await service.public(req.user.username), consent: !!r.consentAt && !r.revoked && r.consentVersion === CONSENT_VERSION, enrolled: !!r.template, pendingApproval: !!r.template && !r.approvedName, manualRequested: !!r.manualRequested,
+      manualReady, faceReady: manualReady && calibrated && consentReady && service.engine.available !== false };
   }));
   app.post("/api/identity/consent", accountLimit, route(async req => {
     if (process.env.NODE_ENV === "production" && process.env.FACE_CONSENT_LEGAL_APPROVED !== "true") throw identityError("Consentimiento legal pendiente de revisión.", 503);

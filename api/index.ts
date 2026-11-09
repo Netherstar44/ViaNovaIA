@@ -6,8 +6,13 @@ import { assertSecurityConfig, getSessionSecret } from "../server/config.js";
 import { applyHttpSecurity } from "../server/http-security.js";
 import { requestLogger, logServerError } from "../server/observability.js";
 import { csrfProtection } from "../server/security.js";
+import { configureFaceEngine } from "../server/identity/routes.js";
+import { VladFaceEngine } from "../server/identity/face-engine.js";
 
 assertSecurityConfig();
+// This Node entry must install the engine just like server/index.ts. Workers
+// imports server/app.ts instead and never bundles this native dependency.
+if (process.versions.node.split(".")[0] === "22") configureFaceEngine(new VladFaceEngine());
 
 const app = express();
 

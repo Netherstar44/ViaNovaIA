@@ -4,6 +4,11 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci --include=dev",
   "outputDirectory": "dist/public",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "node_modules/@vladmandic/face-api/{dist/face-api.node-wasm.js,model/**}"
+    }
+  },
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [

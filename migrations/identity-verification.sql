@@ -1,4 +1,5 @@
--- Aplicar SOLO contra una base local nueva y explícitamente seleccionada.
+-- Aplicar solo contra una base explícitamente seleccionada.
+-- Producción requiere autorización escrita del responsable; nunca ejecución automática.
 -- No se ejecuta automáticamente en peticiones ni despliegues.
 CREATE TABLE IF NOT EXISTS identity_verifications (
   username text PRIMARY KEY REFERENCES users(username) ON DELETE CASCADE,
