@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import { FaceInputError, VladFaceEngine } from "../server/identity/face-engine.js";
 import { distance, quality } from "../server/identity/policy.js";
+import { measure, type CalibrationComparison } from "../server/identity/calibration-stats.js";
 import {
   FACE_CALIBRATION_CONFIDENCE,
   FACE_CALIBRATION_MIN_EVALUATION_GENUINE,
@@ -22,6 +23,7 @@ const sessionId = z.string().min(1).max(100).regex(/^[A-Za-z0-9_.:-]+$/);
 const enrollmentSchema = z.object({ image: imageName, session: sessionId }).strict();
 const probeSchema = z.object({
   claimedId: subjectId,
+  subjectId,
   image: imageName,
   session: sessionId,
   genuine: z.boolean(),
@@ -51,9 +53,8 @@ const manifestSchema = z.object({
 type Group = (typeof GROUPS)[number];
 type Split = z.infer<typeof splitSchema>;
 type Probe = Split["probes"][number];
-type Score = { genuine: boolean; group: Group; score: number };
 type SplitResult = {
-  scores: Score[];
+  scores: CalibrationComparison[];
   rejected: number;
   rejectedByGroup: Record<Group, number>;
 };
@@ -98,8 +99,15 @@ async function validateManifest() {
     for (const probe of split.probes) {
       const enrollment = split.enrollments[probe.claimedId];
       if (!enrollment) throw new Error(`${name}: una prueba no tiene enrolamiento para su claimedId.`);
-      if (probe.genuine && probe.session === enrollment.session) {
-        throw new Error(`${name}: una comparación genuina reutiliza la misma sesión que el enrolamiento.`);
+      if (!split.enrollments[probe.subjectId]) throw new Error(`${name}: una prueba no identifica un sujeto enrolado.`);
+      if (probe.genuine && probe.subjectId !== probe.claimedId) {
+        throw new Error(`${name}: una prueba genuina debe declarar el mismo sujeto y claimedId.`);
+      }
+      if (!probe.genuine && probe.subjectId === probe.claimedId) {
+        throw new Error(`${name}: una prueba impostora no puede ser del mismo sujeto.`);
+      }
+      if (probe.session === enrollment.session) {
+        throw new Error(`${name}: una prueba reutiliza la sesión de su enrolamiento.`);
       }
     }
   }
@@ -149,13 +157,15 @@ async function evaluateSplit(split: Split): Promise<SplitResult> {
     }
   }
 
-  const scores: Score[] = [];
+  const scores: CalibrationComparison[] = [];
   let rejected = 0;
   for (const probe of split.probes) {
     const template = templates.get(probe.claimedId);
-    if (!template) throw new Error("Prueba sin enrolamiento; el manifest ya fue validado.");
+    const enrollment = split.enrollments[probe.claimedId];
+    if (!template || !enrollment) throw new Error("Prueba sin enrolamiento; el manifest ya fue validado.");
     const bytes = await readFile(await localPath(probe.image));
     let score = Infinity;
+    const base = { genuine: probe.genuine, group: probe.group, claimedId: probe.claimedId, subjectId: probe.subjectId, enrollmentSession: enrollment.session, probeSession: probe.session };
     try {
       let sample;
       try { sample = await engine.analyze(bytes, false); }
@@ -163,7 +173,7 @@ async function evaluateSplit(split: Split): Promise<SplitResult> {
         if (!(error instanceof FaceInputError)) throw error;
         rejected++;
         rejectedByGroup[probe.group]++;
-        scores.push({ genuine: probe.genuine, group: probe.group, score });
+        scores.push({ ...base, score });
         continue;
       }
       if (quality(sample, "center")) {
@@ -172,40 +182,12 @@ async function evaluateSplit(split: Split): Promise<SplitResult> {
       } else {
         score = distance(template, sample.descriptor);
       }
-      scores.push({ genuine: probe.genuine, group: probe.group, score });
+      scores.push({ ...base, score });
     } finally {
       bytes.fill(0);
     }
   }
   return { scores, rejected, rejectedByGroup };
-}
-
-/** One-sided Wilson upper bound, used instead of claiming an exact FAR from a small sample. */
-function wilsonUpper(successes: number, n: number, zScore = 1.645): number | null {
-  if (n <= 0) return null;
-  const p = successes / n;
-  const denominator = 1 + (zScore * zScore) / n;
-  const centre = p + (zScore * zScore) / (2 * n);
-  const margin = zScore * Math.sqrt((p * (1 - p)) / n + (zScore * zScore) / (4 * n * n));
-  return Math.min(1, (centre + margin) / denominator);
-}
-
-function measure(set: Score[], threshold: number) {
-  const genuine = set.filter((item) => item.genuine);
-  const impostors = set.filter((item) => !item.genuine);
-  const falseAccepts = impostors.filter((item) => item.score <= threshold).length;
-  const falseRejects = genuine.filter((item) => item.score > threshold).length;
-  return {
-    comparisons: set.length,
-    genuine: genuine.length,
-    impostors: impostors.length,
-    falseAccepts,
-    falseRejects,
-    FAR: impostors.length ? falseAccepts / impostors.length : null,
-    FRR: genuine.length ? falseRejects / genuine.length : null,
-    FAR_upper_95_one_sided: wilsonUpper(falseAccepts, impostors.length),
-    FRR_upper_95_one_sided: wilsonUpper(falseRejects, genuine.length),
-  };
 }
 
 await validateManifest();
@@ -217,8 +199,10 @@ const sweep = Array.from({ length: 61 }, (_, index) => {
   return { threshold, ...measure(calibration.scores, threshold) };
 });
 const candidates = sweep
-  .filter((row) => row.FAR_upper_95_one_sided !== null && row.FAR_upper_95_one_sided <= FACE_CALIBRATION_TARGET_FAR)
+  .filter((row) => row.FAR !== null && row.FAR <= FACE_CALIBRATION_TARGET_FAR)
+  .filter((row) => row.FAR_upper_95_cluster_one_sided !== null && row.FAR_upper_95_cluster_one_sided <= FACE_CALIBRATION_TARGET_FAR)
   .filter((row) => row.FRR !== null && row.FRR <= FACE_CALIBRATION_TARGET_FRR)
+  .filter((row) => row.FRR_upper_95_cluster_one_sided !== null && row.FRR_upper_95_cluster_one_sided <= FACE_CALIBRATION_TARGET_FRR)
   .sort((a, b) => (a.FRR! - b.FRR!) || (b.threshold - a.threshold));
 const selectedCandidate = candidates[0]?.threshold ?? null;
 const evaluationAtThreshold = selectedCandidate === null ? null : measure(evaluation.scores, selectedCandidate);
@@ -230,27 +214,34 @@ const groupEvidence = GROUPS.map((group) => {
   const rows = evaluation.scores.filter((item) => item.group === group);
   const genuine = rows.filter((item) => item.genuine).length;
   const impostors = rows.length - genuine;
+  const clusters = measure(rows, 0.5);
   return {
     group,
     genuine,
     impostors,
-    enoughGenuine: genuine >= FACE_CALIBRATION_MIN_GROUP_GENUINE,
-    enoughImpostors: impostors >= FACE_CALIBRATION_MIN_GROUP_IMPOSTORS,
+    independentGenuineClusters: clusters.independentGenuineClusters,
+    independentImpostorClusters: clusters.independentImpostorClusters,
+    enoughGenuine: clusters.independentGenuineClusters >= FACE_CALIBRATION_MIN_GROUP_GENUINE,
+    enoughImpostors: clusters.independentImpostorClusters >= FACE_CALIBRATION_MIN_GROUP_IMPOSTORS,
   };
 });
 const underpoweredGroups = groupEvidence
   .filter((item) => !item.enoughGenuine || !item.enoughImpostors)
   .map((item) => item.group);
 const hasEnoughIndependentEvidence = !!evaluationAtThreshold
-  && evaluationAtThreshold.impostors >= FACE_CALIBRATION_MIN_EVALUATION_IMPOSTORS
-  && evaluationAtThreshold.genuine >= FACE_CALIBRATION_MIN_EVALUATION_GENUINE
+  && evaluationAtThreshold.independentImpostorClusters >= FACE_CALIBRATION_MIN_EVALUATION_IMPOSTORS
+  && evaluationAtThreshold.independentGenuineClusters >= FACE_CALIBRATION_MIN_EVALUATION_GENUINE
   && underpoweredGroups.length === 0;
 const farMeetsTarget = !!evaluationAtThreshold
-  && evaluationAtThreshold.FAR_upper_95_one_sided !== null
-  && evaluationAtThreshold.FAR_upper_95_one_sided <= FACE_CALIBRATION_TARGET_FAR;
+  && evaluationAtThreshold.FAR !== null
+  && evaluationAtThreshold.FAR <= FACE_CALIBRATION_TARGET_FAR
+  && evaluationAtThreshold.FAR_upper_95_cluster_one_sided !== null
+  && evaluationAtThreshold.FAR_upper_95_cluster_one_sided <= FACE_CALIBRATION_TARGET_FAR;
 const frrMeetsTarget = !!evaluationAtThreshold
   && evaluationAtThreshold.FRR !== null
-  && evaluationAtThreshold.FRR <= FACE_CALIBRATION_TARGET_FRR;
+  && evaluationAtThreshold.FRR <= FACE_CALIBRATION_TARGET_FRR
+  && evaluationAtThreshold.FRR_upper_95_cluster_one_sided !== null
+  && evaluationAtThreshold.FRR_upper_95_cluster_one_sided <= FACE_CALIBRATION_TARGET_FRR;
 const insufficientEvidence = selectedCandidate === null || !hasEnoughIndependentEvidence || missingGroups.length > 0;
 const validated = !insufficientEvidence && farMeetsTarget && frrMeetsTarget;
 
@@ -263,11 +254,12 @@ const report = {
     FAR: FACE_CALIBRATION_TARGET_FAR,
     FRR: FACE_CALIBRATION_TARGET_FRR,
     confidence: FACE_CALIBRATION_CONFIDENCE,
-    minimumEvaluationImpostors: FACE_CALIBRATION_MIN_EVALUATION_IMPOSTORS,
-    minimumEvaluationGenuine: FACE_CALIBRATION_MIN_EVALUATION_GENUINE,
-    minimumGroupImpostors: FACE_CALIBRATION_MIN_GROUP_IMPOSTORS,
-    minimumGroupGenuine: FACE_CALIBRATION_MIN_GROUP_GENUINE,
-    zeroFalseAcceptRule: "Con cero falsos positivos, el límite superior 95% aproximado es 3/N; se requieren ~3000 impostores independientes para 0.1%.",
+    minimumIndependentImpostorClusters: FACE_CALIBRATION_MIN_EVALUATION_IMPOSTORS,
+    minimumIndependentGenuineClusters: FACE_CALIBRATION_MIN_EVALUATION_GENUINE,
+    minimumGroupIndependentImpostorClusters: FACE_CALIBRATION_MIN_GROUP_IMPOSTORS,
+    minimumGroupIndependentGenuineClusters: FACE_CALIBRATION_MIN_GROUP_GENUINE,
+    independentClusters: true,
+    zeroFalseAcceptRule: "Con cero falsos positivos por cluster, el límite superior 95% aproximado es 3/N; se requieren ~3000 pares impostores independientes para 0.1%.",
   },
   dataset: {
     name: data.dataset.name,
@@ -280,11 +272,23 @@ const report = {
     disjointSubjects: true,
     disjointSessions: true,
     reusedImages: false,
-    note: "Cada comparación se cuenta una vez; no se presentan varias imágenes de la misma sesión como evidencia independiente.",
+    note: "La FAR/FRR sin procesar cuenta cada comparación; la validación usa clusters: un sujeto para genuinas y un par no ordenado para impostoras. Varias fotos del mismo sujeto o par no son evidencia independiente.",
   },
   counts: {
-    calibration: { enrollments: Object.keys(data.calibration.enrollments).length, probes: data.calibration.probes.length, rejected: calibration.rejected },
-    evaluation: { enrollments: Object.keys(data.evaluation.enrollments).length, probes: data.evaluation.probes.length, rejected: evaluation.rejected },
+    calibration: {
+      enrollments: Object.keys(data.calibration.enrollments).length,
+      probes: data.calibration.probes.length,
+      rejected: calibration.rejected,
+      independentGenuineClusters: calibration.scores.length ? measure(calibration.scores, 0.5).independentGenuineClusters : 0,
+      independentImpostorClusters: calibration.scores.length ? measure(calibration.scores, 0.5).independentImpostorClusters : 0,
+    },
+    evaluation: {
+      enrollments: Object.keys(data.evaluation.enrollments).length,
+      probes: data.evaluation.probes.length,
+      rejected: evaluation.rejected,
+      independentGenuineClusters: evaluation.scores.length ? measure(evaluation.scores, 0.5).independentGenuineClusters : 0,
+      independentImpostorClusters: evaluation.scores.length ? measure(evaluation.scores, 0.5).independentImpostorClusters : 0,
+    },
   },
   selectedCandidate,
   evaluationAtThreshold,
