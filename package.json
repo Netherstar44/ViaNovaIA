@@ -29,7 +29,9 @@
     "build:cloudflare": "vite build && node scripts/prepare-cloudflare-assets.mjs",
     "dev:cloudflare": "wrangler dev",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
-    "indexnow": "node scripts/indexnow.mjs"
+    "indexnow": "node scripts/indexnow.mjs",
+    "build:pages": "npm run build",
+    "deploy:pages": "npm run build && wrangler pages deploy dist/public --project-name vianova"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

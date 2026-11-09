@@ -62,3 +62,6 @@ video-vianova/.env
 # Assets de marca usados por el bundle (el patron *.png los excluia)
 !client/src/assets/**/*.png
 
+# Video generation artifacts
+motion/
+out/
