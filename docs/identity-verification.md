@@ -29,6 +29,12 @@ Referencias de plataforma: [Node fijado mediante engines](https://vercel.com/doc
 
 El repo representa negocios como servicios con `providerUsername`, sin flujo independiente de reclamación legal del negocio. La insignia dice **identidad del responsable**; no certifica titularidad, licencia ni calidad del establecimiento. No se inventó un proceso de reclamación. El registro no queda bloqueado por no consentir; solo la insignia necesita revisión.
 
+## Recolección propia sin dataset externo
+
+Como no hay dataset autorizado, la herramienta local `npm run face:collect` permite recolectar muestras de voluntarios con un consentimiento específico separado del consentimiento normal. Guarda solo seudónimos y fotos fuera del repositorio, exige `--authorize-capture` y limita el acceso a `127.0.0.1` con un token por proceso. No usa servicios externos ni APIs de IA.
+
+El procedimiento, el protocolo de sesiones, la retención, el borrado y la generación del manifest están en [`docs/face-collection.md`](face-collection.md). La herramienta no se ejecutó con personas reales: **falta la autorización del responsable y la revisión legal del consentimiento**. El flag técnico no sustituye esa autorización.
+
 ## Exactitud y calibración
 
 `docs/face-calibration-report.json` declara 0 comparaciones y FAR/FRR/umbral **no disponibles**. El usuario confirmó que no dispone de un conjunto de prueba autorizado: la verificación automática permanece pendiente; la vista previa y la revisión manual no requieren inventar un umbral. Las pruebas unitarias usan descriptores sintéticos y no acreditan exactitud. El smoke real solo demuestra carga del motor/decodificador/modelos y rechazo de un JPEG sin rostro. La revisión de datasets y las licencias descartadas están en `docs/face-dataset-review.md`.
@@ -41,18 +47,21 @@ Preparar **fuera de git** un `manifest.json` con consentimiento, metadatos del d
   "dataset": { "name": "...", "source": "https://...", "license": "...", "consent": true, "restrictions": "..." },
   "calibration": {
     "enrollments": { "sujeto-a": { "image": "cal/a-enroll.jpg", "session": "cal-a-1" } },
-    "probes": [{ "claimedId": "sujeto-a", "image": "cal/a-probe.jpg", "session": "cal-a-2", "genuine": true, "group": "poca-luz" }]
+    "probes": [{ "claimedId": "sujeto-a", "subjectId": "sujeto-a", "image": "cal/a-probe.jpg", "session": "cal-a-2", "genuine": true, "group": "poca-luz" }]
   },
   "evaluation": {
-    "enrollments": { "sujeto-b": { "image": "eval/b-enroll.jpg", "session": "eval-b-1" } },
-    "probes": [{ "claimedId": "sujeto-b", "image": "eval/b-probe.jpg", "session": "eval-b-2", "genuine": false, "group": "normal" }]
+    "enrollments": {
+      "sujeto-b": { "image": "eval/b-enroll.jpg", "session": "eval-b-1" },
+      "sujeto-c": { "image": "eval/c-enroll.jpg", "session": "eval-c-1" }
+    },
+    "probes": [{ "claimedId": "sujeto-b", "subjectId": "sujeto-c", "image": "eval/c-probe.jpg", "session": "eval-c-2", "genuine": false, "group": "normal" }]
   }
 }
 ```
 
-Grupos: `normal`, `poca-luz`, `gafas`, `piel-clara`, `piel-media`, `piel-oscura`, etiquetados con autorización específica. JPEG de 160–960 px, hasta 240 KB. El manifest es una declaración del operador: el script no puede verificar por sí solo la autenticidad del consentimiento ni de la licencia.
+`subjectId` identifica a la persona del fotograma mediante un seudónimo y `claimedId` es la identidad que se está reclamando. En una prueba genuina deben coincidir; en una impostora deben ser distintos y existir ambos enrolamientos. Esto permite agrupar comparaciones correlacionadas sin contarlas como independientes. Grupos: `normal`, `poca-luz`, `gafas`, `piel-clara`, `piel-media`, `piel-oscura`, etiquetados con autorización específica. JPEG de 160–960 px, hasta 240 KB. El manifest es una declaración del operador: el script no puede verificar por sí solo la autenticidad del consentimiento ni de la licencia.
 
-Ejecutar `npm run face:calibrate -- ruta/manifest.json ruta/reporte.json`. Selecciona el umbral solo con calibración, lo congela y evalúa en el conjunto independiente; no vuelve a elegir el umbral con evaluación. Exporta agregados por grupo, rechazos por calidad, barrido 0.15–0.75, FAR/FRR, límites superiores Wilson y un estado `validated`/`insufficient-evidence`. Objetivo propuesto: FAR 0,1% con límite superior unilateral 95%, FRR 5%, al menos **3.000 comparaciones impostoras** y **300 genuinas** independientes; con cero falsos positivos se necesitan aproximadamente **3.000 impostores** para un límite superior cercano a 0,1%. Cada grupo declarado también necesita al menos **100 impostores y 30 genuinos** en evaluación; un grupo con una o dos muestras no cuenta como evidencia. Si falta evidencia, el informe no habilita nada. Aportar muestras diversas y consentidas, objetivo FAR/FRR y latencia/FPS de un Android real antes de habilitar.
+Ejecutar `npm run face:calibrate -- ruta/manifest.json ruta/reporte.json`. Selecciona el umbral solo con calibración, lo congela y evalúa en el conjunto independiente; no vuelve a elegir el umbral con evaluación. Exporta agregados por grupo, rechazos por calidad, barrido 0.15–0.75, FAR/FRR, límites superiores Wilson y un estado `validated`/`insufficient-evidence`. Objetivo propuesto: FAR 0,1% con límite superior unilateral 95%, FRR 5%, al menos **3.000 pares impostores independientes** y **300 sujetos genuinos independientes** en evaluación; con cero falsos positivos se necesitan aproximadamente **3.000 pares** para un límite superior cercano a 0,1%. Cada grupo declarado también necesita al menos **100 pares impostores y 30 sujetos genuinos** independientes; un grupo con una o dos muestras no cuenta como evidencia. La FAR/FRR sin procesar se muestra, pero la validación usa clusters conservadores: una persona para genuinas y un par no ordenado para impostoras. Varias fotos de la misma persona o del mismo par no son evidencia independiente. Si falta evidencia, el informe no habilita nada. Aportar muestras diversas y consentidas, objetivo FAR/FRR y latencia/FPS de un Android real antes de habilitar.
 
 ## Privacidad, operación y límites
 
@@ -68,6 +77,12 @@ Los giros son un reto activo básico, con calidad de luz/nitidez/tamaño/pose. *
 - `vercel.json` incluye el paquete y los pesos de face-api; la prueba de configuración confirma que Node está fijado en 22 y que esos archivos entran en la función. Esto valida la configuración del repositorio, no el runtime de la cuenta.
 - La cámara de Android/Capacitor requiere HTTPS o localhost. No hay dispositivo físico conectado: faltan permisos reales, carga del modelo, memoria, temperatura, latencia/FPS y comportamiento de WebView. Esas pruebas siguen pendientes y no deben sustituirse por el smoke de escritorio.
 - El reto no es una defensa PAD/deepfake. La evaluación de suplantación con video, pantalla, cámara virtual o máscara requiere un conjunto y un procedimiento aparte, con revisión de seguridad.
+
+### Preflight y validación remota pendiente
+
+`npm run face:preflight` comprueba en local Node 22, los modelos, `@napi-rs/canvas`, la configuración de `vercel.json`, el bundle y una inferencia controlada que rechaza una imagen sin rostro. No inicia Vercel, no despliega y no modifica la cuenta.
+
+La validación remota sigue siendo humana y requiere autorización del propietario del proyecto. Pasos mínimos: instalar con `npm ci --include=dev`; ejecutar `npm run check`, `npm test` y `npm run build`; desplegar desde el panel autorizado, no con Vercel CLI; comprobar en la función real que el binario Linux de canvas carga, que los pesos están presentes y que una verificación autenticada procesa un fotograma; revisar logs sin imágenes ni secretos. Hasta completar eso, **un build correcto no es un despliegue validado**.
 
 El consentimiento es **BORRADOR — REVISAR CON ABOGADO**, separado de términos; producción bloquea la autorización hasta revisión expresa/configuración. Completar responsable, canales de consulta/corrección/supresión, política, encargados, menores y plazos; no afirmar cumplimiento legal solo por implementar software. Referencias oficiales: [Ley 1581, arts. 5–6, 8–9](https://www.cancilleria.gov.co/normograma/compilacion/docs/ley_1581_2012.htm), [Decreto 1074, protección de datos](https://cancilleria.gov.co/sites/default/files/Normograma/docs/decreto_1074_2015_pr025.htm), [SIC: datos sensibles y autorización](https://sedeelectronica.sic.gov.co/politica-de-tratamiento-de-datos-personales).
 

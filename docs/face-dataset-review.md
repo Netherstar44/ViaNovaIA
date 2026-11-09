@@ -33,9 +33,8 @@ legal y un acuerdo de tratamiento de datos.
   específico para el uso comercial y una revisión legal antes de usar sus
   resultados para activar producción.
 - Para una validación real se necesitan imágenes consentidas del contexto
-  colombiano/móvil y, como mínimo, **3.000 comparaciones impostoras
-  independientes** para sostener un límite superior del 0,1 % de FAR con cero
-  falsos positivos.
+  colombiano/móvil y, como mínimo, **3.000 pares impostores independientes**
+  para sostener un límite superior del 0,1 % de FAR con cero falsos positivos.
 
 ## Objetivo de riesgo propuesto
 
@@ -43,9 +42,10 @@ Objetivo **exploratorio**, no aprobado:
 
 - FAR objetivo: **0,1 %** (0,001), con límite superior unilateral del 95 %.
 - FRR objetivo: **5 %**.
-- Evaluación independiente mínima: **3.000 comparaciones impostoras** y **300
-  comparaciones genuinas**; cada grupo declarado necesita al menos **100
-  impostores y 30 genuinos** en evaluación.
+- Evaluación independiente mínima: **3.000 pares impostores** y **300 sujetos
+  genuinos**; cada grupo declarado necesita al menos **100 pares impostores y
+  30 sujetos genuinos** en evaluación. Varias fotos de una misma persona o par
+  no cuentan como evidencia independiente.
 - Cualquier resultado que no cumpla esos mínimos se marca como
   `insufficient-evidence` y no habilita la función.
 - Este objetivo debe revisarse con el responsable del producto y el abogado;

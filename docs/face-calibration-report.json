@@ -10,12 +10,14 @@
     "FAR": 0.001,
     "FRR": 0.05,
     "confidence": 0.95,
-    "minimumEvaluationImpostors": 3000,
-    "minimumEvaluationGenuine": 300,
-    "minimumGroupImpostors": 100,
-    "minimumGroupGenuine": 30
+    "minimumIndependentImpostorClusters": 3000,
+    "minimumIndependentGenuineClusters": 300,
+    "minimumGroupIndependentImpostorClusters": 100,
+    "minimumGroupIndependentGenuineClusters": 30,
+    "independentClusters": true
   },
   "productionEnabled": false,
   "datasetReview": "docs/face-dataset-review.md",
+  "collectionTool": "docs/face-collection.md",
   "reason": "No hay un conjunto facial autorizado y etiquetado en el repositorio. Las pruebas con motor simulado no miden exactitud biométrica y ningún dataset revisado autoriza este uso comercial sin un acuerdo y revisión adicionales."
 }
