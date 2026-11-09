@@ -1,13 +1,14 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { CONSENT_VERSION, type PublicIdentity } from "../../shared/identity.js";
 import { actionMatches, distance, isCurrent, quality, type FaceEngine } from "./policy.js";
+import { calibrationGate } from "./calibration.js";
 import { identityStore, type IdentityRecord, type IdentityStore } from "./store.js";
 
 export function identityError(message: string, status = 400) { return Object.assign(new Error(message), { status }); }
 function threshold(): number {
-  const value = Number(process.env.FACE_DISTANCE_THRESHOLD);
-  if (!(value > 0 && value < 1) || !process.env.FACE_CALIBRATION_ID) throw identityError("La verificación facial requiere calibración. Solicita revisión manual.", 503);
-  return value;
+  const gate = calibrationGate();
+  if (!gate.ready || gate.threshold === null) throw identityError("La verificación facial requiere calibración aprobada. Solicita revisión manual.", 503);
+  return gate.threshold;
 }
 function ttl(): number {
   const minutes = Number(process.env.FACE_VALIDITY_MINUTES ?? 30);

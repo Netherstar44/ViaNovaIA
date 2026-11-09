@@ -4,6 +4,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { requireAuth, requireRole } from "../security.js";
 import { CONSENT_VERSION } from "../../shared/identity.js";
 import { FACE_MODEL, type FaceEngine } from "./policy.js";
+import { calibrationGate } from "./calibration.js";
 import { IdentityService, identityError } from "./service.js";
 
 let nodeEngine: FaceEngine | undefined;
@@ -51,11 +52,10 @@ export function registerIdentityRoutes(app: Express, service = identities) {
   app.get("/api/identity/me", route(async req => {
     const r = await service.read(req.user.username);
     const manualReady = /^[a-f\d]{64}$/i.test(process.env.BIOMETRIC_ENCRYPTION_KEY ?? '');
-    const distance = Number(process.env.FACE_DISTANCE_THRESHOLD);
-    const calibrated = distance > 0 && distance < 1 && !!process.env.FACE_CALIBRATION_ID;
+    const calibration = calibrationGate();
     const consentReady = process.env.NODE_ENV !== 'production' || process.env.FACE_CONSENT_LEGAL_APPROVED === 'true';
     return { identity: await service.public(req.user.username), consent: !!r.consentAt && !r.revoked && r.consentVersion === CONSENT_VERSION, enrolled: !!r.template, pendingApproval: !!r.template && !r.approvedName, manualRequested: !!r.manualRequested,
-      manualReady, faceReady: manualReady && calibrated && consentReady && service.engine.available !== false };
+      manualReady, faceReady: manualReady && calibration.ready && consentReady && service.engine.available !== false };
   }));
   app.post("/api/identity/consent", accountLimit, route(async req => {
     if (process.env.NODE_ENV === "production" && process.env.FACE_CONSENT_LEGAL_APPROVED !== "true") throw identityError("Consentimiento legal pendiente de revisión.", 503);

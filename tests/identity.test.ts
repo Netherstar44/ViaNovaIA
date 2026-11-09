@@ -6,6 +6,7 @@ import type { IdentityRecord, IdentityAudit, IdentityStore } from "../server/ide
 import { seal, unseal } from "../server/identity/crypto.js";
 process.env.FACE_DISTANCE_THRESHOLD = "0.4";
 process.env.FACE_CALIBRATION_ID = "SYNTHETIC-UNIT-TEST-ONLY";
+process.env.FACE_CALIBRATION_APPROVED = "true";
 process.env.BIOMETRIC_ENCRYPTION_KEY = "ab".repeat(32);
 function harness() {
   let now = 1_800_000_000_000;
@@ -26,6 +27,13 @@ function harness() {
   };
   return { records, audit, store, service, tick, complete };
 }
+test("sin aprobación explícita de calibración no se puede iniciar un reto facial", async () => {
+  const h = harness(); await h.service.consent("driver");
+  const previous = process.env.FACE_CALIBRATION_APPROVED;
+  delete process.env.FACE_CALIBRATION_APPROVED;
+  try { await assert.rejects(h.service.challenge("driver", "enroll"), /calibración aprobada/); }
+  finally { process.env.FACE_CALIBRATION_APPROVED = previous; }
+});
 test("flujo de política: enrolar → aprobación documental → verificar → identidad pública mínima", async () => {
   const h = harness(); await h.service.consent("driver"); await h.complete("enroll");
   assert.equal((await h.service.public("driver")).verified, false);
