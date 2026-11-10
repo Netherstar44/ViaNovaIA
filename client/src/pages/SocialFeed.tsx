@@ -185,6 +185,7 @@ function PostCard({ post, currentUser, onDelete }: { post: Post; currentUser: st
         {currentUser === post.username && (
           <button
             onClick={handleDelete}
+            aria-label="Eliminar publicación"
             className="p-1.5 text-muted-foreground hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
           >
             <Trash2 className="h-4 w-4" />
@@ -518,7 +519,10 @@ export default function SocialFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [showCreate, setShowCreate] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const cursorRef = useRef<string | null>(null);
@@ -528,25 +532,34 @@ export default function SocialFeed() {
   useEffect(() => { userRef.current = user?.username; }, [user?.username]);
 
   const fetchFeed = useCallback(async (reset = false) => {
+    // Un cambio de cuenta o un reintento invalida la petición en curso: su
+    // respuesta ya no pertenece al feed que se va a mostrar.
+    if (reset) {
+      abortRef.current?.abort();
+      loadingRef.current = false;
+    }
     if (loadingRef.current) return;
     if (!reset && !hasMoreRef.current) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     loadingRef.current = true;
     setLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({ limit: "20" });
       if (userRef.current) params.set("username", userRef.current);
       if (!reset && cursorRef.current) params.set("before", cursorRef.current);
 
-      const r = await fetch(`${apiBase}/api/social/posts?${params.toString()}`, { credentials: 'include' });
+      const r = await fetch(`${apiBase}/api/social/posts?${params.toString()}`, {
+        credentials: 'include',
+        signal: controller.signal,
+      });
+      if (r.status === 401) throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+      if (!r.ok) throw new Error(`El servidor respondió ${r.status}.`);
       const data = await r.json();
+      if (controller.signal.aborted) return;
 
-      if (!Array.isArray(data)) {
-        console.warn("[SocialFeed] Backend devolvió no-array:", data);
-        if (reset) setPosts([]);
-        hasMoreRef.current = false;
-        setHasMore(false);
-        return;
-      }
+      if (!Array.isArray(data)) throw new Error("La respuesta del feed no se pudo interpretar.");
 
       // Soportar campos camelCase (alias) Y snake_case (directo de BD)
       const mappedPosts: Post[] = data.map((p: any) => ({
@@ -569,11 +582,15 @@ export default function SocialFeed() {
       setHasMore(more);
       setPosts(prev => reset ? mappedPosts : [...prev, ...mappedPosts]);
     } catch (err) {
-      console.error("[SocialFeed] Error al cargar posts:", err);
-      if (reset) setPosts([]);
+      if (controller.signal.aborted) return;
+      setError(err instanceof Error ? err.message : "No hubo respuesta del servidor.");
+      hasMoreRef.current = false;
+      setHasMore(false);
     } finally {
-      loadingRef.current = false;
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -583,8 +600,13 @@ export default function SocialFeed() {
     hasMoreRef.current = true;
     setHasMore(true);
     setPosts([]);
+    setError(null);
     fetchFeed(true);
-  }, [user?.username, fetchFeed]);
+    return () => {
+      abortRef.current?.abort();
+      loadingRef.current = false;
+    };
+  }, [user?.username, fetchFeed, reloadKey]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -646,10 +668,19 @@ export default function SocialFeed() {
               Cargando más...
             </div>
           )}
-          {!hasMore && posts.length > 0 && (
+          {!hasMore && !error && posts.length > 0 && (
             <p className="text-xs text-muted-foreground/50">Has llegado al final del feed ✨</p>
           )}
-          {!loading && posts.length === 0 && (
+          {!loading && error && (
+            <div role="alert" className="text-center py-10 space-y-3 rounded-2xl border border-dashed border-destructive/40 bg-secondary/10">
+              <p className="font-semibold text-lg">No pudimos cargar las publicaciones</p>
+              <p className="text-muted-foreground text-sm">{error} Inténtalo de nuevo en unos segundos.</p>
+              <Button variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}>
+                Reintentar
+              </Button>
+            </div>
+          )}
+          {!loading && !error && posts.length === 0 && (
             <div className="text-center py-16 space-y-3">
               <div className="text-5xl">🌟</div>
               <p className="font-semibold text-lg">¡Sé el primero en publicar!</p>
@@ -666,6 +697,7 @@ export default function SocialFeed() {
           onClick={() => setShowCreate(true)}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
+          aria-label="Crear publicación"
           className="fixed bottom-8 right-6 z-40 w-14 h-14 rounded-full bg-primary text-black shadow-2xl shadow-primary/40 flex items-center justify-center hover:bg-primary/80 transition-colors"
         >
           <Plus className="h-7 w-7 font-bold" />
