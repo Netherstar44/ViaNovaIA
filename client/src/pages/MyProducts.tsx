@@ -1,5 +1,5 @@
 import { apiBase } from "@/lib/queryClient";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -139,9 +139,15 @@ function formatMoney(price?: number, currency = "COP"): string {
 
 export default function MyProducts() {
   const { user } = useAuth();
+  const username = user?.username;
+  const currentUsername = useRef(username);
+  currentUsername.current = username;
+  const servicesRequest = useRef<AbortController | null>(null);
   const [_, setLocation] = useLocation();
-  const [services, setServices] = useState<Service[]>([]);
+  const [serviceResult, setServiceResult] = useState<{ owner: string; services: Service[] } | null>(null);
+  const services = serviceResult && serviceResult.owner === username ? serviceResult.services : [];
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<FormMode>("idle");
   const [editId, setEditId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -180,33 +186,44 @@ export default function MyProducts() {
   const isRestaurant = category === "restaurant";
 
   const fetchServices = useCallback(async () => {
-    if (!user) return;
+    if (!username || currentUsername.current !== username) return;
+    servicesRequest.current?.abort();
+    const controller = new AbortController();
+    servicesRequest.current = controller;
     setLoading(true);
+    setLoadError(null);
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${apiBase}/api/services/provider/${user.username}`, { headers, credentials: "include" });
+      const res = await fetch(`${apiBase}/api/services/provider/${encodeURIComponent(username)}`, { headers, credentials: "include", signal: controller.signal });
+      if (!res.ok) throw new Error("No pudimos cargar tus productos. Intenta de nuevo.");
       const data = await res.json();
-      setServices(data.services || []);
-    } catch (e) {
-      console.error(e);
+      if (!Array.isArray(data.services)) throw new Error("El servidor devolvió un catálogo incompleto.");
+      if (!controller.signal.aborted && currentUsername.current === username) {
+        setServiceResult({ owner: username, services: data.services });
+      }
+    } catch (error) {
+      if (!controller.signal.aborted && currentUsername.current === username) {
+        setLoadError(error instanceof Error ? error.message : "No pudimos cargar tus productos.");
+      }
+    } finally {
+      if (!controller.signal.aborted && currentUsername.current === username) setLoading(false);
     }
-    setLoading(false);
-  }, [user]);
+  }, [username]);
 
   // Fetch hotels list (only when current user is a restaurant)
-  const fetchHotels = useCallback(async () => {
-    if (!isRestaurant) return;
+  const fetchHotels = useCallback(async (signal: AbortSignal) => {
+    if (!isRestaurant) { setHotelOptions([]); return; }
     try {
-      const res = await fetch(`${apiBase}/api/services?category=hotel`);
+      const res = await fetch(`${apiBase}/api/services?category=hotel`, { signal });
+      if (!res.ok) return;
       const data = await res.json();
+      if (signal.aborted) return;
       setHotelOptions(
-        (data.services || []).map((s: any) => ({ id: s.id, name: s.name }))
+        (Array.isArray(data.services) ? data.services : []).map((s: any) => ({ id: s.id, name: s.name }))
       );
-    } catch (e) {
-      console.error(e);
-    }
+    } catch { /* Hotel options are optional; the provider catalogue reports its own error. */ }
   }, [isRestaurant]);
 
   useEffect(() => {
@@ -215,8 +232,18 @@ export default function MyProducts() {
     }
   }, [user, setLocation]);
 
-  useEffect(() => { fetchServices(); }, [fetchServices]);
-  useEffect(() => { fetchHotels(); }, [fetchHotels]);
+  useEffect(() => {
+    setLoadError(null);
+    resetForm();
+    setDeleteConfirm(null);
+    void fetchServices();
+    return () => servicesRequest.current?.abort();
+  }, [fetchServices]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchHotels(controller.signal);
+    return () => controller.abort();
+  }, [fetchHotels]);
 
   if (!user || user.role === "traveler") {
     return null;
@@ -266,7 +293,7 @@ export default function MyProducts() {
     }
   };
 
-  const resetForm = () => {
+  function resetForm() {
     setName("");
     setDescription("");
     setImageUrl("");
@@ -290,7 +317,7 @@ export default function MyProducts() {
     setFormMode("idle");
     setEditId(null);
     setMessage(null);
-  };
+  }
 
   const openEdit = (svc: Service) => {
     setFormMode("edit");
@@ -428,12 +455,13 @@ export default function MyProducts() {
       const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      await fetch(`${apiBase}/api/services/${id}`, {
+      const response = await fetch(`${apiBase}/api/services/${id}`, {
         method: "DELETE",
         headers,
         credentials: "include",
         body: JSON.stringify({ providerUsername: user.username }),
       });
+      if (!response.ok) throw new Error("No se pudo eliminar el producto. Inténtalo de nuevo.");
       setDeleteConfirm(null);
       await fetchServices();
       setMessage({ type: "success", text: "Producto eliminado" });
@@ -827,11 +855,16 @@ export default function MyProducts() {
         </AnimatePresence>
 
         {/* ═══════ PRODUCT LIST ═══════ */}
+        {loadError && <div role="alert" className="mb-6 rounded-xl border border-destructive/40 bg-card p-4 text-sm text-foreground">
+          <p>{loadError}</p>
+          {services.length > 0 && <p className="mt-1 text-muted-foreground">Se conserva la última lista cargada; puede estar desactualizada.</p>}
+          <Button type="button" variant="outline" disabled={loading} onClick={() => void fetchServices()} className="mt-3">Reintentar carga</Button>
+        </div>}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : services.length === 0 ? (
+        ) : loadError && services.length === 0 ? null : services.length === 0 ? (
           <div className="text-center py-20 bg-card/30 rounded-2xl border border-border/30">
             <Package className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2 text-muted-foreground">Sin productos aún</h3>
