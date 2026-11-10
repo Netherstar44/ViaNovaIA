@@ -2,7 +2,7 @@ import { apiBase } from "@/lib/queryClient";
 import { lazy, Suspense, useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Search, ShoppingCart, Filter } from "lucide-react";
+import { AlertCircle, Loader2, Search, ShoppingCart, Filter } from "lucide-react";
 import type { Product } from "@/components/marketplace/ProductModal";
 
 // El modal (calendario + date-fns) se carga solo al abrir un producto. Así la
@@ -19,16 +19,34 @@ export default function ProductStore() {
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    // Abortar la petición anterior evita que una respuesta lenta de otra categoría
+    // sobrescriba los productos que el usuario está viendo ahora.
+    const controller = new AbortController();
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams({ limit: "50" });
     if (category) params.set("category", category);
-    fetch(`${apiBase}/api/products?${params.toString()}`)
-      .then(r => r.json())
-      .then(d => setProducts(d.products || []))
-      .finally(() => setLoading(false));
-  }, [category]);
+    fetch(`${apiBase}/api/products?${params.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`El servidor respondió ${response.status}.`);
+        const data = await response.json();
+        if (controller.signal.aborted) return;
+        setProducts(Array.isArray(data.products) ? data.products : []);
+        setLoading(false);
+      })
+      .catch((cause: unknown) => {
+        // Un aborto es el cambio de categoría, no un fallo que deba ver el usuario.
+        if (controller.signal.aborted) return;
+        setProducts([]);
+        setError(cause instanceof Error ? cause.message : "No hubo respuesta del servidor.");
+        setLoading(false);
+      });
+    return () => controller.abort();
+  }, [category, reloadKey]);
 
   const categories = [
     { id: null, label: "Todos" },
@@ -109,6 +127,19 @@ export default function ProductStore() {
         <h2 className="sr-only">Productos disponibles</h2>
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : error ? (
+          <div role="alert" className="text-center py-20 border border-dashed border-destructive/40 rounded-3xl bg-secondary/10">
+            <AlertCircle className="h-12 w-12 text-destructive/70 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-foreground mb-2">No pudimos cargar el catálogo</h3>
+            <p className="text-muted-foreground">{error} Inténtalo de nuevo en unos segundos.</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((value) => value + 1)}
+              className="mt-6 px-5 py-2.5 rounded-full bg-primary text-black text-sm font-medium shadow-lg shadow-primary/20"
+            >
+              Reintentar
+            </button>
+          </div>
         ) : visibleProducts.length === 0 ? (
           <div className="text-center py-20 border border-dashed border-border/50 rounded-3xl bg-secondary/10">
             <Filter className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
