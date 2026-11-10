@@ -1,6 +1,6 @@
-import { apiBase } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock, MailOpen, MapPin, Search } from "lucide-react";
+import { CheckCircle2, Clock, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,7 +21,7 @@ export default function Notifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
+  const { data: notifications = [], isLoading, isError, isFetching, refetch } = useQuery<Notification[]>({
     queryKey: [user?.username ? `/api/notifications?username=${encodeURIComponent(user.username)}` : null],
     enabled: !!user,
     refetchInterval: 10_000,
@@ -29,7 +29,7 @@ export default function Notifications() {
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${apiBase}/api/notifications/${id}/read`, { method: "PATCH" });
+      await apiRequest("PATCH", `/api/notifications/${encodeURIComponent(id)}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [user?.username ? `/api/notifications?username=${encodeURIComponent(user.username)}` : null] });
@@ -58,15 +58,24 @@ export default function Notifications() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Notificaciones</h1>
             <p className="text-muted-foreground mt-1">
-              Tienes {unreadCount} notificación{unreadCount !== 1 ? 'es' : ''} sin leer.
+              {isError ? "No se pudo actualizar el estado de tus notificaciones." : <>Tienes {unreadCount} {unreadCount === 1 ? 'notificación' : 'notificaciones'} sin leer.</>}
             </p>
           </div>
         </div>
+
+        {markAsRead.isError && <p role="alert" className="mb-4 text-sm text-destructive">No se pudo marcar la notificación como leída. Inténtalo de nuevo.</p>}
 
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
             <span className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           </div>
+        ) : isError ? (
+          <Card>
+            <CardContent className="space-y-4 p-6" role="alert">
+              <p>No se pudieron cargar tus notificaciones. Revisa tu conexión y vuelve a intentarlo.</p>
+              <Button variant="outline" disabled={isFetching} onClick={() => refetch()}>Reintentar</Button>
+            </CardContent>
+          </Card>
         ) : notifications.length === 0 ? (
           <Card className="border-dashed bg-secondary/20">
             <CardContent className="flex flex-col items-center justify-center h-64 text-center">
