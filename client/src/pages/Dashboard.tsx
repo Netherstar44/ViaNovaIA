@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiBase } from "@/lib/queryClient";
+import { authHeaders } from "@/lib/secureStorage";
 import { useAuth, type UserRole } from "@/lib/auth";
 
 type Range = 7 | 30 | 90;
@@ -119,11 +120,6 @@ function StatusBadge({ status }: { status: string }) {
 
 const ROLE_ORDER: UserRole[] = ["hotel", "restaurant", "recreation", "translator", "taxi", "traveler", "admin"];
 
-const authHeader = () => {
-  const token = localStorage.getItem("auth_token");
-  return token ? { Authorization: `Bearer ${token}` } : undefined;
-};
-
 type DashboardView = "general" | "role";
 
 export default function Dashboard() {
@@ -160,7 +156,7 @@ export default function Dashboard() {
         `${apiBase}/api/analytics/dashboard?username=${encodeURIComponent(user!.username)}&role=${encodeURIComponent(role)}&days=${days}`,
         {
           credentials: "include",
-          headers: authHeader(),
+          headers: await authHeaders(),
         },
       );
       if (!res.ok) {
@@ -179,7 +175,7 @@ export default function Dashboard() {
     queryFn: async () => {
       const res = await fetch(
         `${apiBase}/api/analytics/overview?username=${encodeURIComponent(user!.username)}&days=${days}`,
-        { credentials: "include", headers: authHeader() },
+        { credentials: "include", headers: await authHeaders() },
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -283,7 +279,7 @@ export default function Dashboard() {
       params.set("roles", exportRoles.join(","));
       const res = await fetch(`${apiBase}/api/analytics/export?${params.toString()}`, {
         credentials: "include",
-        headers: authHeader(),
+        headers: await authHeaders(),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
