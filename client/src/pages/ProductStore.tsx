@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Loader2, Search, ShoppingCart, Filter } from "lucide-react";
 import type { Product } from "@/components/marketplace/ProductModal";
+import { formatProductPrice } from "@/lib/product-price";
 
 // El modal (calendario + date-fns) se carga solo al abrir un producto. Así la
 // ruta /explore no paga ese parseo en la primera navegación.
@@ -16,11 +17,14 @@ function prefetchProductModal() {
 export default function ProductStore() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<string | null>(null);
+  const [request, setRequest] = useState({ category: null as string | null, offset: 0, attempt: 0 });
+  const { category, offset } = request;
+  const [nextOffset, setNextOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     // Abortar la petición anterior evita que una respuesta lenta de otra categoría
@@ -28,25 +32,53 @@ export default function ProductStore() {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams({ limit: "50" });
+    if (offset === 0) {
+      setProducts([]);
+      setHasMore(false);
+      setTotal(null);
+    }
+    const params = new URLSearchParams({ limit: "50", offset: String(offset) });
     if (category) params.set("category", category);
     fetch(`${apiBase}/api/products?${params.toString()}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`El servidor respondió ${response.status}.`);
         const data = await response.json();
         if (controller.signal.aborted) return;
-        setProducts(Array.isArray(data.products) ? data.products : []);
+        if (!Array.isArray(data.products) || typeof data.hasMore !== "boolean" ||
+            !Number.isSafeInteger(data.total) || data.total < 0 ||
+            (data.hasMore && data.products.length === 0)) {
+          throw new Error("El catálogo devolvió una respuesta incompleta.");
+        }
+        setProducts((previous) => {
+          const combined: Product[] = offset === 0 ? data.products : [...previous, ...data.products];
+          return [...new Map(combined.map((product) => [product.id, product])).values()];
+        });
+        setNextOffset(offset + data.products.length);
+        setHasMore(data.hasMore);
+        setTotal(data.total);
         setLoading(false);
       })
       .catch((cause: unknown) => {
         // Un aborto es el cambio de categoría, no un fallo que deba ver el usuario.
         if (controller.signal.aborted) return;
-        setProducts([]);
         setError(cause instanceof Error ? cause.message : "No hubo respuesta del servidor.");
         setLoading(false);
       });
     return () => controller.abort();
-  }, [category, reloadKey]);
+  }, [request]);
+
+  const retry = () => setRequest((previous) => ({ ...previous, attempt: previous.attempt + 1 }));
+  const selectCategory = (value: string | null) => {
+    if (value === category) return;
+    setProducts([]);
+    setLoading(true);
+    setError(null);
+    setHasMore(false);
+    setTotal(null);
+    setNextOffset(0);
+    setSelectedProduct(null);
+    setRequest((previous) => ({ category: value, offset: 0, attempt: previous.attempt + 1 }));
+  };
 
   const categories = [
     { id: null, label: "Todos" },
@@ -95,7 +127,7 @@ export default function ProductStore() {
             {categories.map(cat => (
               <button
                 key={cat.id || "all"}
-                onClick={() => setCategory(cat.id)}
+                onClick={() => selectCategory(cat.id)}
                 className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
                   category === cat.id 
                     ? "bg-primary text-black shadow-lg shadow-primary/20 scale-105" 
@@ -125,17 +157,17 @@ export default function ProductStore() {
       {/* Product Grid */}
       <div className="container px-4 pb-24">
         <h2 className="sr-only">Productos disponibles</h2>
-        {loading ? (
+        {loading && products.length === 0 ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        ) : error ? (
+        ) : error && products.length === 0 ? (
           <div role="alert" className="text-center py-20 border border-dashed border-destructive/40 rounded-3xl bg-secondary/10">
             <AlertCircle className="h-12 w-12 text-destructive/70 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-foreground mb-2">No pudimos cargar el catálogo</h3>
             <p className="text-muted-foreground">{error} Inténtalo de nuevo en unos segundos.</p>
             <button
               type="button"
-              onClick={() => setReloadKey((value) => value + 1)}
-              className="mt-6 px-5 py-2.5 rounded-full bg-primary text-black text-sm font-medium shadow-lg shadow-primary/20"
+              onClick={retry}
+              className="mt-6 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Reintentar
             </button>
@@ -150,7 +182,7 @@ export default function ProductStore() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 gap-y-10">
             {visibleProducts.map((product, i) => (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 5) * 0.05 }}
                 key={product.id}
                 onClick={() => setSelectedProduct(product)}
                 onPointerEnter={prefetchProductModal}
@@ -197,7 +229,7 @@ export default function ProductStore() {
                   </p>
                   <div className="mt-1">
                     <span className="text-foreground font-bold text-[15px]">
-                      {Number(product.price).toLocaleString("es-CO", { style: "currency", currency: product.currency, maximumFractionDigits: 0 })}
+                      {formatProductPrice(product.price, product.currency)}
                     </span>
                   </div>
                 </div>
@@ -205,6 +237,16 @@ export default function ProductStore() {
             ))}
           </div>
         )}
+        {products.length > 0 && <p role="status" className="mt-6 text-center text-sm text-muted-foreground">{products.length} productos cargados{total !== null ? ` de ${total}` : ""}.</p>}
+        {normalizedSearch && hasMore && <p className="mt-3 text-center text-sm text-muted-foreground">La búsqueda se aplica a los productos cargados. Carga más para ampliar los resultados.</p>}
+        {error && products.length > 0 && <p role="alert" className="mt-4 text-center text-sm text-destructive">No pudimos cargar más productos. {error}</p>}
+        {(hasMore || (error && products.length > 0)) && <div className="mt-6 flex justify-center">
+          <button type="button" disabled={loading} onClick={error ? retry : () => setRequest((previous) => ({ ...previous, offset: nextOffset }))}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {loading ? "Cargando más…" : error ? "Reintentar carga" : "Cargar más"}
+          </button>
+        </div>}
       </div>
       </main>
 
