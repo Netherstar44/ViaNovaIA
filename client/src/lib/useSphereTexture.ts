@@ -52,8 +52,17 @@ export function useSphereTexture(url: string, previewUrl?: string) {
     void (async () => {
       try {
         const preview = previewUrl ?? sourceUrl(url, 512);
-        if (preview !== url) { await load(preview, true); setUpgrading(true); }
-        await load(sourceUrl(url, 4096), false);
+        if (preview !== url) {
+          try {
+            await load(preview, true);
+            if (!cancelled) setUpgrading(true);
+          } catch (error) {
+            // A missing thumbnail must not prevent loading the original.
+            // Cancellation and download deadlines still stop the entire load.
+            if (cancelled || abort.signal.aborted) throw error;
+          }
+        }
+        if (!cancelled) await load(sourceUrl(url, 4096), false);
       } catch (error) {
         if (!cancelled && !textures.length) setState({ status: 'error', message: error instanceof Error && error.name !== 'AbortError' ? error.message : 'La descarga tardó demasiado. Revisa la conexión.' });
       } finally { clearTimeout(timeout); clearTimeout(idleTimeout); if (!cancelled) setUpgrading(false); }
