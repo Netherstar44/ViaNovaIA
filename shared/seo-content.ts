@@ -681,6 +681,10 @@ const PRIVATE_ROUTE_META: Record<string, { title: string; description: string }>
     title: "Gestión de productos | VIANova",
     description: "Panel de productos y servicios para proveedores de VIANova.",
   },
+  "/provider-dashboard": {
+    title: "Panel de proveedor | VIANova",
+    description: "Resumen de actividad, servicios y reservas de tu negocio en VIANova.",
+  },
   "/request-ride": {
     title: "Solicitar taxi | VIANova",
     description: "Solicita un taxi local y sigue el recorrido en el mapa.",
