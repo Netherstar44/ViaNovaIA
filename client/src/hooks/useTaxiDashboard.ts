@@ -33,13 +33,18 @@ export function useTaxiDashboard(taxiUsername: string) {
 
   // ── Viajes pendientes (polling) ────────────────────────────────────────────
   const { data: nearbyData, isLoading: loadingNearby } = useQuery({
-    queryKey: ["rides", "nearby"],
-    queryFn: () => apiFetch<{ rides: Ride[] }>("/api/rides/nearby"),
+    queryKey: ["rides", "nearby", taxiUsername],
+    queryFn: ({ signal }) => apiFetch<{ rides: Ride[] }>("/api/rides/nearby", { signal }),
     refetchInterval: POLLING_INTERVAL,
     enabled: !!taxiUsername,
   });
 
   const pendingRides = nearbyData?.rides ?? [];
+
+  useEffect(() => {
+    prevRidesCount.current = 0;
+    setJustCompletedRide(null);
+  }, [taxiUsername]);
 
   // Notificar cuando llegan nuevas solicitudes
   useEffect(() => {
@@ -50,14 +55,14 @@ export function useTaxiDashboard(taxiUsername: string) {
       });
     }
     prevRidesCount.current = pendingRides.length;
-  }, [pendingRides.length]);
+  }, [pendingRides.length, taxiUsername]);
 
   // ── Ride activo del taxista ────────────────────────────────────────────────
   const { data: taxiRidesData, isLoading: loadingActive } = useQuery({
     queryKey: ["rides", "taxi", taxiUsername],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiFetch<{ activeRide: Ride | null; history: Ride[] }>(
-        `/api/rides/taxi/${taxiUsername}`
+        `/api/rides/taxi/${taxiUsername}`, { signal }
       ),
     refetchInterval: POLLING_INTERVAL,
     enabled: !!taxiUsername,
@@ -75,9 +80,9 @@ export function useTaxiDashboard(taxiUsername: string) {
   // ── Perfil (isAvailable) ───────────────────────────────────────────────────
   const { data: profileData } = useQuery({
     queryKey: ["taxi", "profile", taxiUsername],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       apiFetch<{ profile: { isAvailable: boolean; vehicleType: string | null; plate: string | null; phone: string | null } }>(
-        `/api/taxi/profile/${taxiUsername}`
+        `/api/taxi/profile/${taxiUsername}`, { signal }
       ),
     enabled: !!taxiUsername,
   });
