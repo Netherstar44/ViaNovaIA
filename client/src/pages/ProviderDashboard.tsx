@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Car, Utensils, TentTree, Save, MapPin, Image as ImageIcon, Camera, Languages, Calendar as CalendarIcon, Settings } from "lucide-react";
+import { Building2, Car, Utensils, TentTree, Save, MapPin, Image as ImageIcon, Camera, Languages, Calendar as CalendarIcon, Settings, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,9 @@ export default function ProviderDashboard() {
   const [locationLng, setLocationLng] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [services, setServices] = useState<any[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState<string | null>(null);
+  const [servicesReloadKey, setServicesReloadKey] = useState(0);
 
   const categoryFromRole = (role?: string) => {
     switch (role) {
@@ -40,19 +43,31 @@ export default function ProviderDashboard() {
   };
 
   useEffect(() => {
-    const load = async () => {
-      if (!user?.username) return;
+    if (!user?.username) return;
+    const controller = new AbortController();
+    // Al cambiar de cuenta no se muestran las publicaciones del proveedor anterior.
+    setServices([]);
+    setServicesError(null);
+    setServicesLoading(true);
+    (async () => {
       try {
-        const res = await fetch(`${apiBase}/api/services/provider/${encodeURIComponent(user.username)}`);
-        const data = await res.json();
+        const res = await fetch(`${apiBase}/api/services/provider/${encodeURIComponent(user.username)}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.message || 'No se pudieron cargar tus servicios');
-        setServices(data.services || []);
+        if (controller.signal.aborted) return;
+        setServices(Array.isArray(data.services) ? data.services : []);
       } catch (e: any) {
-        toast({ title: 'Error', description: e.message || 'No se pudieron cargar tus servicios', variant: 'destructive' });
+        if (controller.signal.aborted) return;
+        setServicesError(e?.message || 'No se pudieron cargar tus servicios');
+      } finally {
+        if (!controller.signal.aborted) setServicesLoading(false);
       }
-    };
-    load();
-  }, [user?.username, toast]);
+    })();
+    return () => controller.abort();
+  }, [user?.username, servicesReloadKey]);
 
   const isBlockedRole = !isAuthenticated || !user || user.role === 'traveler' || user.role === 'admin';
 
@@ -317,7 +332,19 @@ export default function ProviderDashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-8">
-                    {services.length === 0 ? (
+                    {servicesLoading ? (
+                      <div className="flex items-center justify-center gap-2 py-12 text-base text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" /> Cargando tus publicaciones...
+                      </div>
+                    ) : servicesError ? (
+                      <div role="alert" className="text-center py-10 bg-background/30 rounded-2xl border border-dashed border-destructive/40">
+                        <p className="text-base font-semibold">No pudimos cargar tus publicaciones</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{servicesError} Inténtalo de nuevo en unos segundos.</p>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={() => setServicesReloadKey((value) => value + 1)}>
+                          Reintentar
+                        </Button>
+                      </div>
+                    ) : services.length === 0 ? (
                       <div className="text-base text-muted-foreground text-center py-12 bg-background/30 rounded-2xl border border-dashed border-border/50">
                         Aún no publicas tu vitrina al mundo. Completa el formulario y guárdalo.
                       </div>
