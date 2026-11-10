@@ -18,8 +18,9 @@ const configuredNativeApiBase = String(import.meta.env.VITE_NATIVE_API_BASE || "
   .replace(/\/+$/, "");
 
 export const getBaseUrl = () => {
-  const isApp = (typeof window !== 'undefined' && Capacitor.isNativePlatform()) ||
-                (typeof navigator !== 'undefined' && navigator.userAgent.includes('wv'));
+  // An embedded browser is still the website: its cookies belong to its origin.
+  // Only the Capacitor bridge identifies an actual installed native app.
+  const isApp = typeof window !== 'undefined' && Capacitor.isNativePlatform();
   if (isApp) {
     return configuredNativeApiBase || FALLBACK_NATIVE_API_BASE;
   }
