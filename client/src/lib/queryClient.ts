@@ -36,8 +36,8 @@ export async function apiRequest(
   const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
   const res = await fetch(finalUrl, {
     method,
-    headers: await authHeaders(data ? { "Content-Type": "application/json" } : {}),
-    body: data ? JSON.stringify(data) : undefined,
+    headers: await authHeaders(data !== undefined ? { "Content-Type": "application/json" } : {}),
+    body: data !== undefined ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 
@@ -50,10 +50,11 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+  async ({ queryKey, signal }) => {
     const url = queryKey.join("/") as string;
     const finalUrl = url.startsWith("http") ? url : `${getBaseUrl()}${url}`;
     const res = await fetch(finalUrl, {
+      signal,
       credentials: "include",
       headers: await authHeaders(),
     });
