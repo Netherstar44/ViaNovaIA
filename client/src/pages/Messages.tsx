@@ -48,6 +48,9 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [newTo, setNewTo] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const activeView = useRef({ username: user?.username, selected });
+  const messageRequest = useRef(0);
+  activeView.current = { username: user?.username, selected };
 
   useEffect(() => {
     if (!user) setLocation("/login");
@@ -59,31 +62,47 @@ export default function Messages() {
       const res = await fetch(`${apiBase}/api/social/messages/conversations`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setConversations(data.conversations || []);
+        if (activeView.current.username === user.username) setConversations(data.conversations || []);
       }
+    } catch {
+      // Un fallo de red no debe romper el sondeo; se reintenta en el siguiente ciclo.
     } finally {
-      setLoadingConversations(false);
+      if (activeView.current.username === user.username) setLoadingConversations(false);
     }
   }, [user]);
 
   const loadMessages = useCallback(async (other: string) => {
     if (!user || !other) return;
+    const request = ++messageRequest.current;
+    const isCurrent = () => request === messageRequest.current &&
+      activeView.current.username === user.username && activeView.current.selected === other;
     try {
       const res = await fetch(`${apiBase}/api/social/messages/${encodeURIComponent(other)}`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
-        setMessages(data.messages || []);
+        if (isCurrent()) setMessages(data.messages || []);
       }
+    } catch {
+      // La vista conserva los mensajes ya cargados; el sondeo reintenta.
     } finally {
-      setLoadingMessages(false);
+      if (isCurrent()) setLoadingMessages(false);
     }
   }, [user]);
 
+  useEffect(() => {
+    setConversations([]);
+    setLoadingConversations(!!user?.username);
+  }, [user?.username]);
   useEffect(() => { loadConversations(); }, [loadConversations]);
   useEffect(() => {
-    if (!selected) return;
+    setMessages([]);
+    setText("");
+  }, [selected, user?.username]);
+  useEffect(() => {
+    if (!selected) { setLoadingMessages(false); return; }
     setLoadingMessages(true);
     loadMessages(selected);
+    return () => { messageRequest.current++; };
   }, [selected, loadMessages]);
 
   useEffect(() => {
@@ -100,7 +119,10 @@ export default function Messages() {
 
   const send = async () => {
     const content = text.trim();
-    if (!content || !selected || sending) return;
+    if (!user || !content || !selected || sending) return;
+    const recipient = selected;
+    const username = user.username;
+    const isCurrent = () => activeView.current.username === username && activeView.current.selected === recipient;
     setSending(true);
     setText("");
     try {
@@ -108,14 +130,14 @@ export default function Messages() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientUsername: selected, content }),
+        body: JSON.stringify({ recipientUsername: recipient, content }),
       });
       const data = await res.json();
       if (res.ok) {
-        setMessages(prev => [...prev, data]);
+        if (isCurrent()) setMessages(prev => [...prev, data]);
         loadConversations();
-      } else {
-        setText(content);
+      } else if (isCurrent()) {
+        setText(current => current || content);
       }
     } finally {
       setSending(false);
