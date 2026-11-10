@@ -31,7 +31,9 @@ import {
   Search,
   Filter,
   Navigation2,
-  ChevronDown
+  ChevronDown,
+  RotateCcw,
+  AlertCircle
 } from "lucide-react";
 
 import TranslatedText from "@/components/TranslatedText";
@@ -207,6 +209,8 @@ export default function Home() {
   const [serviceLocations, setServiceLocations] = useState<LocationItem[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState(false);
+  const [servicesErrorMessage, setServicesErrorMessage] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [commentRatings, setCommentRatings] = useState<Record<string, number>>({});
   const [userLoc, setUserLoc] = useState<[number, number] | null>(null);
 
@@ -221,6 +225,11 @@ export default function Home() {
   const [priceFilter, setPriceFilter] = useState<string>('any');
   const [popularityFilter, setPopularityFilter] = useState<string>('any');
   const [displayLimit, setDisplayLimit] = useState(40);
+
+  // Reset displayLimit on search/filter changes
+  useEffect(() => {
+    setDisplayLimit(40);
+  }, [selectedCategory, searchQuery, distanceFilter, priceFilter, popularityFilter]);
 
   // Hero component is defined below to isolate re-renders
 
@@ -320,10 +329,13 @@ export default function Home() {
     const cats = ['hotel', 'restaurant', 'recreation', 'transport'] as const;
     const controller = new AbortController();
     const fetchAll = async () => {
+      setServicesLoading(true);
+      setServicesError(false);
+      setServicesErrorMessage(null);
       const acc: LocationItem[] = [];
       const results = await Promise.allSettled(cats.map(async c => {
           const res = await fetch(`${apiBase}/api/services?category=${c}`, { signal: controller.signal });
-          if (!res.ok) throw new Error("No se pudieron cargar los servicios.");
+          if (!res.ok) throw new Error(`Error ${res.status} al cargar ${c}`);
           const data = await res.json();
           if (res.ok && Array.isArray(data.services)) {
             for (const s of data.services) {
@@ -349,12 +361,22 @@ export default function Home() {
       }));
       if (controller.signal.aborted) return;
       setServiceLocations(acc);
-      setServicesError(results.some(result => result.status === 'rejected'));
+      const rejectedCount = results.filter(r => r.status === 'rejected').length;
+      if (rejectedCount === cats.length) {
+        setServicesError(true);
+        setServicesErrorMessage("No se pudo conectar con el catálogo de lugares y experiencias.");
+      } else if (rejectedCount > 0) {
+        setServicesError(true);
+        setServicesErrorMessage("Algunos servicios no pudieron cargarse por problemas de conexión.");
+      } else {
+        setServicesError(false);
+        setServicesErrorMessage(null);
+      }
       setServicesLoading(false);
     };
     fetchAll();
     return () => controller.abort();
-  }, []);
+  }, [reloadKey]);
 
   const allLocations = useMemo(() => {
     return serviceLocations;
@@ -413,7 +435,10 @@ export default function Home() {
 
   useEffect(() => {
     const ids = displayedLocations.map((location) => location.id).filter(Boolean);
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      setCommentRatings({});
+      return;
+    }
 
     const controller = new AbortController();
     fetch(`${apiBase}/api/comments/ratings?locationIds=${encodeURIComponent(ids.join(","))}`, {
@@ -421,12 +446,12 @@ export default function Home() {
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!data?.ratings) return;
+        if (controller.signal.aborted || !data?.ratings) return;
         const next: Record<string, number> = {};
         for (const [id, value] of Object.entries<any>(data.ratings)) {
           if (typeof value?.average === "number") next[id] = value.average;
         }
-        setCommentRatings(next);
+        setCommentRatings(prev => ({ ...prev, ...next }));
       })
       .catch(() => {});
 
@@ -587,12 +612,72 @@ export default function Home() {
 
                   <h2 className="sr-only">Resultados de búsqueda</h2>
 
+                  {/* Notice for partial load error */}
+                  {!servicesLoading && servicesError && allLocations.length > 0 && (
+                    <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-foreground" role="alert">
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+                        <span>{servicesErrorMessage || "Algunos servicios no pudieron cargarse."}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReloadKey(k => k + 1)}
+                        className="rounded-full border-destructive/40 text-foreground hover:bg-destructive/15 gap-1.5 shrink-0"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Reintentar
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Layout Grid For Cards */}
-                  {servicesLoading ? <p role="status" className="py-12 text-center text-muted-foreground">Cargando servicios publicados…</p> : filteredAll.length === 0 ? (
-                    <div className="flex w-full flex-col items-center justify-center py-20 text-center opacity-70">
+                  {servicesLoading ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3" role="status" aria-live="polite">
+                      <Spinner className="h-8 w-8 text-primary" />
+                      <p className="text-sm font-medium text-muted-foreground">Cargando servicios publicados…</p>
+                    </div>
+                  ) : servicesError && allLocations.length === 0 ? (
+                    <div className="flex w-full flex-col items-center justify-center py-16 px-4 text-center rounded-3xl border border-border/60 bg-card/40" role="alert">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                        <AlertCircle className="h-7 w-7" />
+                      </div>
+                      <h3 className="text-xl font-heading font-semibold text-foreground">Error de conexión</h3>
+                      <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                        {servicesErrorMessage || "No se pudo conectar con el catálogo de lugares y experiencias."} Revisa tu conexión a internet o el estado del servidor.
+                      </p>
+                      <Button
+                        onClick={() => setReloadKey(k => k + 1)}
+                        className="mt-6 rounded-full bg-primary text-primary-foreground font-bold shadow-md hover:scale-105 transition-transform gap-2"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        Reintentar conexión
+                      </Button>
+                    </div>
+                  ) : filteredAll.length === 0 ? (
+                    <div className="flex w-full flex-col items-center justify-center py-20 text-center opacity-85">
                       <Search className="mb-4 h-14 w-14 text-muted-foreground/60" />
-                      <h3 className="text-xl font-semibold">{servicesError ? "No se pudo cargar el catálogo" : t('home.no_results')}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">{servicesError ? "Revisa la conexión e inténtalo de nuevo." : "Solo se muestran servicios publicados. Prueba otros filtros."}</p>
+                      <h3 className="text-xl font-heading font-semibold text-foreground">{t('home.no_results')}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {searchQuery || selectedCategory !== 'all' || distanceFilter !== 'any' || priceFilter !== 'any' || popularityFilter !== 'any'
+                          ? "No encontramos lugares que coincidan con estos filtros. Prueba modificando la búsqueda o la categoría."
+                          : "Solo se muestran servicios publicados."}
+                      </p>
+                      {(searchQuery || selectedCategory !== 'all' || distanceFilter !== 'any' || priceFilter !== 'any' || popularityFilter !== 'any') && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSelectedCategory("all");
+                            setDistanceFilter("any");
+                            setPriceFilter("any");
+                            setPopularityFilter("any");
+                          }}
+                          className="mt-4 rounded-full text-primary-ink font-semibold hover:bg-primary/10"
+                        >
+                          Limpiar todos los filtros
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <motion.div
