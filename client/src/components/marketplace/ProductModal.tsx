@@ -11,13 +11,14 @@ import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import { productGallery, type CatalogMedia } from "@shared/catalog-media";
 import { useToast } from "@/hooks/use-toast";
+import { formatProductPrice, productAmount } from "@/lib/product-price";
 
 export interface Product {
   id: string;
   name: string;
   description: string | null;
   price: string;
-  currency: string;
+  currency: string | null;
   stock: number;
   cover_image: string | null;
   role_category: string;
@@ -44,7 +45,8 @@ export default function ProductModal({ product, onClose }: { product: Product; o
 
   const maxQuantity = product.stock === -1 ? 99 : Math.max(0, Number(product.stock) || 0);
   const soldOut = maxQuantity === 0;
-  const totalPrice = Number(product.price) * quantity;
+  const unitPrice = productAmount(product.price);
+  const totalPrice = unitPrice === null ? NaN : unitPrice * quantity;
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +78,9 @@ export default function ProductModal({ product, onClose }: { product: Product; o
     }
     if (soldOut) {
       return toast({ title: "Agotado", description: "Este producto no tiene stock disponible.", variant: "destructive" });
+    }
+    if (unitPrice === null) {
+      return toast({ title: "Precio no disponible", description: "El proveedor debe corregir el precio antes de recibir la orden.", variant: "destructive" });
     }
     if (!selectedSlotId && slots.length > 0) {
       return toast({ title: "Atención", description: "Por favor selecciona un horario disponible", variant: "destructive" });
@@ -134,7 +139,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
 
       toast({
         title: "Orden creada",
-        description: `El proveedor confirmará ${quantity}x ${product.name}. Total ${totalPrice.toLocaleString("es-CO", { style: "currency", currency: product.currency, maximumFractionDigits: 0 })}.`,
+        description: `El proveedor confirmará ${quantity}x ${product.name}. Total ${formatProductPrice(totalPrice, product.currency)}.`,
       });
       setTimeout(() => onClose(), 1600);
     } catch (e: any) {
@@ -201,7 +206,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
             
             <h2 className="text-3xl font-extrabold text-foreground mb-2 leading-tight">{product.name}</h2>
             <div className="text-2xl font-bold text-primary mb-6">
-              {Number(product.price).toLocaleString("es-CO", { style: "currency", currency: product.currency, maximumFractionDigits: 0 })}
+              {formatProductPrice(product.price, product.currency)}
             </div>
 
             <div className="space-y-4">
@@ -289,13 +294,13 @@ export default function ProductModal({ product, onClose }: { product: Product; o
               <div className="text-right">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Total</p>
                 <p className="mt-1 text-xl font-extrabold text-primary">
-                  {totalPrice.toLocaleString("es-CO", { style: "currency", currency: product.currency, maximumFractionDigits: 0 })}
+                  {formatProductPrice(totalPrice, product.currency)}
                 </p>
               </div>
             </div>
             <Button 
               onClick={handleCheckout} 
-              disabled={checkingOut || soldOut}
+              disabled={checkingOut || soldOut || unitPrice === null}
               className="w-full h-14 text-base font-bold rounded-2xl bg-primary text-black hover:bg-primary/90 hover:scale-[1.02] transition-all shadow-lg shadow-primary/20 disabled:hover:scale-100"
             >
               {checkingOut ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShoppingCart className="h-5 w-5 mr-2" />}
