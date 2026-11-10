@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es" data-resolution="landscape" data-fps="30" data-motion-blur="on">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>VIANova IA — El plan que conoce el Huila</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #14130f;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #14130f;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="60"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div
+        id="s01"
+        data-composition-id="s01"
+        data-composition-src="compositions/s01-hook.html"
+        data-start="0"
+        data-duration="7.333"
+        data-track-index="1"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s02"
+        data-composition-id="s02"
+        data-composition-src="compositions/s02-brand.html"
+        data-start="7.333"
+        data-duration="5.334"
+        data-track-index="2"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s03"
+        data-composition-id="s03"
+        data-composition-src="compositions/s03-prompt.html"
+        data-start="12.667"
+        data-duration="8.666"
+        data-track-index="3"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s04"
+        data-composition-id="s04"
+        data-composition-src="compositions/s04-providers.html"
+        data-start="21.333"
+        data-duration="9.334"
+        data-track-index="4"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s05"
+        data-composition-id="s05"
+        data-composition-src="compositions/s05-route.html"
+        data-start="30.667"
+        data-duration="9.333"
+        data-track-index="5"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s06"
+        data-composition-id="s06"
+        data-composition-src="compositions/s06-places.html"
+        data-start="40"
+        data-duration="9.333"
+        data-track-index="6"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s07"
+        data-composition-id="s07"
+        data-composition-src="compositions/s07-claim.html"
+        data-start="49.333"
+        data-duration="4.017"
+        data-track-index="7"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+      <div
+        id="s08"
+        data-composition-id="s08"
+        data-composition-src="compositions/s08-end.html"
+        data-start="53.35"
+        data-duration="6.65"
+        data-track-index="8"
+        data-track-kind="graphics"
+        data-width="1920"
+        data-height="1080"
+      ></div>
+
+      <audio
+        id="mix"
+        class="clip"
+        data-start="0"
+        data-duration="60"
+        data-track-index="20"
+        data-volume="1"
+        src="assets/audio/mix.wav"
+      ></audio>
+    </div>
+    <script>
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,150 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #14130f;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .s02-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #s02-bg { opacity: .92; will-change: transform; }
+    #s02-vignette {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(115% 85% at 34% 46%, rgba(24,22,17,0) 34%, rgba(10,9,7,.62) 100%),
+        linear-gradient(0deg, rgba(10,9,7,.45) 0%, rgba(10,9,7,0) 26%);
+    }
+    .s02-hud {
+      position: absolute; left: 120px; right: 120px; top: 56px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 15px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(244,241,232,.52);
+    }
+    #s02-hudline { position: absolute; left: 120px; right: 120px; top: 86px; height: 1px; background: rgba(244,241,232,.18); transform-origin: left center; }
+    #s02-tile {
+      position: absolute; left: 240px; top: 300px; width: 260px; height: 260px;
+      background: url("assets/tex/paper.png") center / cover, #f2efe6;
+      box-shadow: 0 30px 70px rgba(0,0,0,.45);
+      will-change: transform;
+    }
+    #s02-mark {
+      position: absolute; left: 45px; top: 48px; width: 170px; height: auto;
+      will-change: transform;
+    }
+    #s02-word {
+      position: absolute; left: 556px; top: 318px;
+      font-family: "Poppins", sans-serif; font-weight: 800; font-size: 140px; line-height: 1;
+      letter-spacing: -.055em; white-space: nowrap;
+      will-change: clip-path;
+    }
+    #s02-word .s02-via { color: #ffbf00; }
+    #s02-rule { position: absolute; left: 560px; top: 480px; width: 600px; height: 1px; background: rgba(244,241,232,.42); transform-origin: left center; }
+    #s02-desc {
+      position: absolute; left: 560px; top: 502px; width: 660px;
+      font: 400 30px/1.35 "Inter", sans-serif; color: rgba(244,241,232,.82);
+    }
+    #s02-tag {
+      position: absolute; left: 562px; top: 566px;
+      font: 600 16px/1 "Inter", sans-serif; letter-spacing: .24em; text-transform: uppercase;
+      color: rgba(244,241,232,.52);
+    }
+    #s02-tag i { display: inline-block; width: 7px; height: 7px; background: #ffbf00; margin-right: 12px; vertical-align: 2px; }
+    #s02-side {
+      position: absolute; right: 74px; top: 300px;
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font: 500 13px/1 "Inter", sans-serif; letter-spacing: .34em; text-transform: uppercase;
+      color: rgba(244,241,232,.30);
+    }
+    .s02-foot {
+      position: absolute; left: 120px; right: 120px; bottom: 62px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 14px/1 "Inter", sans-serif; letter-spacing: .2em; text-transform: uppercase;
+      color: rgba(244,241,232,.40);
+    }
+    #s02-footline { position: absolute; left: 120px; right: 120px; bottom: 92px; height: 1px; background: rgba(244,241,232,.14); transform-origin: left center; }
+    #s02-seam {
+      position: absolute; left: 1357px; top: 0; width: 6px; height: 1080px;
+      background: #ffbf00; transform-origin: top center; will-change: transform;
+    }
+    #s02-floodcircle {
+      position: absolute; left: 270px; top: 330px; width: 200px; height: 200px;
+      margin: -100px 0 0 -100px; border-radius: 50%;
+      background: #f2efe6; will-change: transform;
+    }
+    #s02-paper { position: absolute; inset: 0; background: url("assets/tex/paper.png") center / cover; opacity: 0; }
+  </style>
+
+  <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
+    <div id="s02-stage" class="clip" data-start="0" data-duration="5.334" data-track-index="1">
+      <img id="s02-bg" class="s02-fill" src="assets/tex/ink.png" alt="" />
+      <div id="s02-vignette"></div>
+
+      <div class="s02-hud"><span>02 — Identidad</span><span>Colombia</span></div>
+      <div id="s02-hudline"></div>
+
+      <div id="s02-tile"><img id="s02-mark" src="assets/brand/vianova-mark.png" alt="Marca VIANova IA" /></div>
+      <div id="s02-word"><span class="s02-via">VIA</span><span>Nova</span></div>
+      <div id="s02-rule"></div>
+      <div id="s02-desc">Planificador de viajes con IA para Colombia</div>
+      <div id="s02-tag"><i></i>Neiva · Huila</div>
+      <div id="s02-side">El plan que conoce el Huila</div>
+
+      <div id="s02-footline"></div>
+      <div class="s02-foot"><span>Hecho en Colombia</span><span>via-nova-ia.vercel.app</span></div>
+
+      <div id="s02-seam"></div>
+    </div>
+
+    <div id="s02-flood" class="clip" data-start="4.20" data-duration="1.134" data-track-index="2">
+      <div id="s02-floodcircle"></div>
+      <div id="s02-paper"></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s02-hudline", { scaleX: 0 });
+    gsap.set("#s02-tile", { scaleY: 0, transformOrigin: "bottom center" });
+    gsap.set("#s02-mark", { opacity: 0, scale: 1.12 });
+    gsap.set("#s02-word", { clipPath: "inset(0 100% 0 0)" });
+    gsap.set("#s02-rule", { scaleX: 0 });
+    gsap.set("#s02-desc", { opacity: 0, y: 14 });
+    gsap.set("#s02-tag", { opacity: 0 });
+    gsap.set("#s02-side", { opacity: 0 });
+    gsap.set("#s02-footline", { scaleX: 0 });
+    gsap.set(".s02-foot span", { opacity: 0 });
+    gsap.set("#s02-floodcircle", { scale: 0.001 });
+    gsap.set("#s02-paper", { opacity: 0 });
+
+    gsap.set("#s02-tile", { x: 0, y: 0 });
+    gsap.set("#s02-seam", { x: 0, y: 0, scaleY: 1 });
+
+    tl.to("#s02-seam", { x: -1117, y: 300, scaleY: 0.2407, duration: 0.62, ease: "expo.inOut" }, 0.02);
+
+    tl.to("#s02-tile", { scaleY: 1, duration: 0.58, ease: "expo.out" }, 0.40);
+    tl.to("#s02-mark", { opacity: 1, scale: 1, duration: 0.55, ease: "power3.out" }, 0.46);
+
+    tl.to("#s02-word", { clipPath: "inset(0 0% 0 0)", duration: 0.62, ease: "expo.inOut" }, 0.52);
+
+    tl.to("#s02-rule", { scaleX: 1, duration: 0.55, ease: "power3.inOut" }, 0.98);
+    tl.to("#s02-desc", { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 1.02);
+    tl.to("#s02-tag", { opacity: 1, duration: 0.45, ease: "power2.out" }, 1.24);
+
+    tl.to("#s02-hudline", { scaleX: 1, duration: 0.9, ease: "power2.inOut" }, 0.6);
+    tl.to("#s02-side", { opacity: 1, duration: 0.7, ease: "power2.out" }, 1.5);
+    tl.to("#s02-footline", { scaleX: 1, duration: 0.9, ease: "power2.inOut" }, 1.45);
+    tl.to(".s02-foot span", { opacity: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" }, 1.6);
+
+    tl.to("#s02-bg", { scale: 1.045, xPercent: -0.6, duration: 5.334, ease: "none" }, 0);
+
+    tl.to("#s02-floodcircle", { scale: 21, duration: 0.92, ease: "power3.inOut" }, 4.20);
+    tl.to("#s02-paper", { opacity: 1, duration: 0.34, ease: "power1.in" }, 4.82);
+
+    window.__timelines["s02"] = tl;
+    tl.seek(0);
+  </script>
+</template>

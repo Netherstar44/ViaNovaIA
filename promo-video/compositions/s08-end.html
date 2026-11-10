@@ -1,0 +1,100 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #14130f;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #s08-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+    #s08-wash { position: absolute; inset: 0; background: radial-gradient(80% 70% at 26% 42%, rgba(60,53,38,.32) 0%, rgba(20,19,15,0) 62%); }
+
+    #s08-rule { position: absolute; left: 850px; top: 430px; width: 950px; height: 4px; background: #ffbf00; transform-origin: left center; }
+
+    #s08-tile { position: absolute; left: 220px; top: 300px; width: 240px; height: 240px; background: url("assets/tex/paper.png") center / cover, #f2efe6; box-shadow: 0 30px 70px rgba(0,0,0,.5); will-change: transform; }
+    #s08-mark { position: absolute; left: 42px; top: 44px; width: 156px; height: auto; }
+    #s08-word { position: absolute; left: 494px; top: 312px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 104px; line-height: 1; letter-spacing: -.055em; white-space: nowrap; }
+    #s08-word .s08-via { color: #ffbf00; }
+    #s08-desc { position: absolute; left: 500px; top: 452px; width: 600px; font: 400 22px/1.4 "Inter", sans-serif; color: rgba(244,241,232,.62); }
+
+    #s08-cta {
+      position: absolute; left: 1226px; top: 322px; width: 520px; height: 90px;
+      background: #ffbf00; color: #14130f;
+    }
+    #s08-ctatxt { position: absolute; left: 30px; top: 29px; font-family: "Poppins", sans-serif; font-weight: 600; font-size: 26px; letter-spacing: -.01em; }
+    #s08-arrow { position: absolute; right: 28px; top: 24px; font: 400 30px/1 "Inter", sans-serif; }
+    #s08-caret { position: absolute; left: 284px; top: 28px; width: 3px; height: 34px; background: #14130f; opacity: 0; }
+    #s08-kicker { position: absolute; left: 1228px; top: 286px; font: 600 11px/1 "Inter", sans-serif; letter-spacing: .24em; text-transform: uppercase; color: rgba(244,241,232,.58); }
+    #s08-url { position: absolute; left: 1228px; top: 438px; font: 500 24px/1 "Inter", sans-serif; letter-spacing: .02em; color: rgba(244,241,232,.80); }
+    #s08-urlline { position: absolute; left: 1228px; top: 476px; width: 300px; height: 1px; background: rgba(244,241,232,.26); transform-origin: left center; }
+
+    #s08-legal { position: absolute; left: 220px; bottom: 56px; font: 500 12px/1 "Inter", sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(244,241,232,.58); }
+    #s08-side { position: absolute; right: 72px; top: 300px; writing-mode: vertical-rl; transform: rotate(180deg); font: 500 12px/1 "Inter", sans-serif; letter-spacing: .32em; text-transform: uppercase; color: rgba(244,241,232,.58); }
+  </style>
+
+  <div id="root" data-composition-id="s08" data-width="1920" data-height="1080">
+    <div id="s08-stage" class="clip" data-start="0" data-duration="6.65" data-track-index="1">
+      <img id="s08-bg" src="assets/tex/ink.png" alt="" />
+      <div id="s08-wash"></div>
+
+      <div id="s08-rule"></div>
+
+      <div id="s08-tile"><img id="s08-mark" src="assets/brand/vianova-mark.png" alt="Marca VIANova IA" /></div>
+      <div id="s08-word"><span class="s08-via">VIA</span><span>Nova</span></div>
+      <div id="s08-desc">Planificador de viajes con IA para Colombia</div>
+
+      <div id="s08-kicker">Empieza hoy</div>
+      <div id="s08-cta">
+        <div id="s08-ctatxt">Crea tu plan gratis</div>
+        <div id="s08-arrow">→</div>
+        <div id="s08-caret"></div>
+      </div>
+      <div id="s08-url">via-nova-ia.vercel.app</div>
+      <div id="s08-urlline"></div>
+
+      <div id="s08-legal">VIANova IA · Colombia · Planificación con IA</div>
+      <div id="s08-side">El plan que conoce el Huila</div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s08-rule", { x: 0, y: 0, scaleX: 1 });
+    gsap.set("#s08-tile", { scaleY: 0, transformOrigin: "bottom center" });
+    gsap.set("#s08-mark", { opacity: 0, scale: 1.1 });
+    gsap.set("#s08-word", { clipPath: "inset(0 100% 0 0)" });
+    gsap.set("#s08-desc", { opacity: 0, y: 12 });
+    gsap.set("#s08-kicker", { opacity: 0 });
+    gsap.set("#s08-cta", { opacity: 0, y: 30 });
+    gsap.set("#s08-url", { opacity: 0, y: 10 });
+    gsap.set("#s08-urlline", { scaleX: 0 });
+    gsap.set("#s08-legal", { opacity: 0 });
+    gsap.set("#s08-side", { opacity: 0 });
+
+    tl.to("#s08-rule", { x: -350, y: 66, scaleX: 0.505, duration: 0.58, ease: "expo.inOut" }, 0);
+
+    tl.to("#s08-tile", { scaleY: 1, duration: 0.55, ease: "expo.out" }, 0.10);
+    tl.to("#s08-mark", { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.18);
+    tl.to("#s08-word", { clipPath: "inset(0 0% 0 0)", duration: 0.6, ease: "expo.inOut" }, 0.38);
+    tl.to("#s08-desc", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.92);
+
+    tl.to("#s08-kicker", { opacity: 1, duration: 0.4 }, 1.06);
+    tl.to("#s08-cta", { opacity: 1, y: 0, duration: 0.55, ease: "expo.out" }, 1.14);
+    tl.to("#s08-url", { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 1.35);
+    tl.to("#s08-urlline", { scaleX: 1, duration: 0.55, ease: "power3.inOut" }, 1.42);
+    tl.to("#s08-legal", { opacity: 1, duration: 0.6 }, 1.5);
+    tl.to("#s08-side", { opacity: 1, duration: 0.6 }, 1.6);
+
+    tl.to("#s08-caret", { opacity: 1, duration: 0.12 }, 1.9);
+    tl.to("#s08-caret", { opacity: 0, duration: 0.46, repeat: 5, yoyo: true, ease: "steps(1)" }, 2.2);
+
+    tl.fromTo("#s08-bg", { scale: 1.0 }, { scale: 1.035, duration: 6.65, ease: "none" }, 0);
+
+    window.__timelines["s08"] = tl;
+    tl.seek(0);
+  </script>
+</template>

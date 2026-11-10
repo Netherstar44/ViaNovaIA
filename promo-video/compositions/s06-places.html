@@ -1,0 +1,136 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0e0d0a;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .s06-beat { position: absolute; inset: 0; overflow: hidden; background: #0e0d0a; }
+    .s06-beat > img, .s06-beat > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+    .s06-scrim {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(9,8,6,.74) 0%, rgba(9,8,6,.42) 12%, rgba(9,8,6,.10) 26%, rgba(9,8,6,0) 40%),
+        linear-gradient(0deg, rgba(9,8,6,.90) 0%, rgba(9,8,6,.58) 22%, rgba(9,8,6,.10) 48%, rgba(9,8,6,0) 64%),
+        linear-gradient(90deg, rgba(9,8,6,.62) 0%, rgba(9,8,6,.18) 34%, rgba(9,8,6,0) 62%);
+    }
+    .s06-hud {
+      position: absolute; left: 110px; right: 110px; top: 52px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 14px/1 "Inter", sans-serif; letter-spacing: .24em; text-transform: uppercase;
+      color: rgba(244,241,232,.78);
+    }
+    .s06-name {
+      position: absolute; left: 104px; bottom: 194px;
+      font-family: "Poppins", sans-serif; font-weight: 800; font-size: 152px; line-height: .86;
+      letter-spacing: -.06em; white-space: nowrap;
+    }
+    .s06-line { display: block; overflow: hidden; padding-top: .1em; margin-top: -.1em; }
+    .s06-line > span { display: block; will-change: transform; }
+    .s06-meta {
+      position: absolute; left: 112px; bottom: 348px;
+      font: 600 17px/1 "Inter", sans-serif; letter-spacing: .24em; text-transform: uppercase;
+      color: rgba(244,241,232,.78);
+    }
+    .s06-rule { position: absolute; left: 112px; bottom: 318px; width: 84px; height: 4px; background: #ffbf00; transform-origin: left center; }
+    .s06-dist { position: absolute; right: 112px; bottom: 206px; text-align: right; }
+    .s06-dist .s06-d1 { font: 600 16px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: rgba(244,241,232,.72); }
+    .s06-dist .s06-d2 { margin-top: 10px; font: 400 13px/1 "Inter", sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(244,241,232,.62); }
+    .s06-index { position: absolute; right: 112px; top: 96px; font: 600 12px/1 "Inter", sans-serif; letter-spacing: .22em; color: rgba(244,241,232,.90); }
+
+    #s06-wind { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #s06-windscrim {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(0deg, rgba(9,8,6,.72) 0%, rgba(9,8,6,.10) 38%, rgba(9,8,6,0) 62%),
+        radial-gradient(120% 100% at 50% 50%, rgba(9,8,6,0) 40%, rgba(9,8,6,.42) 100%);
+    }
+  </style>
+
+  <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
+    <div id="s06-b1" class="clip s06-beat" data-start="0" data-duration="2.80" data-track-index="1">
+      <img id="s06-i1" src="assets/img/tatacoa.png" alt="Desierto de la Tatacoa, Huila" />
+      <div class="s06-scrim"></div>
+      <div class="s06-hud"><span>El Huila · Colombia</span><span>Desierto de la Tatacoa</span></div>
+      <div class="s06-index">01 / 03</div>
+      <div class="s06-meta">Desierto · observatorio</div>
+      <div class="s06-rule"></div>
+      <div class="s06-name"><span class="s06-line"><span>TATACOA</span></span></div>
+      <div class="s06-dist"><div class="s06-d1">38 km de Neiva</div><div class="s06-d2">45–60 min · Villavieja</div></div>
+    </div>
+
+    <div id="s06-b2" class="clip s06-beat" data-start="2.80" data-duration="2.50" data-track-index="2">
+      <img id="s06-i2" src="assets/img/rivera.png" alt="Rivera, Huila" />
+      <div class="s06-scrim"></div>
+      <div class="s06-hud"><span>El Huila · Colombia</span><span>Rivera</span></div>
+      <div class="s06-index">02 / 03</div>
+      <div class="s06-meta">Termales · cascadas</div>
+      <div class="s06-rule"></div>
+      <div class="s06-name"><span class="s06-line"><span>RIVERA</span></span></div>
+      <div class="s06-dist"><div class="s06-d1">20 km de Neiva</div><div class="s06-d2">Amanecer en el valle</div></div>
+    </div>
+
+    <div id="s06-b3" class="clip s06-beat" data-start="5.30" data-duration="2.10" data-track-index="3">
+      <img id="s06-i3" src="assets/img/cocora.png" alt="Valle del Cocora, Quindío" />
+      <div class="s06-scrim"></div>
+      <div class="s06-hud"><span>Colombia</span><span>Valle del Cocora</span></div>
+      <div class="s06-index">03 / 03</div>
+      <div class="s06-meta">Palmas de cera · niebla</div>
+      <div class="s06-rule"></div>
+      <div class="s06-name"><span class="s06-line"><span>COCORA</span></span></div>
+      <div class="s06-dist"><div class="s06-d1">Quindío</div><div class="s06-d2">Eje Cafetero</div></div>
+    </div>
+
+    <video id="s06-wind" class="clip" data-start="7.40" data-duration="1.933" data-media-start="0.4" data-hf-media-start-basis="local" src="assets/clips/wind.mp4" muted playsinline></video>
+    <div id="s06-b4" class="clip" data-start="7.40" data-duration="1.933" data-track-index="4">
+      <div id="s06-windscrim"></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s06-i1", { scale: 1.10, xPercent: 1.6 });
+    gsap.set("#s06-b1 .s06-line > span", { yPercent: 112 });
+    gsap.set("#s06-b1 .s06-meta", { opacity: 0 });
+    gsap.set("#s06-b1 .s06-rule", { scaleX: 0 });
+    gsap.set("#s06-b1 .s06-dist", { opacity: 0, y: 12 });
+    gsap.set("#s06-b1 .s06-index", { opacity: 0 });
+
+    gsap.set("#s06-i2", { scale: 1.10, xPercent: 2.2 });
+    gsap.set("#s06-b2 .s06-line > span", { yPercent: 112 });
+    gsap.set("#s06-b2 .s06-meta", { opacity: 0 });
+    gsap.set("#s06-b2 .s06-rule", { scaleX: 0 });
+    gsap.set("#s06-b2 .s06-dist", { opacity: 0, y: 12 });
+    gsap.set("#s06-b2 .s06-index", { opacity: 0 });
+
+    gsap.set("#s06-i3", { scale: 1.10, xPercent: -2.0 });
+    gsap.set("#s06-b3 .s06-line > span", { yPercent: 112 });
+    gsap.set("#s06-b3 .s06-meta", { opacity: 0 });
+    gsap.set("#s06-b3 .s06-rule", { scaleX: 0 });
+    gsap.set("#s06-b3 .s06-dist", { opacity: 0, y: 12 });
+    gsap.set("#s06-b3 .s06-index", { opacity: 0 });
+
+    function beat(prefix, at, dur) {
+      tl.to(prefix + " .s06-line > span", { yPercent: 0, duration: 0.55, ease: "expo.out" }, at + 0.12);
+      tl.to(prefix + " .s06-meta", { opacity: 1, duration: 0.45, ease: "power2.out" }, at + 0.26);
+      tl.to(prefix + " .s06-rule", { scaleX: 1, duration: 0.5, ease: "power3.inOut" }, at + 0.34);
+      tl.to(prefix + " .s06-dist", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, at + 0.40);
+      tl.to(prefix + " .s06-index", { opacity: 1, duration: 0.4 }, at + 0.18);
+      tl.fromTo(prefix + " img", { scale: 1.10 }, { scale: 1.03, duration: dur, ease: "power2.out" }, at);
+    }
+
+    beat("#s06-b1", 0, 2.8);
+    beat("#s06-b2", 2.8, 2.5);
+    beat("#s06-b3", 5.3, 2.1);
+
+    tl.fromTo("#s06-wind", { scale: 1.06, xPercent: 1.0 }, { scale: 1.0, xPercent: 0, duration: 1.933, ease: "power2.out" }, 7.4);
+
+    window.__timelines["s06"] = tl;
+    tl.seek(0);
+  </script>
+</template>

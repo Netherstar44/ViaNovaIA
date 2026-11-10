@@ -1,0 +1,205 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #f2efe6;
+      color: #14130f;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #s03-paper { position: absolute; inset: 0; background: url("assets/tex/paper.png") center / cover; }
+    #s03-wash {
+      position: absolute; inset: 0;
+      background: radial-gradient(90% 70% at 20% 10%, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 55%);
+    }
+    .s03-hud {
+      position: absolute; left: 120px; right: 120px; top: 56px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 600 14px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(20,19,15,.62);
+    }
+    #s03-hudline { position: absolute; left: 120px; right: 120px; top: 86px; height: 1px; background: rgba(20,19,15,.16); transform-origin: left center; }
+
+    .s03-line { display: block; overflow: hidden; }
+    .s03-line > span { display: block; will-change: transform; }
+    #s03-head { position: absolute; left: 120px; top: 132px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 100px; line-height: .92; letter-spacing: -.055em; }
+    #s03-head .s03-l2 { color: #14130f; }
+    #s03-head .s03-dot { color: #ffbf00; }
+
+    #s03-inputs { position: absolute; left: 1350px; top: 150px; width: 450px; }
+    .s03-input { padding: 15px 0 14px; border-top: 1px solid rgba(20,19,15,.18); display: flex; justify-content: space-between; align-items: baseline; }
+    .s03-input:last-child { border-bottom: 1px solid rgba(20,19,15,.18); }
+    .s03-k { font: 600 12px/1 "Inter", sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(20,19,15,.62); }
+    .s03-v { font: 500 19px/1 "Inter", sans-serif; color: rgba(20,19,15,.86); }
+
+    #s03-prompt { position: absolute; left: 120px; top: 404px; width: 1220px; }
+    #s03-bar { position: absolute; left: 0; top: 6px; width: 6px; height: 226px; background: #ffbf00; transform-origin: top center; }
+    #s03-prompttext { position: absolute; left: 44px; top: 0; width: 1180px; font-family: "Poppins", sans-serif; font-weight: 500; font-size: 56px; line-height: 1.26; letter-spacing: -.03em; }
+    .s03-w { display: inline-block; margin-right: .22em; will-change: transform; }
+    .s03-w:last-child { margin-right: 0; }
+    #s03-huila { color: #14130f; background: #ffbf00; padding: 0 .05em; }
+    #s03-caret { display: inline-block; width: 4px; height: 50px; background: #ffbf00; margin-left: 6px; vertical-align: -7px; opacity: 0; }
+
+    #s03-header { position: absolute; left: 164px; top: 414px; opacity: 0; }
+    #s03-header .s03-eyebrow { font: 600 12px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: rgba(20,19,15,.62); }
+    #s03-header .s03-sum { margin-top: 14px; font-family: "Poppins", sans-serif; font-weight: 700; font-size: 30px; letter-spacing: -.02em; }
+    #s03-header .s03-sum b { color: #14130f; }
+    #s03-header .s03-sum em { font-style: normal; color: rgba(20,19,15,.62); padding: 0 10px; }
+
+    #s03-rail { position: absolute; left: 145px; top: 512px; width: 3px; height: 452px; background: #ffbf00; transform-origin: top center; }
+    .s03-row { position: absolute; left: 164px; width: 1250px; height: 112px; }
+    .s03-row .s03-day { position: absolute; left: 14px; top: 12px; font: 600 12px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: rgba(20,19,15,.62); }
+    .s03-row .s03-name { position: absolute; left: 136px; top: 0; font-family: "Poppins", sans-serif; font-weight: 700; font-size: 38px; line-height: 1; letter-spacing: -.035em; }
+    .s03-row .s03-meta { position: absolute; left: 136px; top: 52px; font: 400 19px/1.2 "Inter", sans-serif; color: rgba(20,19,15,.64); }
+    .s03-row .s03-hair { position: absolute; left: 136px; right: 0; bottom: 0; height: 1px; background: rgba(20,19,15,.16); transform-origin: left center; }
+    .s03-dot { position: absolute; left: 138px; top: 6px; width: 17px; height: 17px; border-radius: 50%; background: #ffbf00; box-shadow: 0 0 0 6px #f2efe6; }
+    #s03-r1 { top: 520px; }
+    #s03-r2 { top: 632px; }
+    #s03-r3 { top: 744px; }
+    #s03-r4 { top: 856px; }
+
+    .s03-thumb { position: absolute; left: 1478px; width: 250px; height: 148px; overflow: hidden; box-shadow: 0 12px 26px rgba(31,31,31,.16); }
+    .s03-thumb img { width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+    .s03-thumb::after { content: ""; position: absolute; inset: 0; border: 1px solid rgba(20,19,15,.18); }
+    #s03-t1 { top: 520px; }
+    #s03-t2 { top: 690px; }
+    #s03-t3 { top: 860px; }
+
+    #s03-legal { position: absolute; left: 120px; bottom: 54px; font: 600 12px/1 "Inter", sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(20,19,15,.62); }
+    #s03-legal i { display: inline-block; width: 5px; height: 5px; background: #ffbf00; margin: 0 10px 2px; }
+
+    #s03-wipe { position: absolute; inset: 0; background: #14130f; transform-origin: bottom center; }
+  </style>
+
+  <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
+    <div id="s03-stage" class="clip" data-start="0" data-duration="8.666" data-track-index="1">
+      <div id="s03-paper"></div>
+      <div id="s03-wash"></div>
+
+      <div class="s03-hud"><span>03 — El plan</span><span>Huila · Colombia</span></div>
+      <div id="s03-hudline"></div>
+
+      <div id="s03-head">
+        <span class="s03-line"><span>TÚ DESCRIBES</span></span>
+        <span class="s03-line"><span class="s03-l2">EL VIAJE<span class="s03-dot">.</span></span></span>
+      </div>
+
+      <div id="s03-inputs">
+        <div class="s03-input"><span class="s03-k">Fechas</span><span class="s03-v">4 días</span></div>
+        <div class="s03-input"><span class="s03-k">Presupuesto</span><span class="s03-v">A tu medida</span></div>
+        <div class="s03-input"><span class="s03-k">Ritmo</span><span class="s03-v">Sin madrugar</span></div>
+        <div class="s03-input"><span class="s03-k">Viajeros</span><span class="s03-v">2</span></div>
+      </div>
+
+      <div id="s03-prompt">
+        <div id="s03-bar"></div>
+        <div id="s03-prompttext">
+          <div class="s03-line"><span><span class="s03-w">Quiero</span><span class="s03-w">conocer</span><span class="s03-w">el</span><span class="s03-w" id="s03-huila">Huila</span><span class="s03-w">en</span></span></div>
+          <div class="s03-line"><span><span class="s03-w">cuatro</span><span class="s03-w">días.</span><span class="s03-w">Dos</span><span class="s03-w">viajeros.</span></span></div>
+          <div class="s03-line"><span><span class="s03-w">Sin</span><span class="s03-w">madrugar.</span><span id="s03-caret"></span></span></div>
+        </div>
+      </div>
+
+      <div id="s03-header">
+        <div class="s03-eyebrow">El plan toma forma</div>
+        <div class="s03-sum"><b>4 DÍAS</b><em>·</em>2 VIAJEROS<em>·</em>HUILA</div>
+      </div>
+
+      <div id="s03-rail"></div>
+
+      <div id="s03-r1" class="s03-row">
+        <div class="s03-dot"></div>
+        <div class="s03-day">Día 01</div>
+        <div class="s03-name">Neiva histórico</div>
+        <div class="s03-meta">Parque Santander · Malecón del Magdalena</div>
+        <div class="s03-hair"></div>
+      </div>
+      <div id="s03-r2" class="s03-row">
+        <div class="s03-dot"></div>
+        <div class="s03-day">Día 02</div>
+        <div class="s03-name">Desierto de la Tatacoa</div>
+        <div class="s03-meta">Villavieja · observatorio astronómico · 38 km</div>
+        <div class="s03-hair"></div>
+      </div>
+      <div id="s03-r3" class="s03-row">
+        <div class="s03-dot"></div>
+        <div class="s03-day">Día 03</div>
+        <div class="s03-name">Rivera</div>
+        <div class="s03-meta">Termales y cascadas · 20 km de Neiva</div>
+        <div class="s03-hair"></div>
+      </div>
+      <div id="s03-r4" class="s03-row">
+        <div class="s03-dot"></div>
+        <div class="s03-day">Día 04</div>
+        <div class="s03-name">Gigante o regreso</div>
+        <div class="s03-meta">Cierre del viaje a tu ritmo</div>
+        <div class="s03-hair"></div>
+      </div>
+
+      <div id="s03-t1" class="s03-thumb"><img src="assets/img/neiva.png" alt="Neiva, Huila" /></div>
+      <div id="s03-t2" class="s03-thumb"><img src="assets/img/tatacoa.png" alt="Desierto de la Tatacoa" /></div>
+      <div id="s03-t3" class="s03-thumb"><img src="assets/img/rivera.png" alt="Rivera, Huila" /></div>
+
+      <div id="s03-legal">Itinerario gratis<i></i>Editable en el chat<i></i>Proveedores del Huila</div>
+    </div>
+
+    <div id="s03-wipeclip" class="clip" data-start="8.28" data-duration="0.386" data-track-index="2">
+      <div id="s03-wipe"></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s03-hudline", { scaleX: 0 });
+    gsap.set("#s03-head .s03-line > span", { yPercent: 112 });
+    gsap.set(".s03-input", { opacity: 0, y: 12 });
+    gsap.set("#s03-bar", { scaleY: 0 });
+    gsap.set(".s03-w", { opacity: 0, y: 14 });
+    gsap.set("#s03-header", { opacity: 0, y: 16 });
+    gsap.set("#s03-rail", { scaleY: 0 });
+    gsap.set(".s03-row", { opacity: 0, y: 26 });
+    gsap.set(".s03-dot", { scale: 0 });
+    gsap.set(".s03-thumb", { clipPath: "inset(0 0 100% 0)" });
+    gsap.set("#s03-wipe", { scaleY: 0 });
+
+    tl.to("#s03-hudline", { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, 0.1);
+
+    tl.to("#s03-head .s03-line > span", { yPercent: 0, duration: 0.72, stagger: 0.1, ease: "expo.out" }, 0.18);
+
+    tl.to(".s03-input", { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, ease: "power3.out" }, 0.52);
+
+    tl.to("#s03-bar", { scaleY: 1, duration: 0.7, ease: "expo.out" }, 0.66);
+    tl.to(".s03-w", { opacity: 1, y: 0, duration: 0.34, stagger: 0.085, ease: "power3.out" }, 0.84);
+    tl.to("#s03-caret", { opacity: 1, duration: 0.12 }, 1.86);
+    tl.to("#s03-caret", { opacity: 0, duration: 0.34, repeat: 5, yoyo: true, ease: "steps(1)" }, 2.16);
+
+    tl.to("#s03-prompt", { scale: 0.34, opacity: 0, duration: 0.42, ease: "power3.in", transformOrigin: "0% 0%" }, 3.34);
+    tl.fromTo("#s03-header", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 3.56);
+
+    tl.to("#s03-rail", { scaleY: 1, duration: 0.85, ease: "power3.inOut" }, 3.72);
+
+    tl.to("#s03-r1", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 3.86);
+    tl.to("#s03-r1 .s03-dot", { scale: 1, duration: 0.3, ease: "back.out(2)" }, 3.90);
+    tl.to("#s03-r2", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.04);
+    tl.to("#s03-r2 .s03-dot", { scale: 1, duration: 0.3, ease: "back.out(2)" }, 4.08);
+    tl.to("#s03-r3", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.22);
+    tl.to("#s03-r3 .s03-dot", { scale: 1, duration: 0.3, ease: "back.out(2)" }, 4.26);
+    tl.to("#s03-r4", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 4.40);
+    tl.to("#s03-r4 .s03-dot", { scale: 1, duration: 0.3, ease: "back.out(2)" }, 4.44);
+
+    tl.to("#s03-t1", { clipPath: "inset(0 0 0% 0)", duration: 0.55, ease: "power3.inOut" }, 4.02);
+    tl.to("#s03-t2", { clipPath: "inset(0 0 0% 0)", duration: 0.55, ease: "power3.inOut" }, 4.16);
+    tl.to("#s03-t3", { clipPath: "inset(0 0 0% 0)", duration: 0.55, ease: "power3.inOut" }, 4.30);
+    tl.fromTo("#s03-t1 img", { scale: 1.0 }, { scale: 1.07, duration: 4.3, ease: "none" }, 4.02);
+    tl.fromTo("#s03-t2 img", { scale: 1.0 }, { scale: 1.07, duration: 4.2, ease: "none" }, 4.16);
+    tl.fromTo("#s03-t3 img", { scale: 1.0 }, { scale: 1.07, duration: 4.1, ease: "none" }, 4.30);
+
+    tl.to("#s03-wipe", { scaleY: 1, duration: 0.386, ease: "power3.in" }, 8.28);
+
+    window.__timelines["s03"] = tl;
+    tl.seek(0);
+  </script>
+</template>

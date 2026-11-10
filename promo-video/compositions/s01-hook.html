@@ -1,0 +1,174 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #14130f;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .shot { position: absolute; inset: 0; overflow: hidden; }
+    .shot > img, .shot > video {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; will-change: transform;
+    }
+    #s01-vidA { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+    .scrim {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(12,11,8,.82) 0%, rgba(12,11,8,.46) 6%, rgba(12,11,8,.12) 13%, rgba(12,11,8,0) 20%),
+        linear-gradient(90deg, rgba(12,11,8,.80) 0%, rgba(12,11,8,.44) 38%, rgba(12,11,8,0) 66%),
+        linear-gradient(0deg, rgba(12,11,8,.66) 0%, rgba(12,11,8,.12) 34%, rgba(12,11,8,0) 55%);
+    }
+    .hud {
+      position: absolute; left: 120px; right: 120px; top: 54px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 16px/1 "Inter", sans-serif; letter-spacing: .18em; text-transform: uppercase;
+      color: rgba(244,241,232,.94);
+    }
+    .hud-line { position: absolute; left: 120px; right: 120px; top: 84px; height: 1px; background: rgba(244,241,232,.24); }
+    .eyebrow {
+      font: 600 21px/1.2 "Inter", sans-serif; letter-spacing: .17em; text-transform: uppercase;
+      color: rgba(244,241,232,.86);
+    }
+    .display {
+      font-family: "Poppins", sans-serif; font-weight: 800;
+      letter-spacing: -.055em; line-height: .82;
+    }
+    .line { display: block; overflow: hidden; }
+    .line > span { display: block; will-change: transform; }
+    .accent { color: #ffbf00; }
+    #s01-titleA { position: absolute; left: 120px; top: 0; width: 1420px; height: 1080px; }
+    #s01-eyebrowA { position: absolute; left: 0; top: 508px; }
+    #s01-l1 { position: absolute; left: -4px; top: 552px; font-size: 188px; }
+    #s01-l2 { position: absolute; left: -4px; top: 704px; font-size: 188px; }
+    #s01-subA {
+      position: absolute; left: 4px; top: 906px;
+      font: 600 23px/1 "Inter", sans-serif; letter-spacing: .16em; text-transform: uppercase;
+      color: rgba(244,241,232,.72);
+    }
+    #s01-labelB, #s01-labelC { position: absolute; left: 120px; bottom: 116px; display: flex; gap: 24px; align-items: flex-end; }
+    .locbar { width: 4px; height: 118px; background: #ffbf00; margin-bottom: 4px; }
+    .locname { font: 800 62px/1 "Poppins", sans-serif; letter-spacing: -.04em; }
+    .locmeta { margin-top: 10px; font: 600 17px/1 "Inter", sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(244,241,232,.78); }
+    #s01-stage { position: absolute; inset: 0; overflow: hidden; background: #14130f; }
+    #s01-stage > img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .strip { position: absolute; top: 0; width: 120px; height: 1080px; overflow: hidden; will-change: transform; }
+    .strip-inner { position: absolute; inset: 0; background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform; }
+    .strip::after { content: ""; position: absolute; inset: 0; border-right: 1px solid rgba(244,241,232,.18); }
+    #s01-strip1 { left: 1200px; }
+    #s01-strip2 { left: 1360px; }
+    #s01-strip3 { left: 1520px; }
+    #s01-stripimg1 { background-image: url("assets/img/tatacoa.png"); }
+    #s01-stripimg2 { background-image: url("assets/img/cocora.png"); }
+    #s01-stripimg3 { background-image: url("assets/img/cartagena.png"); }
+    #s01-hstage { position: absolute; left: 120px; top: 350px; width: 1080px; }
+    #s01-hstage .eyebrow { color: rgba(244,241,232,.72); }
+    #s01-lh { margin-top: 22px; font-size: 258px; }
+    #s01-lh .dot { color: #ffbf00; }
+    #s01-hrule { margin-top: 34px; width: 860px; height: 1px; background: rgba(244,241,232,.28); }
+    #s01-hsub { margin-top: 18px; font: 500 18px/1 "Inter", sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(244,241,232,.58); }
+    #s01-seam { position: absolute; left: 1357px; top: 0; width: 6px; height: 1080px; background: #ffbf00; }
+  </style>
+
+  <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
+    <video id="s01-vidA" class="clip s01-vidfill" data-start="0" data-duration="3.45" data-track-index="1" src="assets/clips/desert.mp4" muted playsinline data-media-start="0"></video>
+    <div id="s01-shotA" class="clip" data-start="0" data-duration="3.45" data-track-index="2">
+      <div class="scrim"></div>
+    </div>
+
+    <div id="s01-hudA" class="clip" data-start="0" data-duration="3.45" data-track-index="2">
+      <div class="hud"><span>VIANova IA presenta</span><span>Colombia / 01</span></div>
+      <div class="hud-line"></div>
+    </div>
+
+    <div id="s01-titleClip" class="clip" data-start="0" data-duration="3.45" data-track-index="3">
+      <div id="s01-titleA">
+        <div id="s01-eyebrowA" class="eyebrow"><span class="line"><span>Un país que no cabe en una lista</span></span></div>
+        <div id="s01-l1" class="display"><span class="line"><span>DEMASIADO</span></span></div>
+        <div id="s01-l2" class="display"><span class="line"><span>PAÍS<span class="accent">.</span></span></span></div>
+        <div id="s01-subA">Para una lista de diez lugares</div>
+      </div>
+    </div>
+
+    <div id="s01-shotB" class="clip shot" data-start="3.2" data-duration="1.65" data-track-index="4">
+      <img id="s01-imgB" src="assets/img/cocora.png" alt="Palmas de cera del Valle del Cocora" />
+      <div class="scrim"></div>
+    </div>
+    <div id="s01-labelB" class="clip" data-start="3.2" data-duration="1.65" data-track-index="5">
+      <div class="locbar"></div>
+      <div>
+        <div class="locname">COCORA</div>
+        <div class="locmeta">Quindío · Eje Cafetero</div>
+      </div>
+    </div>
+
+    <div id="s01-shotC" class="clip shot" data-start="4.6" data-duration="1.15" data-track-index="6">
+      <img id="s01-imgC" src="assets/img/cartagena.png" alt="Calle colonial de Cartagena" />
+      <div class="scrim"></div>
+    </div>
+    <div id="s01-labelC" class="clip" data-start="4.6" data-duration="1.15" data-track-index="7">
+      <div class="locbar"></div>
+      <div>
+        <div class="locname">CARTAGENA</div>
+        <div class="locmeta">Bolívar · Caribe colombiano</div>
+      </div>
+    </div>
+
+    <div id="s01-stage" class="clip" data-start="5.6" data-duration="1.733" data-track-index="8">
+      <img class="bg" src="assets/tex/ink.png" alt="" />
+      <div id="s01-strip1" class="strip"><div class="strip-inner" id="s01-stripimg1"></div></div>
+      <div id="s01-strip2" class="strip"><div class="strip-inner" id="s01-stripimg2"></div></div>
+      <div id="s01-strip3" class="strip"><div class="strip-inner" id="s01-stripimg3"></div></div>
+      <div id="s01-hstage">
+        <div class="eyebrow"><span class="line"><span>El plan que conoce</span></span></div>
+        <div id="s01-lh" class="display"><span class="line"><span>HUILA<span class="dot">.</span></span></span></div>
+        <div id="s01-hrule"></div>
+        <div id="s01-hsub">De tres lugares a uno</div>
+      </div>
+      <div id="s01-seam"></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#s01-vidA", { scale: 1.0, xPercent: 0 }, { scale: 1.075, xPercent: -1.0, duration: 3.45, ease: "none" }, 0);
+    tl.fromTo("#s01-hudA", { opacity: 0 }, { opacity: 1, duration: 0.38, ease: "power2.out" }, 0.1);
+    tl.fromTo("#s01-eyebrowA .line > span", { yPercent: 112 }, { yPercent: 0, duration: 0.5, ease: "expo.out" }, 0.34);
+    tl.fromTo("#s01-l1 .line > span", { yPercent: 112 }, { yPercent: 0, duration: 0.72, ease: "expo.out" }, 0.44);
+    tl.fromTo("#s01-l2 .line > span", { yPercent: 112 }, { yPercent: 0, duration: 0.72, ease: "expo.out" }, 0.56);
+    tl.fromTo("#s01-subA", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.9);
+    tl.to("#s01-titleA", { yPercent: -7, opacity: 0, duration: 0.26, ease: "power3.in" }, 2.92);
+
+    tl.fromTo("#s01-imgB", { scale: 1.105, xPercent: 3.0 }, { scale: 1.045, xPercent: 0, duration: 1.7, ease: "power3.out" }, 3.2);
+    tl.fromTo("#s01-labelB", { opacity: 0, x: -26 }, { opacity: 1, x: 0, duration: 0.46, ease: "expo.out" }, 3.38);
+    tl.to("#s01-labelB", { opacity: 0, x: -14, duration: 0.2, ease: "power3.in" }, 4.46);
+
+    tl.fromTo("#s01-imgC", { scale: 1.09, xPercent: 9 }, { scale: 1.02, xPercent: 0, duration: 0.6, ease: "power4.out" }, 4.6);
+    tl.fromTo("#s01-labelC", { opacity: 0, x: 26 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 4.78);
+    tl.to("#s01-labelC", { opacity: 0, x: -10, duration: 0.18, ease: "power3.in" }, 5.5);
+
+    tl.fromTo("#s01-strip1", { x: 430, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, 5.6);
+    tl.fromTo("#s01-strip2", { x: 430, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, 5.67);
+    tl.fromTo("#s01-strip3", { x: 430, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, 5.74);
+
+    tl.fromTo("#s01-hstage .eyebrow .line > span", { yPercent: 112 }, { yPercent: 0, duration: 0.5, ease: "expo.out" }, 5.82);
+    tl.fromTo("#s01-lh .line > span", { yPercent: 112 }, { yPercent: 0, duration: 0.62, ease: "expo.out" }, 5.95);
+    tl.fromTo("#s01-hrule", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.inOut", transformOrigin: "left center" }, 6.22);
+    tl.fromTo("#s01-hsub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 6.34);
+
+    tl.to("#s01-strip1", { x: 160, duration: 0.55, ease: "power2.inOut" }, 6.32);
+    tl.to("#s01-strip2", { x: 0, duration: 0.55, ease: "power2.inOut" }, 6.32);
+    tl.to("#s01-strip3", { x: -160, duration: 0.55, ease: "power2.inOut" }, 6.32);
+    tl.to("#s01-stripimg1", { scaleX: 0.05, duration: 0.3, ease: "power3.in" }, 6.82);
+    tl.to("#s01-stripimg2", { scaleX: 0.05, duration: 0.3, ease: "power3.in" }, 6.84);
+    tl.to("#s01-stripimg3", { scaleX: 0.05, duration: 0.3, ease: "power3.in" }, 6.86);
+    tl.fromTo("#s01-seam", { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out" }, 7.06);
+
+    window.__timelines["s01"] = tl;
+    tl.seek(0);
+  </script>
+</template>

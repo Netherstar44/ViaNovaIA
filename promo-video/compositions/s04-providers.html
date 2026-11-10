@@ -1,0 +1,172 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #14130f;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #s04-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .9; }
+    #s04-light {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(118deg, rgba(74,64,42,.34) 0%, rgba(20,19,15,0) 46%),
+        radial-gradient(120% 100% at 100% 0%, rgba(255,191,0,.055) 0%, rgba(20,19,15,0) 52%);
+    }
+    .s04-hud {
+      position: absolute; left: 110px; right: 110px; top: 54px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 14px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(244,241,232,.60);
+    }
+    #s04-hudline { position: absolute; left: 110px; right: 110px; top: 84px; height: 1px; background: rgba(244,241,232,.16); transform-origin: left center; }
+
+    .s04-line { display: block; overflow: hidden; }
+    .s04-line > span { display: block; will-change: transform; }
+    #s04-title { position: absolute; left: 110px; top: 138px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 78px; line-height: 1.04; letter-spacing: -.055em; }
+    #s04-title .s04-acc { color: #ffbf00; }
+
+    #s04-body { position: absolute; left: 112px; top: 336px; width: 470px; font: 400 25px/1.45 "Inter", sans-serif; color: rgba(244,241,232,.62); }
+
+    #s04-list { position: absolute; left: 110px; top: 470px; width: 560px; }
+    .s04-item { position: relative; padding: 16px 0 18px; border-top: 1px solid rgba(244,241,232,.14); }
+    .s04-item:last-child { border-bottom: 1px solid rgba(244,241,232,.14); }
+    .s04-item .s04-idx { position: absolute; left: 0; top: 18px; font: 500 11px/1 "Inter", sans-serif; letter-spacing: .18em; color: rgba(244,241,232,.58); }
+    .s04-item .s04-k { display: block; margin-left: 40px; font: 600 14px/1 "Inter", sans-serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(244,241,232,.66); transition: none; }
+    .s04-item .s04-sub { display: block; margin-left: 40px; margin-top: 7px; font: 400 14px/1.2 "Inter", sans-serif; color: rgba(244,241,232,.54); }
+    .s04-item .s04-pip { position: absolute; left: 0; top: 36px; width: 7px; height: 7px; background: #ffbf00; opacity: .18; }
+    #s04-item4 .s04-k { padding-right: 0; }
+
+    .s04-card { position: absolute; left: 1080px; top: 110px; width: 620px; height: 888px; box-shadow: 0 36px 84px rgba(0,0,0,.58); overflow: hidden; background: #f4f1e8; }
+    .s04-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .s04-ticket {
+      position: absolute; left: 1080px; width: 620px; height: 336px;
+      background: url("assets/tex/paper.png") center / cover, #f2efe6;
+      box-shadow: 0 30px 70px rgba(0,0,0,.55);
+      color: #14130f; overflow: hidden;
+    }
+    .s04-ticket .s04-strip { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: #ffbf00; }
+    .s04-ticket .s04-tk { position: absolute; left: 44px; top: 38px; font: 600 12px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: rgba(20,19,15,.62); }
+    .s04-ticket .s04-tn { position: absolute; left: 42px; top: 74px; width: 470px; font-family: "Poppins", sans-serif; font-weight: 700; font-size: 40px; line-height: 1.02; letter-spacing: -.04em; }
+    .s04-ticket .s04-tm { position: absolute; left: 44px; bottom: 42px; width: 470px; font: 400 18px/1.3 "Inter", sans-serif; color: rgba(20,19,15,.66); }
+    .s04-ticket .s04-tr { position: absolute; right: 42px; top: 66px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 72px; letter-spacing: -.05em; }
+    .s04-ticket .s04-tr small { display: block; margin-top: 4px; font: 600 10px/1 "Inter", sans-serif; letter-spacing: .16em; color: rgba(20,19,15,.62); text-align: right; }
+    .s04-ticket .s04-perf { position: absolute; left: 44px; right: 44px; bottom: 96px; height: 1px; background: repeating-linear-gradient(90deg, rgba(20,19,15,.28) 0 6px, transparent 6px 12px); }
+    #s04-taxi { top: 208px; }
+    #s04-transfer { top: 588px; }
+
+    #s04-foot { position: absolute; left: 110px; bottom: 52px; font: 500 11px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase; color: rgba(244,241,232,.58); }
+  </style>
+
+  <div id="root" data-composition-id="s04" data-width="1920" data-height="1080">
+    <div id="s04-stage" class="clip" data-start="0" data-duration="9.334" data-track-index="1">
+      <img id="s04-bg" src="assets/tex/ink.png" alt="" />
+      <div id="s04-light"></div>
+
+      <div class="s04-hud"><span>04 — Catálogo real</span><span>Huila · Colombia</span></div>
+      <div id="s04-hudline"></div>
+
+      <div id="s04-title">
+        <span class="s04-line"><span>PROVEEDORES</span></span>
+        <span class="s04-line"><span class="s04-acc">REALES.</span></span>
+      </div>
+
+      <div id="s04-body">Nombres, precios y reseñas del catálogo de VIANova. Nada de directorios genéricos.</div>
+
+      <div id="s04-list">
+        <div class="s04-item" id="s04-item1">
+          <span class="s04-idx">01</span><span class="s04-pip"></span>
+          <span class="s04-k">Alojamiento</span>
+          <span class="s04-sub">Hotel Plaza Neiva · Hotel Chicalá Real</span>
+        </div>
+        <div class="s04-item" id="s04-item2">
+          <span class="s04-idx">02</span><span class="s04-pip"></span>
+          <span class="s04-k">Gastronomía</span>
+          <span class="s04-sub">Asadero El Huilense · La Casona del Río</span>
+        </div>
+        <div class="s04-item" id="s04-item3">
+          <span class="s04-idx">03</span><span class="s04-pip"></span>
+          <span class="s04-k">Experiencias</span>
+          <span class="s04-sub">Tatacoa · Rivera · observatorio</span>
+        </div>
+        <div class="s04-item" id="s04-item4">
+          <span class="s04-idx">04</span><span class="s04-pip"></span>
+          <span class="s04-k">Movilidad</span>
+          <span class="s04-sub">Taxi Rápido Neiva · Transfer Tatacoa</span>
+        </div>
+      </div>
+
+      <div id="s04-hotel" class="s04-card"><img src="assets/ui/card-hotel-plaza.png" alt="Hotel Plaza Neiva en el catálogo de VIANova" /></div>
+      <div id="s04-asadero" class="s04-card"><img src="assets/ui/card-asadero.png" alt="Asadero El Huilense en el catálogo de VIANova" /></div>
+
+      <div id="s04-taxi" class="s04-ticket">
+        <div class="s04-strip"></div>
+        <div class="s04-tk">Movilidad · Neiva</div>
+        <div class="s04-tn">Taxi Rápido Neiva</div>
+        <div class="s04-tr">4,8<small>RESEÑA</small></div>
+        <div class="s04-perf"></div>
+        <div class="s04-tm">Terminal de Transportes · servicio 24/7</div>
+      </div>
+
+      <div id="s04-transfer" class="s04-ticket">
+        <div class="s04-strip"></div>
+        <div class="s04-tk">Movilidad · Tatacoa</div>
+        <div class="s04-tn">Transfer al desierto</div>
+        <div class="s04-tm">Desierto de la Tatacoa y observatorio astronómico</div>
+      </div>
+
+      <div id="s04-foot">Catálogo VIANova · Neiva, Huila</div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s04-hudline", { scaleX: 0 });
+    gsap.set("#s04-title .s04-line > span", { yPercent: 112 });
+    gsap.set("#s04-body", { opacity: 0, y: 14 });
+    gsap.set(".s04-item", { opacity: 0, y: 12 });
+    gsap.set("#s04-hotel", { opacity: 0, y: 80, rotate: 2.4 });
+    gsap.set("#s04-asadero", { opacity: 0, x: 130, rotate: -1.8 });
+    gsap.set("#s04-taxi", { opacity: 0, y: 70, rotate: 1.6 });
+    gsap.set("#s04-transfer", { opacity: 0, y: 90, rotate: -1.2 });
+    gsap.set("#s04-foot", { opacity: 0 });
+
+    tl.to("#s04-hudline", { scaleX: 1, duration: 0.8, ease: "power2.inOut" }, 0.08);
+    tl.to("#s04-title .s04-line > span", { yPercent: 0, duration: 0.74, stagger: 0.1, ease: "expo.out" }, 0.18);
+    tl.to("#s04-body", { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.52);
+    tl.to(".s04-item", { opacity: 1, y: 0, duration: 0.45, stagger: 0.07, ease: "power3.out" }, 0.64);
+
+    tl.to("#s04-hotel", { opacity: 1, y: 0, rotate: -0.7, duration: 0.62, ease: "expo.out" }, 0.22);
+    tl.to("#s04-item1 .s04-pip", { opacity: 1, duration: 0.3 }, 0.5);
+    tl.to("#s04-item1 .s04-k", { color: "rgba(244,241,232,0.95)", duration: 0.3 }, 0.5);
+    tl.to("#s04-item1 .s04-sub", { color: "rgba(244,241,232,0.62)", duration: 0.3 }, 0.5);
+
+    tl.to("#s04-hotel", { opacity: 0, x: -150, duration: 0.32, ease: "power3.in" }, 1.55);
+    tl.to("#s04-asadero", { opacity: 1, x: 0, rotate: 0.6, duration: 0.55, ease: "expo.out" }, 1.66);
+    tl.to("#s04-item2 .s04-pip", { opacity: 1, duration: 0.3 }, 1.7);
+    tl.to("#s04-item2 .s04-k", { color: "rgba(244,241,232,0.95)", duration: 0.3 }, 1.7);
+    tl.to("#s04-item2 .s04-sub", { color: "rgba(244,241,232,0.62)", duration: 0.3 }, 1.7);
+
+    tl.to("#s04-asadero", { opacity: 0, x: -150, duration: 0.32, ease: "power3.in" }, 3.45);
+    tl.to("#s04-taxi", { opacity: 1, y: 0, rotate: -0.5, duration: 0.5, ease: "expo.out" }, 3.56);
+    tl.to("#s04-transfer", { opacity: 1, y: 0, rotate: 0.6, duration: 0.55, ease: "expo.out" }, 3.68);
+    tl.to("#s04-item3 .s04-pip", { opacity: 1, duration: 0.3 }, 3.62);
+    tl.to("#s04-item3 .s04-k", { color: "rgba(244,241,232,0.95)", duration: 0.3 }, 3.62);
+    tl.to("#s04-item3 .s04-sub", { color: "rgba(244,241,232,0.62)", duration: 0.3 }, 3.62);
+    tl.to("#s04-item4 .s04-pip", { opacity: 1, duration: 0.3 }, 4.3);
+    tl.to("#s04-item4 .s04-k", { color: "rgba(244,241,232,0.95)", duration: 0.3 }, 4.3);
+    tl.to("#s04-item4 .s04-sub", { color: "rgba(244,241,232,0.62)", duration: 0.3 }, 4.3);
+    tl.to("#s04-foot", { opacity: 1, duration: 0.6 }, 4.6);
+
+    tl.fromTo("#s04-taxi", { scale: 1 }, { scale: 1.018, duration: 4.6, ease: "none" }, 4.7);
+    tl.fromTo("#s04-transfer", { scale: 1 }, { scale: 1.018, duration: 4.6, ease: "none" }, 4.7);
+
+    window.__timelines["s04"] = tl;
+    tl.seek(0);
+  </script>
+</template>

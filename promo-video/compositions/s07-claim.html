@@ -1,0 +1,97 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #14130f;
+      color: #f4f1e8;
+      font-family: "Inter", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #s07-photo { position: absolute; left: 0; top: 0; width: 760px; height: 1080px; overflow: hidden; will-change: transform; }
+    #s07-photo img { width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+    #s07-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(9,8,6,.55) 0%, rgba(9,8,6,0) 42%); }
+    #s07-edge { position: absolute; left: 759px; top: 0; width: 1px; height: 1080px; background: rgba(244,241,232,.28); }
+
+    #s07-bg { position: absolute; left: 760px; top: 0; width: 1160px; height: 1080px; object-fit: cover; }
+    #s07-wash {
+      position: absolute; left: 760px; top: 0; width: 1160px; height: 1080px;
+      background: radial-gradient(90% 80% at 100% 20%, rgba(255,191,0,.05) 0%, rgba(20,19,15,0) 55%);
+    }
+
+    .s07-hud {
+      position: absolute; left: 850px; right: 110px; top: 54px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font: 500 14px/1 "Inter", sans-serif; letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(244,241,232,.55);
+    }
+    #s07-eyebrow { position: absolute; left: 850px; top: 296px; font: 600 14px/1 "Inter", sans-serif; letter-spacing: .24em; text-transform: uppercase; color: rgba(244,241,232,.60); }
+    .s07-line { display: block; overflow: hidden; padding-top: .1em; margin-top: -.1em; }
+    .s07-line > span { display: block; will-change: transform; }
+    #s07-l1 { position: absolute; left: 844px; top: 322px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 72px; line-height: 1.02; letter-spacing: -.055em; white-space: nowrap; }
+    #s07-l2 { position: absolute; left: 844px; top: 481px; font-family: "Poppins", sans-serif; font-weight: 800; font-size: 72px; line-height: 1.02; letter-spacing: -.055em; color: #ffbf00; white-space: nowrap; }
+    #s07-copy { position: absolute; left: 850px; top: 604px; width: 620px; font: 400 23px/1.4 "Inter", sans-serif; color: rgba(244,241,232,.66); }
+    #s07-hair { position: absolute; left: 850px; top: 575px; width: 880px; height: 1px; background: rgba(244,241,232,.20); transform-origin: left center; }
+    #s07-rule { position: absolute; left: 850px; top: 430px; width: 950px; height: 4px; background: #ffbf00; transform-origin: left center; }
+    #s07-side { position: absolute; right: 72px; top: 300px; writing-mode: vertical-rl; transform: rotate(180deg); font: 500 12px/1 "Inter", sans-serif; letter-spacing: .32em; text-transform: uppercase; color: rgba(244,241,232,.55); }
+  </style>
+
+  <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
+    <div id="s07-stage" class="clip" data-start="0" data-duration="4.017" data-track-index="1">
+      <img id="s07-bg" src="assets/tex/ink.png" alt="" />
+      <div id="s07-wash"></div>
+
+      <div id="s07-photo"><img id="s07-img" src="assets/img/hotel.png" alt="Hotel en el Huila" /></div>
+      <div id="s07-edge"></div>
+
+      <div class="s07-hud"><span>07 — La promesa</span><span>Colombia</span></div>
+      <div id="s07-eyebrow">Lo que hacemos</div>
+      <div id="s07-l1"><span class="s07-line"><span>PLAN</span></span><span class="s07-line"><span>INTELIGENTE</span></span></div>
+      <div id="s07-l2"><span class="s07-line"><span>GENTE REAL</span></span></div>
+      <div id="s07-hair"></div>
+      <div id="s07-copy">Itinerario con IA. Proveedores del Huila.</div>
+      <div id="s07-rule"></div>
+      <div id="s07-side">El plan que conoce el Huila</div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    gsap.set("#s07-eyebrow", { opacity: 0 });
+    gsap.set("#s07-l1 .s07-line > span", { yPercent: 112 });
+    gsap.set("#s07-l2 .s07-line > span", { yPercent: 112 });
+    gsap.set("#s07-hair", { scaleX: 0 });
+    gsap.set("#s07-copy", { opacity: 0, y: 12 });
+    gsap.set("#s07-rule", { scaleX: 0 });
+    gsap.set("#s07-side", { opacity: 0 });
+    gsap.set("#s07-img", { scale: 1.06 });
+
+    tl.to("#s07-img", { scale: 1.0, duration: 3.2, ease: "power2.out" }, 0);
+
+    tl.to("#s07-eyebrow", { opacity: 1, duration: 0.4 }, 0.12);
+    tl.to("#s07-l1 .s07-line > span", { yPercent: 0, duration: 0.5, stagger: 0.08, ease: "expo.out" }, 0.18);
+    tl.to("#s07-l2 .s07-line > span", { yPercent: 0, duration: 0.55, ease: "expo.out" }, 0.34);
+    tl.to("#s07-hair", { scaleX: 1, duration: 0.6, ease: "power3.inOut" }, 0.52);
+    tl.to("#s07-copy", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.62);
+    tl.to("#s07-side", { opacity: 1, duration: 0.5 }, 0.24);
+
+    tl.to("#s07-l1", { y: 30, opacity: 0, duration: 0.34, ease: "power3.in" }, 2.02);
+    tl.to("#s07-l2", { y: -30, opacity: 0, duration: 0.34, ease: "power3.in" }, 2.02);
+    tl.to("#s07-eyebrow", { opacity: 0, duration: 0.28 }, 2.02);
+    tl.to("#s07-hair", { opacity: 0, duration: 0.28 }, 2.02);
+    tl.to("#s07-copy", { opacity: 0, y: -10, duration: 0.28 }, 2.02);
+
+    tl.to("#s07-rule", { scaleX: 1, duration: 0.62, ease: "expo.inOut" }, 2.16);
+    tl.to("#s07-photo", { x: -770, duration: 0.6, ease: "power3.inOut" }, 2.62);
+    tl.to("#s07-edge", { x: -770, duration: 0.6, ease: "power3.inOut" }, 2.62);
+    tl.to("#s07-side", { opacity: 0, duration: 0.4 }, 2.62);
+    tl.to("#s07-bg", { x: -770, duration: 0.6, ease: "power3.inOut" }, 2.62);
+    tl.to("#s07-wash", { x: -770, duration: 0.6, ease: "power3.inOut" }, 2.62);
+    tl.to(".s07-hud", { opacity: 0, duration: 0.3 }, 2.62);
+
+    window.__timelines["s07"] = tl;
+    tl.seek(0);
+  </script>
+</template>
