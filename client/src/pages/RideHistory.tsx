@@ -56,6 +56,8 @@ export default function RideHistory() {
   const [reviewedItems, setReviewedItems] = useState<Set<string>>(new Set());
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [itemReviews, setItemReviews] = useState<Record<string, any[]>>({});
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+  const [reviewsReloadKey, setReviewsReloadKey] = useState(0);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
 
   // Payment mock state
@@ -84,6 +86,7 @@ export default function RideHistory() {
     setChatHistory([]);
     setReviewingItem(null);
     setExpandedItem(null);
+    setReviewsError(null);
     setError(null);
     setLoading(true);
     fetch(endpoint, { signal: controller.signal })
@@ -152,11 +155,12 @@ export default function RideHistory() {
         if (controller.signal.aborted || identityRef.current !== identity) return;
         const reviewed = new Set<string>();
         const reviewMap: Record<string, any[]> = {};
+        let failed = 0;
         results.forEach((result, i) => {
           // Un viaje sin reseñas disponibles no debe invalidar las demás consultas.
-          if (result.status !== "fulfilled") return;
+          if (result.status !== "fulfilled") { failed += 1; return; }
           const data = result.value;
-          if (!data || !Array.isArray(data.reviews)) return;
+          if (!data || !Array.isArray(data.reviews)) { failed += 1; return; }
           const rideId = completedIds[i];
           reviewMap[rideId] = data.reviews;
           const hasMyReview = data.reviews.some(
@@ -166,17 +170,20 @@ export default function RideHistory() {
         });
         setReviewedItems(reviewed);
         setItemReviews(reviewMap);
+        // Las reseñas son información secundaria: el historial sigue visible y
+        // solo se avisa de lo que no se pudo comprobar, con opción de reintentar.
+        setReviewsError(failed > 0
+          ? `No pudimos comprobar las reseñas de ${failed} de ${completedIds.length} viaje(s).`
+          : null);
       })
-      .catch((cause: unknown) => {
+      .catch(() => {
         // Un aborto es el cambio de cuenta o de rol, no un fallo que deba ver el usuario.
         if (controller.signal.aborted || identityRef.current !== identity) return;
-        // Las reseñas son información secundaria: el historial ya cargó y se
-        // mantiene visible aunque esta consulta falle (p. ej. sesión expirada).
-        console.warn("No se pudieron cargar las reseñas del historial:", cause);
+        setReviewsError("No pudimos comprobar las reseñas de tus viajes.");
       });
 
     return () => controller.abort();
-  }, [items, user?.username, user?.role]);
+  }, [items, user?.username, user?.role, reviewsReloadKey]);
 
   useEffect(() => {
     if (!user) setLocation("/login");
@@ -283,6 +290,23 @@ export default function RideHistory() {
               </button>
             ))}
           </div>
+
+          {reviewsError && !loading && (
+            <div
+              role="status"
+              className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200"
+            >
+              <span>{reviewsError} El historial sigue disponible.</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReviewsReloadKey((value) => value + 1)}
+                className="h-7 rounded-lg px-2 text-xs font-semibold"
+              >
+                Reintentar reseñas
+              </Button>
+            </div>
+          )}
 
           {/* Items list */}
           {loading ? (
