@@ -1,11 +1,11 @@
 import { apiBase } from "@/lib/queryClient";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Car, MapPin, Navigation, Clock, Star,
   Calendar, DollarSign, MessageSquare, ChevronDown,
-  CheckCircle, XCircle, Loader2, Filter,
+  AlertCircle, CheckCircle, XCircle, Loader2, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,8 @@ export default function RideHistory() {
   const [_, setLocation] = useLocation();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [filter, setFilter] = useState<"all" | "completed" | "cancelled" | "confirmed">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "ride" | "service">("all");
   const [reviewingItem, setReviewingItem] = useState<string | null>(null);
@@ -61,15 +63,35 @@ export default function RideHistory() {
 
   const isTaxi = user?.role === "taxi";
 
+  // Identidad actual (cuenta + rol). Las respuestas asíncronas la comparan al
+  // volver para no escribir estado que pertenece a una sesión anterior.
+  const identityRef = useRef("");
+  identityRef.current = user ? `${user.role}:${user.username}` : "";
+
   useEffect(() => {
     if (!user) return;
     const endpoint = isTaxi
       ? `/api/rides/taxi/${user.username}`
       : `/api/rides/traveler/${user.username}`;
     
-    fetch(endpoint)
-      .then((r) => r.json())
-      .then((data) => {
+    // Cancelar la petición anterior evita que la respuesta lenta de otra cuenta
+    // o de otro rol sobrescriba el historial que se está mostrando ahora.
+    const controller = new AbortController();
+    // Al cambiar de cuenta o de rol, nada de la sesión anterior debe seguir visible.
+    setItems([]);
+    setReviewedItems(new Set<string>());
+    setItemReviews({});
+    setChatHistory([]);
+    setReviewingItem(null);
+    setExpandedItem(null);
+    setError(null);
+    setLoading(true);
+    fetch(endpoint, { signal: controller.signal })
+      .then(async (r) => {
+        if (r.status === 401) throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+        if (!r.ok) throw new Error(`El servidor respondió ${r.status}.`);
+        const data = await r.json();
+        if (controller.signal.aborted) return;
         // Combine active + history, show all items
         const allItems: HistoryItem[] = [];
         const mapRide = (r: any): HistoryItem => ({
@@ -79,29 +101,32 @@ export default function RideHistory() {
         });
 
         if (data.activeRide) allItems.push(mapRide(data.activeRide));
-        if (data.history) allItems.push(...data.history.map(mapRide));
+        if (Array.isArray(data.history)) allItems.push(...data.history.map(mapRide));
 
         setItems(allItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((cause: unknown) => {
+        // Un aborto es el cambio de cuenta o de rol, no un fallo que deba ver el usuario.
+        if (controller.signal.aborted) return;
+        setItems([]);
+        setError(cause instanceof Error ? cause.message : "No hubo respuesta del servidor.");
+        setLoading(false);
+      });
 
-    if (user?.username) {
-      fetch(`${apiBase}/api/chat/history?username=${encodeURIComponent(user.username)}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setChatHistory(data);
-          } else {
-            setChatHistory([]);
-          }
-        })
-        .catch((e) => {
-          console.error(e);
-          setChatHistory([]);
-        });
-    }
-  }, [user?.username, user?.role, isTaxi]);
+    fetch(`${apiBase}/api/chat/history?username=${encodeURIComponent(user.username)}`, { signal: controller.signal })
+      .then(async (r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setChatHistory(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setChatHistory([]);
+      });
+
+    return () => controller.abort();
+  }, [user?.username, user?.role, isTaxi, reloadKey]);
 
   // Check which items user has already reviewed
   useEffect(() => {
@@ -109,25 +134,49 @@ export default function RideHistory() {
     const completedIds = items.filter(r => r.status === "completed" && r.type === "ride").map(r => r.id);
     if (completedIds.length === 0) return;
 
-    Promise.all(
+    // Identidad y petición de origen: si el usuario cambia de cuenta o de rol
+    // mientras las respuestas viajan, se abortan y además se descartan al volver.
+    const identity = `${user.role}:${user.username}`;
+    const controller = new AbortController();
+
+    Promise.allSettled(
       completedIds.map(id =>
-        fetch(`${apiBase}/api/reviews/ride/${id}`).then(r => r.json())
+        fetch(`${apiBase}/api/reviews/ride/${encodeURIComponent(id)}`, { signal: controller.signal })
+          .then(r => {
+            if (!r.ok) throw new Error(`El servidor respondió ${r.status} al cargar reseñas.`);
+            return r.json();
+          })
       )
-    ).then(results => {
-      const reviewed = new Set<string>();
-      const reviewMap: Record<string, any[]> = {};
-      results.forEach((data, i) => {
-        const rideId = completedIds[i];
-        reviewMap[rideId] = data.reviews || [];
-        const hasMyReview = (data.reviews || []).some(
-          (rev: any) => rev.authorUsername === user.username
-        );
-        if (hasMyReview) reviewed.add(rideId);
+    )
+      .then(results => {
+        if (controller.signal.aborted || identityRef.current !== identity) return;
+        const reviewed = new Set<string>();
+        const reviewMap: Record<string, any[]> = {};
+        results.forEach((result, i) => {
+          // Un viaje sin reseñas disponibles no debe invalidar las demás consultas.
+          if (result.status !== "fulfilled") return;
+          const data = result.value;
+          if (!data || !Array.isArray(data.reviews)) return;
+          const rideId = completedIds[i];
+          reviewMap[rideId] = data.reviews;
+          const hasMyReview = data.reviews.some(
+            (rev: any) => rev?.authorUsername === user.username
+          );
+          if (hasMyReview) reviewed.add(rideId);
+        });
+        setReviewedItems(reviewed);
+        setItemReviews(reviewMap);
+      })
+      .catch((cause: unknown) => {
+        // Un aborto es el cambio de cuenta o de rol, no un fallo que deba ver el usuario.
+        if (controller.signal.aborted || identityRef.current !== identity) return;
+        // Las reseñas son información secundaria: el historial ya cargó y se
+        // mantiene visible aunque esta consulta falle (p. ej. sesión expirada).
+        console.warn("No se pudieron cargar las reseñas del historial:", cause);
       });
-      setReviewedItems(reviewed);
-      setItemReviews(reviewMap);
-    });
-  }, [items, user?.username]);
+
+    return () => controller.abort();
+  }, [items, user?.username, user?.role]);
 
   useEffect(() => {
     if (!user) setLocation("/login");
@@ -239,6 +288,20 @@ export default function RideHistory() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div role="alert" className="bg-card border border-dashed border-destructive/40 rounded-2xl p-12 text-center">
+              <AlertCircle className="h-12 w-12 text-destructive/70 mx-auto mb-3" />
+              <p className="text-sm font-semibold">No pudimos cargar tu historial</p>
+              <p className="text-sm text-muted-foreground mt-1">{error} Inténtalo de nuevo en unos segundos.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReloadKey((value) => value + 1)}
+                className="mt-4 rounded-xl"
+              >
+                Reintentar
+              </Button>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="bg-card border border-border/40 rounded-2xl p-12 text-center">
