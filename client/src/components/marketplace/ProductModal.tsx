@@ -12,6 +12,9 @@ import { format } from "date-fns";
 import { productGallery, type CatalogMedia } from "@shared/catalog-media";
 import { useToast } from "@/hooks/use-toast";
 import { formatProductPrice, productAmount } from "@/lib/product-price";
+import { sameLocalCalendarDay } from "@shared/calendar";
+
+type BookingSlot = { id: string; startTime: string; endTime: string; capacity: number; booked?: number | null };
 
 export interface Product {
   id: string;
@@ -38,7 +41,10 @@ export default function ProductModal({ product, onClose }: { product: Product; o
   const { toast } = useToast();
   
   // Bookings state
-  const [slots, setSlots] = useState<any[]>([]);
+  const [slots, setSlots] = useState<BookingSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(true);
+  const [slotsError, setSlotsError] = useState(false);
+  const [slotsAttempt, setSlotsAttempt] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedSlotId, setSelectedSlotId] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
@@ -47,6 +53,8 @@ export default function ProductModal({ product, onClose }: { product: Product; o
   const soldOut = maxQuantity === 0;
   const unitPrice = productAmount(product.price);
   const totalPrice = unitPrice === null ? NaN : unitPrice * quantity;
+  const selectedSlot = slots.find(slot => slot.id === selectedSlotId);
+  const slotHasCapacity = !!selectedSlot && selectedSlot.capacity - (selectedSlot.booked || 0) >= quantity;
 
   useEffect(() => {
     let cancelled = false;
@@ -63,13 +71,33 @@ export default function ProductModal({ product, onClose }: { product: Product; o
     };
     void loadMedia();
 
-    // Fetch availability slots
-    fetch(`${apiBase}/api/bookings/slots/${product.id}`)
-      .then(r => r.ok ? r.json() : [])
-      .then(d => setSlots(d))
-      .catch(() => setSlots([]));
     return () => { cancelled = true; };
   }, [product]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setSlotsLoading(true); setSlotsError(false); setSlots([]); setSelectedSlotId("");
+    void (async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/bookings/slots/${encodeURIComponent(product.id)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error('Disponibilidad no disponible');
+        const data: unknown = await response.json();
+        if (!Array.isArray(data) || data.some(slot => !slot || typeof slot.id !== 'string'
+          || typeof slot.startTime !== 'string' || typeof slot.endTime !== 'string'
+          || !Number.isFinite(new Date(slot.startTime).getTime()) || !Number.isFinite(new Date(slot.endTime).getTime())
+          || !Number.isInteger(slot.capacity) || slot.capacity < 0
+          || (slot.booked != null && (!Number.isInteger(slot.booked) || slot.booked < 0)))) {
+          throw new Error('Disponibilidad inválida');
+        }
+        if (!controller.signal.aborted) setSlots(data);
+      } catch {
+        if (!controller.signal.aborted) setSlotsError(true);
+      } finally {
+        if (!controller.signal.aborted) setSlotsLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [product.id, slotsAttempt]);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -82,7 +110,10 @@ export default function ProductModal({ product, onClose }: { product: Product; o
     if (unitPrice === null) {
       return toast({ title: "Precio no disponible", description: "El proveedor debe corregir el precio antes de recibir la orden.", variant: "destructive" });
     }
-    if (!selectedSlotId && slots.length > 0) {
+    if (slotsLoading || slotsError) {
+      return toast({ title: "Disponibilidad pendiente", description: "Espera a que se consulten los horarios o vuelve a intentarlo.", variant: "destructive" });
+    }
+    if (slots.length > 0 && !slotHasCapacity) {
       return toast({ title: "Atención", description: "Por favor selecciona un horario disponible", variant: "destructive" });
     }
     if (quantity < 1 || quantity > maxQuantity) {
@@ -151,7 +182,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
   const slotsForSelectedDate = slots.filter(s => {
     if (!selectedDate) return false;
     const sDate = new Date(s.startTime);
-    return sDate.getDate() === selectedDate.getDate() && sDate.getMonth() === selectedDate.getMonth();
+    return sameLocalCalendarDay(sDate, selectedDate);
   });
 
   return (
@@ -218,7 +249,14 @@ export default function ProductModal({ product, onClose }: { product: Product; o
 
             <div className="mt-8 pt-8 border-t border-border/40 space-y-4">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Disponibilidad y Reservas</h3>
-              {slots.length === 0 ? (
+              {slotsLoading ? (
+                <p role="status" className="text-sm text-muted-foreground">Consultando horarios…</p>
+              ) : slotsError ? (
+                <div role="alert" className="space-y-3 rounded-xl border border-border p-4">
+                  <p className="text-sm">No se pudo consultar la disponibilidad. Reintenta antes de reservar.</p>
+                  <Button variant="outline" onClick={() => setSlotsAttempt(value => value + 1)}>Reintentar horarios</Button>
+                </div>
+              ) : slots.length === 0 ? (
                 <div className="flex justify-between items-center text-sm p-4 bg-background/50 rounded-xl border border-border/40">
                   <span className="text-muted-foreground">Inventario (Sin turnos asignados)</span>
                   <span className={soldOut ? "font-bold text-red-400" : "text-foreground font-medium"}>
@@ -231,7 +269,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
                     <Calendar
                       mode="single"
                       selected={selectedDate}
-                      onSelect={setSelectedDate}
+                      onSelect={date => { setSelectedDate(date); setSelectedSlotId(""); }}
                       locale={es}
                       className="bg-transparent border-none text-foreground pointer-events-auto"
                     />
@@ -247,6 +285,8 @@ export default function ProductModal({ product, onClose }: { product: Product; o
                           <button 
                             key={slot.id}
                             onClick={() => setSelectedSlotId(slot.id)}
+                            disabled={checkingOut || available < quantity}
+                            aria-pressed={isSelected}
                             className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
                               isSelected 
                                 ? "border-primary bg-primary/10" 
@@ -300,7 +340,7 @@ export default function ProductModal({ product, onClose }: { product: Product; o
             </div>
             <Button 
               onClick={handleCheckout} 
-              disabled={checkingOut || soldOut || unitPrice === null}
+              disabled={checkingOut || soldOut || unitPrice === null || slotsLoading || slotsError || (slots.length > 0 && !slotHasCapacity)}
               className="w-full h-14 text-base font-bold rounded-2xl bg-primary text-black hover:bg-primary/90 hover:scale-[1.02] transition-all shadow-lg shadow-primary/20 disabled:hover:scale-100"
             >
               {checkingOut ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShoppingCart className="h-5 w-5 mr-2" />}
