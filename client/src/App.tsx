@@ -34,6 +34,7 @@ const UserProfile = lazy(() => import("@/pages/UserProfile"));
 const Messages = lazy(() => import("@/pages/Messages"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const ProductManager = lazy(() => import("@/pages/ProductManager"));
+const ProviderDashboard = lazy(() => import("@/pages/ProviderDashboard"));
 const ProductStore = lazy(() => import("@/pages/ProductStore"));
 const SeoLanding = lazy(() => import("@/pages/SeoLanding"));
 const Chatbot = lazy(() => import("@/components/Chatbot"));
@@ -208,6 +209,7 @@ function Router() {
         <Route path="/u/:username" component={UserProfile} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/products" component={ProductManager} />
+        <Route path="/provider-dashboard" component={ProviderDashboard} />
         <Route path="/explore" component={ProductStore} />
 
         {/* Guías públicas con contenido prerenderizado para buscadores. */}
