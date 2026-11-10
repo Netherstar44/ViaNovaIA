@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   AlertTriangle, CheckCircle2, Clock, CreditCard, ExternalLink,
-  Loader2, LockKeyhole, QrCode, ReceiptText, ShieldCheck, Wallet,
+  Loader2, LockKeyhole, QrCode, ReceiptText, RefreshCw, ShieldCheck, Wallet,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PaymentMethods from "@/components/PaymentMethods";
@@ -32,6 +32,16 @@ type PaymentIntent = {
   tripId: string | null;
   createdAt: string | null;
 };
+
+type LoadStatus = "idle" | "loading" | "ready" | "error";
+
+async function readJson(res: Response): Promise<unknown> {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pendiente",
@@ -72,48 +82,151 @@ function formatDate(value: string | null) {
 export default function Payments() {
   const { user, loading: authLoading } = useAuth();
   const [config, setConfig] = useState<PaymentConfig | null>(null);
+  const [configStatus, setConfigStatus] = useState<LoadStatus>("loading");
   const [trip, setTrip] = useState<TripDto | null>(null);
+  const [tripStatus, setTripStatus] = useState<LoadStatus>("idle");
   const [intents, setIntents] = useState<PaymentIntent[]>([]);
+  const [intentsStatus, setIntentsStatus] = useState<LoadStatus>("loading");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const isTraveler = user?.role === "traveler";
 
   useEffect(() => {
-    if (!user) return;
+    // Los viajes y pagos pertenecen a la cuenta activa. Al cambiar de usuario
+    // o cerrar sesión deben descartarse; si no, se muestran datos ajenos
+    // mientras carga la cuenta nueva (o cuando la nueva no tiene viaje).
+    setConfig(null);
+    setConfigStatus("loading");
+    setTrip(null);
+    setTripStatus("idle");
+    setIntents([]);
+    setIntentsStatus("loading");
+    setError(null);
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
 
     const load = async () => {
       setLoading(true);
+      setConfigStatus("loading");
+      setIntentsStatus("loading");
+      setTripStatus(isTraveler ? "loading" : "idle");
       setError(null);
+
+      const failures: string[] = [];
+
       try {
-        const [configRes, intentsRes, tripRes] = await Promise.all([
-          fetch(`${apiBase}/api/payments/config`, {
-            headers: await authHeaders(),
-            credentials: "include",
-          }),
-          fetch(`${apiBase}/api/payments/intents`, {
-            headers: await authHeaders(),
-            credentials: "include",
-          }),
+        const headers = await authHeaders();
+        if (cancelled) return;
+
+        const [configResult, intentsResult, tripResult] = await Promise.allSettled([
+          fetch(`${apiBase}/api/payments/config`, { headers, credentials: "include", signal }),
+          fetch(`${apiBase}/api/payments/intents`, { headers, credentials: "include", signal }),
           isTraveler
-            ? fetch(`${apiBase}/api/trips/latest`, {
-                headers: await authHeaders(),
-                credentials: "include",
-              })
+            ? fetch(`${apiBase}/api/trips/latest`, { headers, credentials: "include", signal })
             : Promise.resolve(null),
         ]);
 
-        const configData = await configRes.json().catch(() => null);
-        const intentsData = await intentsRes.json().catch(() => ({}));
-        const tripData = tripRes ? await tripRes.json().catch(() => ({})) : null;
-
         if (cancelled) return;
-        if (configData) setConfig(configData);
-        setIntents(Array.isArray(intentsData.intents) ? intentsData.intents : []);
-        if (tripData?.trip) setTrip(tripData.trip as TripDto);
+
+        // Configuración: el contrato mínimo exige `sandbox` booleano. Si no
+        // llega, no podemos afirmar en qué modo está la pasarela.
+        if (configResult.status === "fulfilled") {
+          const res = configResult.value;
+          const data = await readJson(res);
+          if (cancelled) return;
+          const sandbox =
+            data && typeof data === "object"
+              ? (data as { sandbox?: unknown }).sandbox
+              : undefined;
+          if (res.ok && typeof sandbox === "boolean") {
+            const payload = data as Partial<PaymentConfig>;
+            setConfig({
+              provider: typeof payload.provider === "string" ? payload.provider : "",
+              mode: typeof payload.mode === "string" ? payload.mode : "",
+              sandbox,
+              note: typeof payload.note === "string" ? payload.note : "",
+            });
+            setConfigStatus("ready");
+          } else {
+            setConfigStatus("error");
+            failures.push("No se pudo cargar la configuración de pagos.");
+          }
+        } else {
+          setConfigStatus("error");
+          failures.push("No se pudo cargar la configuración de pagos.");
+        }
+
+        // Pagos recientes: el contrato mínimo exige un array `intents`. Una
+        // lista vacía solo es válida si la respuesta cumple ese contrato.
+        if (intentsResult.status === "fulfilled") {
+          const res = intentsResult.value;
+          const data = await readJson(res);
+          if (cancelled) return;
+          const list =
+            data && typeof data === "object" && Array.isArray((data as { intents?: unknown }).intents)
+              ? (data as { intents: unknown[] }).intents
+              : null;
+          if (res.ok && list) {
+            setIntents(
+              list.filter((item): item is PaymentIntent => Boolean(item) && typeof item === "object"),
+            );
+            setIntentsStatus("ready");
+          } else {
+            setIntentsStatus("error");
+            failures.push("No se pudieron cargar tus pagos recientes.");
+          }
+        } else {
+          setIntentsStatus("error");
+          failures.push("No se pudieron cargar tus pagos recientes.");
+        }
+
+        // Ruta: un 404 es una respuesta legítima (no hay viaje). Cualquier
+        // otro fallo se muestra como error, no como “sin ruta pendiente”.
+        if (isTraveler) {
+          if (tripResult.status === "fulfilled" && tripResult.value) {
+            const res = tripResult.value;
+            if (res.status === 404) {
+              setTrip(null);
+              setTripStatus("ready");
+            } else {
+              const data = await readJson(res);
+              if (cancelled) return;
+              const tripPayload =
+                data && typeof data === "object" ? (data as { trip?: unknown }).trip : undefined;
+              if (res.ok && tripPayload && typeof tripPayload === "object") {
+                setTrip(tripPayload as TripDto);
+                setTripStatus("ready");
+              } else if (res.ok && tripPayload === null) {
+                setTrip(null);
+                setTripStatus("ready");
+              } else {
+                setTripStatus("error");
+                failures.push("No se pudo cargar tu ruta.");
+              }
+            }
+          } else {
+            setTripStatus("error");
+            failures.push("No se pudo cargar tu ruta.");
+          }
+        }
+
+        if (!cancelled) setError(failures.length ? failures.join(" ") : null);
       } catch {
-        if (!cancelled) setError("No se pudo cargar la información de pagos.");
+        if (!cancelled) {
+          setConfigStatus("error");
+          setIntentsStatus("error");
+          if (isTraveler) setTripStatus("error");
+          setError("No se pudo cargar la información de pagos.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -122,8 +235,9 @@ export default function Payments() {
     void load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [user?.username, isTraveler]);
+  }, [user?.username, isTraveler, reloadKey]);
 
   if (authLoading) {
     return (
@@ -182,30 +296,62 @@ export default function Payments() {
           </Link>
         </div>
 
-        <div
-          className={`flex items-start gap-2 rounded-2xl border p-3 text-[11px] ${
-            config?.sandbox
-              ? "border-amber-500/30 bg-amber-500/5 text-amber-900 dark:text-amber-100"
-              : "border-emerald-500/25 bg-emerald-500/5 text-emerald-900 dark:text-emerald-100"
-          }`}
-        >
-          {config?.sandbox ? (
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          ) : (
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-          )}
-          <p>
-            <strong>{config?.sandbox ? "Modo sandbox." : "Modo producción."}</strong>{" "}
-            {config?.sandbox
-              ? "Los pagos son simulados: no se cobra dinero real. Puedes confirmar el sandbox desde el panel de la ruta."
-              : "Los pagos se procesan en Wompi y se confirman únicamente por webhook firmado."}{" "}
-            {config?.note || "Los datos bancarios se capturan solo en la pasarela."}
-          </p>
-        </div>
+        {configStatus === "ready" && config ? (
+          <div
+            className={`flex items-start gap-2 rounded-2xl border p-3 text-[11px] ${
+              config.sandbox
+                ? "border-amber-500/30 bg-amber-500/5 text-amber-900 dark:text-amber-100"
+                : "border-emerald-500/25 bg-emerald-500/5 text-emerald-900 dark:text-emerald-100"
+            }`}
+          >
+            {config.sandbox ? (
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            ) : (
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
+            <p>
+              <strong>{config.sandbox ? "Modo sandbox." : "Modo producción."}</strong>{" "}
+              {config.sandbox
+                ? "Los pagos son simulados: no se cobra dinero real. Puedes confirmar el sandbox desde el panel de la ruta."
+                : "Los pagos se procesan en Wompi y se confirman únicamente por webhook firmado."}{" "}
+              {config.note || "Los datos bancarios se capturan solo en la pasarela."}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-2xl border border-border/40 bg-secondary/10 p-3 text-[11px] text-muted-foreground">
+            {configStatus === "loading" ? (
+              <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+            ) : (
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            )}
+            <p>
+              <strong>
+                {configStatus === "loading"
+                  ? "Comprobando el modo de pago."
+                  : "Estado de pago no disponible."}
+              </strong>{" "}
+              {configStatus === "loading"
+                ? "Confirmando con el servidor si la pasarela está en sandbox o en producción."
+                : "No pudimos confirmar si la pasarela está en sandbox o en producción, así que no mostramos ningún aviso de modo."}
+            </p>
+          </div>
+        )}
 
         {error && (
-          <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+          <div className="flex flex-wrap items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1">{error}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl"
+              onClick={() => {
+                setError(null);
+                setReloadKey((key) => key + 1);
+              }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Reintentar
+            </Button>
           </div>
         )}
 
@@ -218,7 +364,7 @@ export default function Payments() {
           </section>
         )}
 
-        {isTraveler && !routedTrip && !loading && (
+        {isTraveler && tripStatus === "ready" && !routedTrip && (
           <section className="rounded-2xl border border-border/40 bg-secondary/10 p-4">
             <div className="flex items-center gap-2 text-sm font-bold">
               <Clock className="h-4 w-4 text-muted-foreground" /> Sin ruta pendiente de pago
@@ -249,6 +395,10 @@ export default function Payments() {
             <div className="flex items-center gap-2 py-4 text-xs text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Cargando pagos...
             </div>
+          ) : intentsStatus === "error" ? (
+            <p className="py-3 text-xs text-muted-foreground">
+              No se pudieron cargar tus pagos recientes. Usa “Reintentar” para volver a intentarlo.
+            </p>
           ) : intents.length === 0 ? (
             <p className="py-3 text-xs text-muted-foreground">
               Todavía no tienes pagos registrados.
