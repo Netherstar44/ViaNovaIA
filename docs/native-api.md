@@ -14,3 +14,10 @@ comprobar que las peticiones usan el backend de `VITE_NATIVE_API_BASE`.
 
 Hallazgo identificado mediante revisión de OpenCode con DeepSeek V4.1 Flash.
 No se verificó con un dispositivo Android físico durante esta corrección.
+
+El interceptor nativo solo añade el token a rutas `/api` del origen del backend.
+Antes, `url.includes("/api")` en `client/src/main.tsx` también coincidía con URLs
+externas y podía enviar el token a un tercero. Reproducción aislada: simular un
+token y solicitar `https://external.example/api/data`; el transporte no debe
+recibir `Authorization` ni consultar el token. La regresión está en
+`tests/security.test.ts`, sin tráfico real ni credenciales de producción.

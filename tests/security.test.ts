@@ -7,6 +7,38 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import jwt from "jsonwebtoken";
 
+test("el fetch nativo solo adjunta credenciales al API de su backend", async () => {
+  const { createNativeApiFetch } = await import("../client/src/lib/native-fetch.js");
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  let tokenReads = 0;
+  const transport: typeof fetch = async (input, init) => {
+    calls.push({ input, init });
+    return new Response('{}');
+  };
+  const nativeFetch = createNativeApiFetch(transport, 'https://backend.example', async () => {
+    tokenReads++; return 'test-token';
+  });
+  for (const url of ['https://external.example/api/data', 'https://backend.example.evil.test/api', '/apiary', 'https://backend.example/images/api.jpg']) {
+    await nativeFetch(url);
+    assert.equal(new Headers(calls.at(-1)!.init?.headers).has('Authorization'), false);
+  }
+  assert.equal(tokenReads, 0);
+  await nativeFetch('/api/auth/me');
+  assert.equal(calls.at(-1)!.input, 'https://backend.example/api/auth/me');
+  assert.equal(new Headers(calls.at(-1)!.init?.headers).get('Authorization'), 'Bearer test-token');
+  assert.equal(tokenReads, 1);
+  const request = new Request('https://backend.example/api/profile', { headers: { 'X-Existing': 'kept' } });
+  await nativeFetch(request, { headers: { 'X-Override': 'also-kept' } });
+  const headers = new Headers(calls.at(-1)!.init?.headers);
+  assert.equal(headers.get('X-Existing'), 'kept');
+  assert.equal(headers.get('X-Override'), 'also-kept');
+  assert.equal(headers.get('Authorization'), 'Bearer test-token');
+  const webFetch = createNativeApiFetch(transport, '', async () => { throw Error('web must use cookies'); });
+  await webFetch('/api/auth/me');
+  assert.equal(calls.at(-1)!.input, '/api/auth/me');
+  assert.equal(calls.at(-1)!.init, undefined);
+});
+
 test("biometría no llega a logs aunque aparezca en un objeto de error", async () => {
   const { redactForLog } = await import("../server/observability.js");
   const result: any = redactForLog({ jpeg: "image-bytes", descriptor: [0.1], template: [0.2], landmarks: [1], documentRef: "private" });
