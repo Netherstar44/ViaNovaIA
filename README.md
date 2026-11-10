@@ -1185,3 +1185,9 @@ El diagnóstico, la captura y la evidencia del visor esférico están en [docs/s
 
 La auditoría del catálogo, la conexión de sus archivos y el estado real de la base están en [docs/catalog-media-audit.md](docs/catalog-media-audit.md). El catálogo ya no incorpora sitios ni reservas de demostración del frontend.
 
+El contador `npm run metrics:code` informa líneas físicas y no vacías del código rastreado, sin dependencias ni assets; sus criterios están en [docs/code-metrics.md](docs/code-metrics.md). La selección del backend web/Android y la protección del token nativo se describen en [docs/native-api.md](docs/native-api.md).
+
+Las notificaciones distinguen un fallo de conexión de una bandeja vacía y permiten reintentar. Los viajes cercanos tienen caché separada por conductor y cancelan consultas obsoletas. En panoramas, una miniatura fallida permite descargar la imagen principal; cancelar o cerrar el visor sigue interrumpiendo esa descarga.
+
+El catálogo carga lotes de hasta 50 productos mediante **Cargar más**; la búsqueda indica cuándo solo abarca los productos cargados. Un fallo en otra página conserva los productos previos y permite reintentar. Los precios incompletos se identifican sin inventar una moneda. El visor conserva orientación y zoom cuando sustituye la miniatura por la imagen completa.
+
