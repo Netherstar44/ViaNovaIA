@@ -52,6 +52,41 @@ test("isCountedFile excluye extensiones, .d.ts y carpetas generadas", () => {
   assert.equal(isCountedFile("build-tools/generate.ts"), false);
 });
 
+test("collectMetrics cuenta Java/Kotlin nativo y excluye generados, assets y Example", () => {
+  const root = fixture({
+    "android/app/src/main/java/com/vianova/app/MainActivity.java": "class MainActivity {\n\n  // nativo\n}\n",
+    "android/app/src/main/kotlin/com/vianova/app/ThemeBars.kt": "class ThemeBars\n",
+    "android/app/src/main/java/com/vianova/app/ExampleUnitTest.java": "class ExampleUnitTest {}\n",
+    "android/app/src/main/kotlin/com/vianova/app/ExampleInstrumentedTest.kt": "class ExampleInstrumentedTest\n",
+    "android/app/src/main/java/com/getcapacitor/myapp/MainActivity.java": "class MainActivity {}\n",
+    "android/app/src/main/java/com/vianova/app/build/Generated.java": "class Generated {}\n",
+    "android/app/src/main/java/com/vianova/app/generated/Gen.kt": "class Gen\n",
+    "android/app/src/main/assets/public/app.js": "no\n",
+    "android/app/src/main/java/com/vianova/app/layout.xml": "<layout />\n",
+    "android/app/src/main/java/com/vianova/app/bundle.apk": "no\n",
+    "android/app/src/main/java/com/vianova/app/BuildConfig.kts": "no\n",
+  });
+  const report = collectMetrics({
+    root,
+    files: [
+      "android/app/src/main/java/com/vianova/app/MainActivity.java",
+      "android/app/src/main/kotlin/com/vianova/app/ThemeBars.kt",
+      "android/app/src/main/java/com/vianova/app/ExampleUnitTest.java",
+      "android/app/src/main/kotlin/com/vianova/app/ExampleInstrumentedTest.kt",
+      "android/app/src/main/java/com/getcapacitor/myapp/MainActivity.java",
+      "android/app/src/main/java/com/vianova/app/build/Generated.java",
+      "android/app/src/main/java/com/vianova/app/generated/Gen.kt",
+      "android/app/src/main/assets/public/app.js",
+      "android/app/src/main/java/com/vianova/app/layout.xml",
+      "android/app/src/main/java/com/vianova/app/bundle.apk",
+      "android/app/src/main/java/com/vianova/app/BuildConfig.kts",
+    ],
+  });
+  assert.deepEqual(report.missing, []);
+  assert.deepEqual(report.areas, [{ area: "android", files: 2, lines: 5, nonblank: 4 }]);
+  assert.deepEqual(report.total, { files: 2, lines: 5, nonblank: 4 });
+});
+
 test("collectMetrics solo suma archivos incluidos y presentes", () => {
   const root = fixture({
     "client/App.tsx": "a\n\nb\n",

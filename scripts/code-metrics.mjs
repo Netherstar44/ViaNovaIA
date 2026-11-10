@@ -9,9 +9,26 @@ export const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 export const extensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css', '.sql']);
 export const directories = new Set(['client', 'server', 'shared', 'api', 'functions', 'scripts', 'script', 'tests', 'migrations']);
 const excludedPath = /(^|\/)(dist|build|coverage|vendor|node_modules)(\/|$)/;
+
+// Native Android source written for this app. Capacitor templates, generated
+// code, assets, builds and the sample "Example*Test" files stay out.
+export const nativeSourceRoot = /^android\/app\/src\/main\/(?:java|kotlin)\//;
+export const nativeExtensions = new Set(['.java', '.kt']);
+const excludedNativePath = /(^|\/)(assets|build|dist|generated|gen|node_modules|vendor)(\/|$)/;
+const generatedCapacitorPath = /(^|\/)com\/getcapacitor\//;
+const exampleTestFile = /(^|\/)Example(?:Unit|Instrumented)?Test\.(?:java|kt)$/;
 const definition = 'Tracked source files in the working tree; physical lines including comments. Not a measure of quality or completion.';
 
+export function isNativeSourceFile(file) {
+  return nativeSourceRoot.test(file)
+    && nativeExtensions.has(path.extname(file))
+    && !excludedNativePath.test(file)
+    && !generatedCapacitorPath.test(file)
+    && !exampleTestFile.test(file);
+}
+
 export function isCountedFile(file) {
+  if (isNativeSourceFile(file)) return true;
   return directories.has(file.split('/')[0])
     && extensions.has(path.extname(file))
     && !file.endsWith('.d.ts')
