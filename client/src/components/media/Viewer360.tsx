@@ -69,6 +69,15 @@ interface PanoramaSceneProps {
   onInteraction?: () => void;
 }
 
+type PanoramaPose = {
+  lon: number;
+  lat: number;
+  fov: number;
+  targetFov: number;
+  targetLon: number;
+  targetLat: number;
+};
+
 /**
  * Imperative three.js panorama. The R3F Canvas relies on a ResizeObserver
  * measurement that can be skipped when it mounts inside a Swiper slide, which
@@ -77,6 +86,7 @@ interface PanoramaSceneProps {
  */
 function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onInteraction }: PanoramaSceneProps) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const poseRef = useRef<PanoramaPose>({ lon: 0, lat: 0, fov: 75, targetFov: 75, targetLon: 0, targetLat: 0 });
   const autoRotateRef = useRef(autoRotate);
   const gyroRef = useRef(gyroEnabled);
   autoRotateRef.current = autoRotate;
@@ -116,12 +126,7 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
 
     let width = 0;
     let height = 0;
-    let lon = 0;
-    let lat = 0;
-    let fov = 75;
-    let targetFov = 75;
-    let targetLon = 0;
-    let targetLat = 0;
+    let { lon, lat, fov, targetFov, targetLon, targetLat } = poseRef.current;
     let dragging = false;
     let velocityLon = 0;
     let velocityLat = 0;
@@ -328,6 +333,8 @@ function PanoramaScene({ texture, autoRotate, gyroEnabled, controlsRef, onIntera
     frameId = requestAnimationFrame(animate);
 
     return () => {
+      // A progressive texture upgrade rebuilds GPU resources, not the view.
+      poseRef.current = { lon, lat, fov, targetFov, targetLon, targetLat };
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       window.removeEventListener('orientationchange', resize);
@@ -435,6 +442,7 @@ export function Viewer360({ url, previewUrl, className = '', caption, controls =
       </p>}
       {state.status === 'ready' && (
         <PanoramaScene
+          key={url}
           texture={state.texture}
           autoRotate={autoRotate}
           gyroEnabled={gyroEnabled}
