@@ -100,8 +100,10 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const loadedAccountRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -109,36 +111,43 @@ export default function Profile() {
       return;
     }
 
-    let cancelled = false;
+    // Si cambia la cuenta, el formulario no puede seguir mostrando el perfil
+    // anterior ni un instante; un reintento, en cambio, conserva lo escrito.
+    if (loadedAccountRef.current !== user.username) {
+      loadedAccountRef.current = user.username;
+      setForm(EMPTY_FORM);
+      setInitialForm(EMPTY_FORM);
+      setMessage(null);
+    }
+
+    const controller = new AbortController();
+    setLoading(true);
     (async () => {
       try {
         const res = await fetch(`${apiBase}/api/user/profile`, {
           credentials: "include",
           headers: await authHeaders(),
+          signal: controller.signal,
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "No se pudo cargar tu perfil");
-        if (!cancelled) {
-          const loaded = toForm(data.user);
-          setForm(loaded);
-          setInitialForm(loaded);
-        }
+        if (controller.signal.aborted) return;
+        const loaded = toForm(data.user);
+        setForm(loaded);
+        setInitialForm(loaded);
       } catch (err: any) {
-        if (!cancelled) {
-          setMessage({ type: "error", text: err?.message || "No se pudo cargar tu perfil" });
-          const fallback = toForm(user);
-          setForm(fallback);
-          setInitialForm(fallback);
-        }
+        if (controller.signal.aborted) return;
+        setMessage({ type: "error", text: err?.message || "No se pudo cargar tu perfil" });
+        const fallback = toForm(user);
+        setForm(fallback);
+        setInitialForm(fallback);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.username, authLoading, setLocation]);
+    return () => controller.abort();
+  }, [user?.username, user?.role, authLoading, setLocation, reloadKey]);
 
   if (!user) {
     return authLoading ? (
@@ -295,8 +304,17 @@ export default function Profile() {
             ) : (
               <X className="mt-0.5 h-4 w-4 shrink-0" />
             )}
-            <span>{message.text}</span>
-            <button onClick={() => setMessage(null)} className="ml-auto opacity-70 hover:opacity-100" aria-label="Cerrar aviso">
+            <span className="min-w-0 flex-1">{message.text}</span>
+            {message.type === "error" && !loading && (
+              <button
+                type="button"
+                onClick={() => { setMessage(null); setReloadKey((value) => value + 1); }}
+                className="shrink-0 rounded-lg border border-current/30 px-2.5 py-1 text-xs font-semibold hover:bg-current/10"
+              >
+                Reintentar
+              </button>
+            )}
+            <button onClick={() => setMessage(null)} className="shrink-0 opacity-70 hover:opacity-100" aria-label="Cerrar aviso">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
